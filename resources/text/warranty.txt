@@ -1,0 +1,106 @@
+<h1 class="font-bold text-xl mt-6 mb-2">1. Overview</h1>
+<p class="mt-0">
+At LifeStyleQ8, we are committed to providing high-quality products and reliable customer support.
+All products purchased from LifeStyleQ8 come with a warranty as specified by the manufacturer or our store warranty conditions.
+</p>
+<p class="mt-0">
+This policy explains what is covered, what is not covered, and how customers can claim warranty service.
+</p>
+
+<h1 class="font-bold text-xl mt-6 mb-2">2. Warranty Duration</h1>
+<p>Warranty duration varies depending on the item:</p>
+
+<p><b>Mobile Phones & Tablets</b><br>12 months, unless stated otherwise.</p>
+<p><b>Laptops</b><br>12–24 months depending on the model.</p>
+<p><b>Smart Watches & Wearables</b><br>6–12 months.</p>
+<p><b>Earbuds & Audio Accessories</b><br>6 months.</p>
+<p><b>Chargers, Cables, Power Banks & Basic Accessories</b><br>30 days replacement warranty.</p>
+<p><b>Refurbished / Open-Box Items</b><br>Warranty varies by item and will be clearly mentioned on the product page.</p>
+
+<h1 class="font-bold text-xl mt-6 mb-2">3. What is Covered</h1>
+<p>Warranty covers the following:</p>
+
+<ul class="list-disc ml-12">
+    <li>Manufacturing defects</li>
+    <li>Internal component failure</li>
+    <li>Battery defects (as per manufacturer terms)</li>
+    <li>Software malfunction due to factory issues</li>
+    <li>Touchscreen malfunction (non physical damage)</li>
+    <li>Speaker, microphone, and charging IC issues not caused by misuse</li>
+</ul>
+
+<h1 class="font-bold text-xl">4. What is NOT Covered</h1>
+<p>Warranty does not cover:</p>
+
+<ul class="list-disc ml-12">
+    <li>Physical damage (cracks, dents, bending, chips, scratches)</li>
+    <li>Water or liquid damage (unless IP-rated and approved after inspection)</li>
+    <li>Damage caused by misuse, drops, pressure, or unauthorized repair</li>
+    <li>Dead pixels within manufacturer tolerance limits</li>
+    <li>Burn-in or retention on OLED displays</li>
+    <li>Accessories such as cables, cases, screen protectors</li>
+    <li>Battery wear due to normal usage</li>
+    <li>Software modification, rooting, or jailbreaking</li>
+</ul>
+
+<h1 class="font-bold text-xl mt-6 mb-2">5. Warranty for Repair Services (LifeStyleQ8 Repair Center)</h1>
+
+<p>We offer:</p>
+<ul class="list-disc ml-12">
+    <li>30-day warranty on repair services</li>
+    <li>7-day warranty on aftermarket parts</li>
+    <li>90-day warranty on premium/original parts (if used)</li>
+</ul>
+
+<p>Warranty does not apply if:</p>
+<ul class="list-disc ml-12">
+    <li>The device is opened by another technician</li>
+    <li>Additional damage occurs after repair</li>
+    <li>The device suffers liquid damage</li>
+    <li>The customer declines recommended repairs</li>
+</ul>
+
+<h1 class="font-bold text-xl mt-6 mb-2">6. Warranty Claim Process</h1>
+<p>To file a warranty claim:</p>
+
+<ul class="list-disc ml-12">
+    <li>Contact us via WhatsApp or email</li>
+    <li>Provide the order number and proof of purchase</li>
+    <li>Describe the issue in detail</li>
+    <li>Bring or ship the device to our service center</li>
+    <li>Our team will inspect and approve/reject the claim</li>
+</ul>
+
+<p><b>Inspection time:</b> 1–5 business days</p>
+
+<p>If the warranty is approved:</p>
+<ul class="list-disc ml-12">
+    <li>✔ Device will be repaired free of charge</li>
+    <li>✔ Replacement may be provided (if repair is not possible)</li>
+</ul>
+
+<p>If the warranty is rejected:</p>
+<ul class="list-disc ml-12">
+    <li>✖ A detailed explanation will be provided</li>
+    <li>✖ Paid repair options will be offered</li>
+</ul>
+
+<h1 class="font-bold text-xl mt-6 mb-2">7. Manufacturer Warranty</h1>
+<p>
+For products sold with official manufacturer warranty, customers may contact the authorized service center directly.
+</p>
+
+<h1 class="font-bold text-xl mt-6 mb-2">8. Shipping for Warranty Claims</h1>
+
+<p>
+Shipping to our service center is the customer's responsibility.
+Return shipping will be covered by LifeStyleQ8 only if the warranty claim is approved.
+</p>
+
+<h1 class="font-bold text-xl mt-6 mb-2">9. Contact</h1>
+
+<p class="mb-4">If you have questions regarding warranty claims, contact:</p>
+
+<p><b>📞 Phone:</b> +965 1234 5678</p>
+<p><b>✉️ Email:</b> support@LifeStyleQ8.com</p>
+<p><b>💬 WhatsApp:</b> Available for support</p>
