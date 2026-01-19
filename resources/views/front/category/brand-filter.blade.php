@@ -46,8 +46,7 @@
         <div class="md:col-span-3 relative">
 
             {{-- Skeleton --}}
-            <div id="productSkeleton" class="inset-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden z-30">
-                
+            <div id="productSkeleton" class=" absolute inset-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden z-30">    
             </div>
 
             {{-- Results --}}

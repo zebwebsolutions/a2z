@@ -35,7 +35,7 @@
                     class="flex overflow-x-auto gap-6 scroll-smooth snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing py-2"
                 >
                     @foreach($categories as $category)
-                        <a href="{{ route('shop.index', ['category' => $category->slug]) }}"
+                        <a href="{{ route('category.show', ['category' => $category->slug]) }}"
                           class="group flex-shrink-0 w-64 bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden snap-start">
                             <img src="{{ asset('storage/' . $category->image) }}" 
                                 alt="{{ $category->name }}" 

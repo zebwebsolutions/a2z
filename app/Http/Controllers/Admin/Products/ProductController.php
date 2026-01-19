@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin\Products;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -10,6 +10,9 @@ use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Brand;
+use App\Services\Products\UsedDeviceService;
+use App\Http\Requests\Products\StoreUsedDeviceRequest;
+
 
 
 class ProductController extends Controller
@@ -17,11 +20,52 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('store', 'category')->latest()->paginate(10);
-        return view('admin.products.index', compact('products'));
+        $query = Product::with(['store', 'category']);
+
+        // Search by name
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by store
+        if ($request->filled('store_id')) {
+            $query->where('store_id', $request->store_id);
+        }
+
+        // Filter by category
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Stock filter
+        if ($request->filled('stock')) {
+            if ($request->stock === 'in') {
+                $query->where('stock', '>', 0);
+            } elseif ($request->stock === 'out') {
+                $query->where('stock', '<=', 0);
+            }
+        }
+
+        // Price range
+        if ($request->filled('price_min')) {
+            $query->where('price', '>=', $request->price_min);
+        }
+
+        if ($request->filled('price_max')) {
+            $query->where('price', '<=', $request->price_max);
+        }
+
+        $products = $query->latest()->paginate(20)->withQueryString();
+
+        return view('admin.products.index', [
+            'products' => $products,
+            'stores' => Store::orderBy('name')->get(),
+            'categories' => Category::orderBy('name')->get(),
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -38,7 +82,7 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, UsedDeviceService $usedDeviceService)
     {
         $data = $request->validate([
             'store_id' => 'required|exists:stores,id',
@@ -50,9 +94,11 @@ class ProductController extends Controller
             'sku' => 'nullable|string|max:100|unique:products,sku',
             'image' => 'nullable|image|max:2048',
             'gallery.*' => 'nullable|image|max:2048',
+            'barcode' => 'nullable|unique:products,barcode',
             'is_active' => 'nullable|boolean',
             'brand_id' => 'nullable|exists:brands,id',
             'parent_category_id' => 'nullable|exists:categories,id',
+            'is_used' => 'nullable|boolean',
         ]);
 
         $keys = $request->specs_keys ?? [];
@@ -88,7 +134,20 @@ class ProductController extends Controller
             $data['category_id'] = $data['parent_category_id'];
         }
 
-        Product::create($data);
+        $product =Product::create($data);
+
+        // USED DEVICE HANDLING
+        if ($request->boolean('is_used')) {
+            $usedDeviceService->create($product, $request->only([
+                'condition_grade',
+                'battery_health',
+                'box_available',
+                'charger_available',
+                'headphones_available',
+                'warranty_days',
+                'imei',
+            ]));
+        }
 
         return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
     }
@@ -117,7 +176,7 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, UsedDeviceService $usedDeviceService)
     {
         $product = Product::findOrFail($id);
 
@@ -135,6 +194,7 @@ class ProductController extends Controller
             'is_active' => 'nullable|boolean',
             'brand_id' => 'nullable|exists:brands,id',
             'parent_category_id' => 'nullable|exists:categories,id',
+            'is_used' => 'nullable|boolean',
         ]);
 
         $keys = $request->specs_keys ?? [];
@@ -174,6 +234,22 @@ class ProductController extends Controller
             $data['category_id'] = $data['parent_category_id'];
         }   
         $product->update($data);
+
+        // USED DEVICE HANDLING
+        if ($request->boolean('is_used')) {
+            $usedDeviceService->update($product, $request->only([
+                'condition_grade',
+                'battery_health',
+                'box_available',
+                'charger_available',
+                'headphones_available',
+                'warranty_days',
+                'imei',
+            ]));
+        } else {
+            // If not used, remove any existing used device record
+            $usedDeviceService->remove($product);
+        }
 
         return redirect()->back()->with('success', 'Product updated successfully.');
     }

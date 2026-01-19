@@ -50,6 +50,16 @@
 
         {{-- Details --}}
         <div>
+            {{-- Condition Badge --}}
+            @if($product->is_used === 1)
+                <span class="inline-block mb-3 px-3 py-1 text-sm font-semibold rounded bg-yellow-100 text-yellow-800">
+                    Used Device
+                </span>
+            @elseif($product->condition === 'refurbished')
+                <span class="inline-block mb-3 px-3 py-1 text-sm font-semibold rounded bg-blue-100 text-blue-800">
+                    Refurbished Device
+                </span>
+            @endif
             <h1 class="text-3xl font-bold mb-2">{{ $product->name }}</h1>
             <p class="text-gray-500 mb-4">Category: {{ $product->category->name ?? 'Uncategorized' }}</p>
             

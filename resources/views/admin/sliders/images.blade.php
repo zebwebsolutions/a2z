@@ -19,23 +19,8 @@
         </div>
 
         <div>
-            <label>Heading</label>
-            <input type="text" name="heading" class="w-full border p-2">
-        </div>
-
-        <div>
-            <label>Description</label>
-            <textarea name="description" class="w-full border p-2"></textarea>
-        </div>
-
-        <div>
-            <label>Button Text</label>
-            <input type="text" name="button_text" class="w-full border p-2">
-        </div>
-
-        <div>
-            <label>Button Link</label>
-            <input type="text" name="button_link" class="w-full border p-2">
+            <label>Slider Link</label>
+            <input type="text" name="url" class="w-full border p-2" placeholder="https://example.com">
         </div>
     </div>
 
@@ -51,11 +36,6 @@
             class="bg-white p-3 shadow flex items-center gap-4 rounded cursor-move">
 
             <img src="{{ asset('storage/' . $image->image) }}" class="w-32 h-20 object-cover rounded">
-
-            <div class="flex-1">
-                <div class="font-bold">{{ $image->heading }}</div>
-                <div class="text-sm text-gray-600">{{ $image->description }}</div>
-            </div>
 
             <a href="{{ route('admin.sliders.images.edit', $image) }}" class="text-blue-600">Edit</a>
             <form action="{{ route('admin.sliders.images.destroy', $image) }}" method="POST">

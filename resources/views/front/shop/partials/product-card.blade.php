@@ -1,10 +1,16 @@
-<div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
+<div class="relative bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
 
     @php
         // Determine which image to display
         $displayImage = $product->image 
             ?: ($product->gallery[0] ?? null);
     @endphp
+
+    @if($product->is_used === 1)
+        <span class="absolute top-3 left-3 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+            USED
+        </span>
+    @endif
 
     <a href="{{ route('product.show', $product->slug) }}">
         @if($displayImage)

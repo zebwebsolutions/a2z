@@ -6,7 +6,18 @@
     'availableRAM' => [],
     'availableStorage' => [],
     'subcategories' => [],
+    'batteryMin' => null,
+    'batteryMax' => null,
 ])
+
+@php
+    $currentBrand = request('brand');
+
+    // If we're on /brand/{slug}
+    if (!$currentBrand && request()->routeIs('brand.show')) {
+        $currentBrand = request()->route('brand');
+    }
+@endphp
 
 <div class="hidden md:block w-64 p-4 bg-white rounded-lg border shadow-sm h-fit space-y-8">
     <form id="filterForm" class="space-y-6">
@@ -53,10 +64,20 @@
                 <ul x-show="open" x-collapse class="space-y-1 text-sm">
                     @foreach($subcategories as $sub)
                         <li>
-                            <a href="{{ route('category.show', $sub->slug) }}"
-                               class="block px-2 py-1 rounded hover:bg-gray-100 transition-colors">
-                                {{ $sub->name }}
-                            </a>
+                            @if($currentBrand)
+                                <a href="{{ route('brand.category', [
+                                    'category' => $sub->slug,
+                                    'brand' => $currentBrand
+                                ]) }}"
+                                class="block px-2 py-1 rounded hover:bg-gray-100">
+                                    {{ $sub->name }}
+                                </a>
+                            @else
+                                <a href="{{ route('category.show', $sub->slug) }}"
+                                class="block px-2 py-1 rounded hover:bg-gray-100">
+                                    {{ $sub->name }}
+                                </a>
+                            @endif
                         </li>
                     @endforeach
                 </ul>
@@ -125,6 +146,36 @@
         </div>
         @endif
 
+        {{-- BATTERY HEALTH (USED DEVICES ONLY) --}}
+        @if(!is_null($batteryMin) && !is_null($batteryMax) && $batteryMax >= 80)
+            <div class="mt-6">
+                <h3 class="text-sm font-semibold mb-2">
+                    Battery Health
+                </h3>
+
+                @php
+                    $batterySteps = [80, 85, 90, 95];
+                    $selected = (array) request('battery');
+                @endphp
+
+                <div class="space-y-2">
+                    @foreach($batterySteps as $value)
+                        @if($value <= $batteryMax)
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox"
+                                    name="battery[]"
+                                    value="{{ $value }}"
+                                    @checked(in_array($value, $selected))
+                                    onchange="this.form.submit()"
+                                    class="rounded border-gray-300 text-black focus:ring-black">
+
+                                <span>{{ $value }}%+</span>
+                            </label>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         {{-- ===========================
             RAM FILTER
@@ -181,9 +232,16 @@
         @endif
 
         {{-- CLEAR FILTERS --}}
-        @if(request()->query())
+        @if($category && $category->id)
+            {{-- REAL CATEGORY --}}
             <a href="{{ route('category.show', $category->slug) }}"
-               class="block mt-6 text-center bg-gray-200 py-2 rounded hover:bg-gray-300 text-sm font-medium transition-colors">
+            class="block mt-6 text-center bg-gray-200 py-2 rounded hover:bg-gray-300 text-sm font-medium transition-colors">
+                Clear Filters
+            </a>
+        @else
+            {{-- USED / VIRTUAL PAGE --}}
+            <a href="{{ url()->current() }}"
+            class="block mt-6 text-center bg-gray-200 py-2 rounded hover:bg-gray-300 text-sm font-medium transition-colors">
                 Clear Filters
             </a>
         @endif

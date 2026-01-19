@@ -20,7 +20,7 @@ class CategoryController extends Controller
         // ------------------------------------
         // BUILD BASE QUERY FOR CATEGORY
         // ------------------------------------
-        $query = Product::query();
+        $query = Product::query()->where('is_used', false);
 
         if (in_array($category->slug, ['phones', 'tablets', 'laptops', 'smart-watches'])) {
 
@@ -161,28 +161,50 @@ class CategoryController extends Controller
     // -----------------------------------------------------
     public function brandFilter(Request $request, $categorySlug, $brandSlug)
     {
+        // ------------------------------------
+        // RESOLVE CATEGORY & BRAND BY SLUG
+        // ------------------------------------
         $category = Category::where('slug', $categorySlug)->firstOrFail();
         $brand    = Brand::where('slug', $brandSlug)->firstOrFail();
 
-        // Base query: products in this category (or its children) and this brand
-        $childIds = $category->children()->pluck('id')->toArray();
-
-        $base = Product::where(function ($q) use ($category, $childIds) {
-                $q->where('parent_category_id', $category->id)
-                ->orWhereIn('category_id', $childIds);
-            })
+        // ------------------------------------
+        // BASE QUERY (brand scoped)
+        // ------------------------------------
+        $base = Product::query()
             ->where('brand_id', $brand->id)
             ->where('is_active', 1);
 
-        // Price range based on base set
+        /**
+         * CATEGORY LOGIC
+         * - If CHILD category → only itself
+         * - If PARENT category → include children
+         */
+        if ($category->parent_id) {
+            // CHILD CATEGORY (e.g. headphones)
+            $base->where('category_id', $category->id);
+        } else {
+            // PARENT CATEGORY (e.g. accessories)
+            $childIds = $category->children()->pluck('id')->toArray();
+
+            $base->where(function ($q) use ($category, $childIds) {
+                $q->where('category_id', $category->id)
+                ->orWhereIn('category_id', $childIds);
+            });
+        }
+
+        // ------------------------------------
+        // PRICE RANGE (BEFORE FILTERS)
+        // ------------------------------------
         $priceMin = $base->min('price') ?? 0;
         $priceMax = $base->max('price') ?? 0;
 
-        // Build available specs lists (assuming specs keys are uppercase like 'RAM' and 'STORAGE')
+        // ------------------------------------
+        // SPECS EXTRACTION (JSON)
+        // ------------------------------------
         $specsRaw = $base->pluck('specs')->filter();
 
         $availableRAM = collect($specsRaw)
-            ->map(function ($s) { return is_array($s) ? ($s['RAM'] ?? null) : (data_get($s, 'RAM')); })
+            ->map(fn ($s) => is_array($s) ? ($s['RAM'] ?? null) : data_get($s, 'RAM'))
             ->filter()
             ->unique()
             ->values()
@@ -190,65 +212,77 @@ class CategoryController extends Controller
             ->all();
 
         $availableStorage = collect($specsRaw)
-            ->map(function ($s) { return is_array($s) ? ($s['STORAGE'] ?? null) : (data_get($s, 'STORAGE')); })
+            ->map(fn ($s) => is_array($s) ? ($s['STORAGE'] ?? null) : data_get($s, 'STORAGE'))
             ->filter()
             ->unique()
             ->values()
             ->sort()
             ->all();
 
-        // APPLY FILTERS (use request values)
+        // ------------------------------------
+        // APPLY USER FILTERS
+        // ------------------------------------
         $query = clone $base;
 
         if ($request->filled('min')) {
             $query->where('price', '>=', (float) $request->input('min'));
         }
+
         if ($request->filled('max')) {
             $query->where('price', '<=', (float) $request->input('max'));
         }
+
         if ($request->filled('ram')) {
-            // JSON key is uppercase 'RAM'
             $query->whereJsonContains('specs->RAM', $request->input('ram'));
         }
+
         if ($request->filled('storage')) {
             $query->whereJsonContains('specs->STORAGE', $request->input('storage'));
         }
 
+        // ------------------------------------
+        // FINAL PRODUCTS
+        // ------------------------------------
         $products = $query->latest()->paginate(20)->withQueryString();
 
+        // ------------------------------------
+        // BREADCRUMB
+        // ------------------------------------
         $breadcrumbItems = [
             ['label' => 'Home', 'url' => route('home')],
             ['label' => $category->name, 'url' => route('category.show', $category->slug)],
             ['label' => $brand->name, 'url' => '#'],
         ];
 
-        // If AJAX: return JSON with two rendered fragments (products + chips)
+        // ------------------------------------
+        // AJAX RESPONSE
+        // ------------------------------------
         if ($request->ajax()) {
-            $productsHtml = view('front.products.partials.product-grid', compact('products'))->render();
-
-            $chipsHtml = view('components.filter-chips', [
-                'category' => $category,
-                'availableBrands' => collect([$brand]),
-                'priceMin' => $priceMin,
-                'priceMax' => $priceMax,
-                'availableRAM' => $availableRAM,
-                'availableStorage' => $availableStorage,
-                'subcategories' => [],
-            ])->render();
-
             return response()->json([
-                'products' => $productsHtml,
-                'chips'    => $chipsHtml,
+                'products' => view('front.products.partials.product-grid', compact('products'))->render(),
+                'chips' => view('components.filter-chips', [
+                    'category' => $category,
+                    'availableBrands' => collect([$brand]),
+                    'priceMin' => $priceMin,
+                    'priceMax' => $priceMax,
+                    'availableRAM' => $availableRAM,
+                    'availableStorage' => $availableStorage,
+                    'subcategories' => [],
+                ])->render(),
                 'pagination' => $products->links()->render(),
             ]);
         }
 
-        // Regular full-page response
+        // ------------------------------------
+        // NORMAL PAGE RESPONSE
+        // ------------------------------------
         return view('front.category.brand-filter', [
             'category' => $category,
             'brand' => $brand,
             'products' => $products,
             'breadcrumbItems' => $breadcrumbItems,
+
+            // FILTER DATA
             'availableBrands' => collect([$brand]),
             'priceMin' => $priceMin,
             'priceMax' => $priceMax,
@@ -257,4 +291,5 @@ class CategoryController extends Controller
             'subcategories' => [],
         ]);
     }
+
 }

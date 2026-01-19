@@ -30,7 +30,7 @@
             <ul class="space-y-2 text-sm">
                 @foreach($footerBrands as $brand)
                     <li>
-                        <a href="{{ route('brand.show', $brand->slug) }}" class="hover:text-white">
+                        <a href="{{ route('brand.index', $brand->slug) }}" class="hover:text-white">
                             {{ $brand->name }}
                         </a>
                     </li>
