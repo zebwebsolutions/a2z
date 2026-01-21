@@ -25,6 +25,7 @@ class OrderController extends Controller
         return DB::transaction(function () use ($data) {
 
             $order = Order::create([
+                'user_id' => Auth::id(),
                 'payment_method' => $data['payment_method'],
                 'total' => $data['total'],
                 'status' => 'completed',
