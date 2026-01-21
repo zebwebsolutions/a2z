@@ -12,6 +12,12 @@ class OrderController extends Controller
 {
     public function store(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
         $data = $request->validate([
             'payment_method' => 'required|in:cash,card',
             'total' => 'required|numeric|min:0',
@@ -22,10 +28,10 @@ class OrderController extends Controller
             'items.*.qty' => 'required|integer|min:1',
         ]);
 
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $user) {
 
             $order = Order::create([
-                'user_id' => Auth::id(),
+                'user_id' => $user->id,
                 'payment_method' => $data['payment_method'],
                 'total' => $data['total'],
                 'status' => 'completed',
