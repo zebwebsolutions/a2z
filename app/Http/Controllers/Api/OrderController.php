@@ -21,18 +21,29 @@ class OrderController extends Controller
         $data = $request->validate([
             'payment_method' => 'required|in:cash,card',
             'total' => 'required|numeric|min:0',
+
+            // order items
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|integer',
-            'items.*.type' => 'required|in:product,spare_part',
             'items.*.price' => 'required|numeric',
             'items.*.qty' => 'required|integer|min:1',
+
+            // OPTIONAL customer fields
+            'customer_name' => 'nullable|string|max:255',
+            'customer_email' => 'nullable|email|max:255',
+            'customer_phone' => 'nullable|string|max:255',
+            'customer_address' => 'nullable|string',
         ]);
 
         return DB::transaction(function () use ($data, $user) {
 
             $order = Order::create([
                 'user_id' => $user->id,
-                'payment_method' => $data['payment_method'],
+                'store_id' => $user->store_id ?? null,   // ✅ auto from user
+                'customer_name' => $data['customer_name'] ?? null,
+                'customer_email' => $data['customer_email'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
+                'customer_address' => $data['customer_address'] ?? null,
                 'total' => $data['total'],
                 'status' => 'completed',
             ]);
@@ -40,7 +51,7 @@ class OrderController extends Controller
             foreach ($data['items'] as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'product_id' => $item['id'],
+                    'product_id' => $item['id'],   // ✅ matches DB schema
                     'price' => $item['price'],
                     'quantity' => $item['qty'],
                 ]);
