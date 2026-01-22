@@ -6,4 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 
 Route::get('/products/barcode/{barcode}', [BarcodeScanController::class, 'scan']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->post('/orders', [OrderController::class, 'store']);
+Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->get('/orders', [OrderController::class, 'index']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->get('/orders/{order}', [OrderController::class, 'show']);
+Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->post('/orders/{order}/refund', [OrderController::class, 'refund']);
