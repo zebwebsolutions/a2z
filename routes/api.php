@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\RepairController;
+use App\Http\Controllers\Api\ProfileController;
 
 Route::get('/products/barcode/{barcode}', [BarcodeScanController::class, 'scan']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->post('/orders', [OrderController::class, 'store']);
@@ -19,4 +20,10 @@ Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->group(functi
     Route::post('/repairs', [RepairController::class, 'store']);
     Route::get('/repairs/{repair}', [RepairController::class, 'show']);
     Route::patch('/repairs/{repair}', [RepairController::class, 'update']);
+});
+
+Route::middleware('auth:sanctum', 'active')->get('/me', [ProfileController::class, 'me']);
+Route::middleware('auth:sanctum', 'active')->post('/logout', function (Request $request) {
+    $request->user()->tokens()->delete();
+    return response()->json(['success' => true]);
 });
