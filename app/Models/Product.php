@@ -33,6 +33,8 @@ class Product extends Model
     protected $casts = [
         'specs' => 'array',
         'gallery' => 'array',
+        'price' => 'float',
+        'stock' => 'integer',
     ];
 
     protected static function booted()

@@ -12,3 +12,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->get('/orders/{order}', [OrderController::class, 'show']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->post('/orders/{order}/refund', [OrderController::class, 'refund']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->get('/products', [ProductController::class, 'index']);
+
+Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->group(function () {
+    Route::get('/repairs', [Api\RepairController::class, 'index']);
+    Route::post('/repairs', [Api\RepairController::class, 'store']);
+    Route::get('/repairs/{repair}', [Api\RepairController::class, 'show']);
+    Route::patch('/repairs/{repair}', [Api\RepairController::class, 'update']);
+});
