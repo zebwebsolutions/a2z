@@ -22,22 +22,54 @@ class RepairController extends Controller
         $data = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
+
             'device_model' => 'required|string|max:255',
             'imei' => 'nullable|string|max:50',
+
             'problem_description' => 'required|string',
-            'total_cost' => 'nullable|numeric|min:0',
+
+            'total_cost' => 'required|numeric|min:0',
+            'status' => 'required|in:pending,completed,delivered',
+
+            'parts' => 'nullable|array',
+            'parts.*.part_name' => 'required_with:parts|string|max:255',
+            'parts.*.quantity' => 'required_with:parts|integer|min:1',
+            'parts.*.cost' => 'required_with:parts|numeric|min:0',
         ]);
 
         $user = $request->user();
 
+        // Create repair
         $repair = Repair::create([
-            ...$data,
-            'user_id' => $user->id,
             'store_id' => $user->store_id,
-            'status' => 'pending',
+            'user_id' => $user->id,
+
+            'customer_name' => $data['customer_name'],
+            'customer_phone' => $data['customer_phone'],
+
+            'device_model' => $data['device_model'],
+            'imei' => $data['imei'] ?? null,
+
+            'problem_description' => $data['problem_description'],
+            'total_cost' => $data['total_cost'],
+            'status' => $data['status'],
         ]);
 
-        return response()->json($repair, 201);
+        // Save parts (if any)
+        if (!empty($data['parts'])) {
+            foreach ($data['parts'] as $part) {
+                $repair->parts()->create([
+                    'part_name' => $part['part_name'],
+                    'quantity' => $part['quantity'],
+                    'cost' => $part['cost'],
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'repair' => $repair->load('parts'),
+        ], 201);
     }
 
     public function show(Repair $repair)
