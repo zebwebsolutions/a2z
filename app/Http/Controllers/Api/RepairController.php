@@ -51,7 +51,7 @@ class RepairController extends Controller
         $this->authorizeRepair($repair);
 
         $data = $request->validate([
-            'status' => 'nullable|in:pending,in_progress,repaired,cancelled',
+            'status' => 'nullable|in:pending,in_progress,completed,delivered,cancelled',
             'total_cost' => 'nullable|numeric|min:0',
         ]);
 
