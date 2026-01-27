@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\support\Carbon;
 
 class OrderController extends Controller
 {
@@ -15,18 +16,39 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $orders = Order::with('user:id,name')
-            ->where('store_id', $user->store_id)
+        $query = Order::query()
+            ->with('items')
+            ->where('store_id', $user->store_id);
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%{$search}%")
+                ->orWhere('customer_phone', 'like', "%{$search}%");
+                if (is_numeric($search)) {
+                    $q->orWhere('id', (int) $search);
+                }
+            });
+        }
+
+        match ($request->query('date')) {
+            'today' => $query->whereDate('created_at', Carbon::today()),
+            '7days' => $query->where('created_at', '>=', Carbon::now()->subDays(7)),
+            'month' => $query->whereMonth('created_at', Carbon::now()->month)
+                            ->whereYear('created_at', Carbon::now()->year),
+            default => null,
+        };
+
+        if ($payment = $request->query('payment')) {
+            $query->where('payment_method', $payment);
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        $orders = $query
             ->latest()
-            ->limit(50)
-            ->get([
-                'id',
-                'user_id',
-                'customer_name',
-                'total',
-                'status',
-                'created_at',
-            ]);
+            ->paginate(20);
 
         return response()->json($orders);
     }
