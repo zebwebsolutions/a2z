@@ -8,7 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
-use Illuminate\support\Carbon;
+use Illuminate\Support\Carbon;
 
 class OrderController extends Controller
 {
@@ -32,9 +32,9 @@ class OrderController extends Controller
 
         match ($request->query('date')) {
             'today' => $query->whereDate('created_at', Carbon::today()),
-            '7days' => $query->where('created_at', '>=', Carbon::now()->subDays(7)),
-            'month' => $query->whereMonth('created_at', Carbon::now()->month)
-                            ->whereYear('created_at', Carbon::now()->year),
+            'last_7_days' => $query->where('created_at', '>=', Carbon::now()->subDays(7)),
+            'this_month' => $query->whereMonth('created_at', Carbon::now()->month)
+                                ->whereYear('created_at', Carbon::now()->year),
             default => null,
         };
 
@@ -50,7 +50,7 @@ class OrderController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($orders);
+        return response()->json($orders->items());
     }
 
     public function store(Request $request)
@@ -87,8 +87,9 @@ class OrderController extends Controller
                 'customer_email' => $data['customer_email'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
                 'customer_address' => $data['customer_address'] ?? null,
-                'total' => $data['total'],
                 'status' => 'completed',
+                'payment_method' => $data['payment_method'],
+                'total' => $data['total'],
             ]);
 
             foreach ($data['items'] as $item) {
