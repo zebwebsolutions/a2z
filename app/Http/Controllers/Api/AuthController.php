@@ -24,11 +24,11 @@ class AuthController extends Controller
 
         // Check if user is active and has required role/store
         if (!$user->active || !in_array($user->role, ['admin', 'salesman'])) {
-            return response()->json(['message' => 'Account not authorized for mobile access'], 403);
+            return response()->json(['message' => 'Account ' . $user->role . ' is not authorized for mobile access'], 403);
         }
 
         if (!$user->store_id) {
-            return response()->json(['message' => 'User not assigned to any store'], 403);
+            return response()->json(['message' => 'User is not assigned to any store'], 403);
         }
 
         return response()->json([
