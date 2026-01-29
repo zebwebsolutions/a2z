@@ -10,7 +10,6 @@ use App\Http\Controllers\Api\ProfileController;
 Route::get('/products/barcode/{barcode}', [BarcodeScanController::class, 'scan']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->post('/orders', [OrderController::class, 'store']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->get('/orders', [OrderController::class, 'index']);
-Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->get('/orders/{order}', [OrderController::class, 'show']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->post('/orders/{order}/refund', [OrderController::class, 'refund']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->get('/products', [ProductController::class, 'index']);
@@ -22,6 +21,7 @@ Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->group(functi
     Route::patch('/repairs/{repair}', [RepairController::class, 'update']);
 });
 
+Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum', 'active')->get('/me', [ProfileController::class, 'me']);
 Route::middleware('auth:sanctum', 'active')->post('/logout', function (Request $request) {
     $request->user()->tokens()->delete();

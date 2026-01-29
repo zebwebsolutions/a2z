@@ -17,10 +17,19 @@ class AuthController extends Controller
         ]);
 
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
-        $user = $request->user();
+        $user = $request->user()->load('store'); // Load store relationship
+
+        // Check if user is active and has required role/store
+        if (!$user->active || !in_array($user->role, ['admin', 'salesman'])) {
+            return response()->json(['message' => 'Account not authorized for mobile access'], 403);
+        }
+
+        if (!$user->store_id) {
+            return response()->json(['message' => 'User not assigned to any store'], 403);
+        }
 
         return response()->json([
             'token' => $user->createToken($request->device_name)->plainTextToken,
@@ -29,6 +38,11 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'store_id' => $user->store_id,
+                'store' => $user->store ? [
+                    'id' => $user->store->id,
+                    'name' => $user->store->name,
+                ] : null,
             ],
         ]);
     }

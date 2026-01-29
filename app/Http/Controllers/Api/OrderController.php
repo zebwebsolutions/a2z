@@ -50,7 +50,7 @@ class OrderController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($orders->items());
+        return response()->json($orders);
     }
 
     public function store(Request $request)

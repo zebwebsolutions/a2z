@@ -39,6 +39,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'store_id' => 'integer',
+    ];
+
     /**
      * Get the attributes that should be cast.
      *
