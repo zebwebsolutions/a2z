@@ -23,7 +23,7 @@ class AuthController extends Controller
         $user = $request->user()->load('store'); // Load store relationship
 
         // Check if user is active and has required role/store
-        if (!$user->active || !in_array($user->role, ['admin', 'salesman'])) {
+        if (!$user->is_active || !in_array($user->role, ['admin', 'salesman'])) {
             return response()->json(['message' => 'Account ' . $user->role . ' is not authorized for mobile access'], 403);
         }
 
