@@ -16,7 +16,7 @@ class RepairController extends Controller
         $status = $request->query('status');
 
         $query = Repair::query()
-            ->with('items')
+            ->with('parts')
             ->where('store_id', $user->store_id);
 
         if ($search) {
