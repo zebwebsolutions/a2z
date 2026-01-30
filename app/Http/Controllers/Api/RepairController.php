@@ -14,7 +14,7 @@ class RepairController extends Controller
 
         return Repair::where('store_id', $user->store_id)
             ->latest()
-            ->get();
+            ->paginate(20);
     }
 
     public function store(Request $request)
