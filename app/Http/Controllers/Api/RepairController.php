@@ -32,9 +32,7 @@ class RepairController extends Controller
         }
 
 
-        return Repair::where('store_id', $user->store_id)
-            ->latest()
-            ->paginate(20);
+        return $query->latest()->paginate(20);
     }
 
     public function store(Request $request)
@@ -49,7 +47,7 @@ class RepairController extends Controller
             'problem_description' => 'required|string',
 
             'total_cost' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,completed,delivered',
+            'status' => 'required|in:pending,in_progress,completed,delivered,cancelled',
 
             'parts' => 'nullable|array',
             'parts.*.part_name' => 'required_with:parts|string|max:255',
