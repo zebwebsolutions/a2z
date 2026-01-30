@@ -12,6 +12,25 @@ class RepairController extends Controller
     {
         $user = $request->user();
 
+        $search = $request->query('search');
+        $status = $request->query('status');
+
+        $query = Repair::query()
+            ->where('store_id', $user->store_id);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%$search%")
+                ->orWhere('customer_phone', 'like', "%$search%")
+                ->orWhere('device_model', 'like', "%$search%");
+            });
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+
         return Repair::where('store_id', $user->store_id)
             ->latest()
             ->paginate(20);
