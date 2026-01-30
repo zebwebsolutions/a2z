@@ -32,7 +32,9 @@ class RepairController extends Controller
         }
 
 
-        return $query->latest()->paginate(20);
+        $repairs = $query->latest()->paginate(20);
+
+        return response()->json($repairs);
     }
 
     public function store(Request $request)
