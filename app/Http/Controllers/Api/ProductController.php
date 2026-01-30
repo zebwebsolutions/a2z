@@ -38,8 +38,7 @@ class ProductController extends Controller
         return response()->json(
             $query
                 ->orderBy('name')
-                ->limit(50)
-                ->get()
+                ->paginate(20)
         );
     }
 }
