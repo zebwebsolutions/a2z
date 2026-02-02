@@ -31,7 +31,7 @@
             </label>
         </div>
 
-        <button class="px-4 py-2 bg-blue-600 text-white rounded">Create Brand</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Create Brand</button>
 
         <a href="{{ route('admin.brands.index') }}" class="ml-4 text-gray-600">Cancel</a>
     </form>
