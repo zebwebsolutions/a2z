@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum', 'active')->post('/logout', function (Request $
     return response()->json(['success' => true]);
 });
 
-Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+Route::middleware('auth:sanctum', 'active', 'role:salesman,admin')->group(function () {
     Route::get('/stores', [StoreController::class, 'index']);
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/brands', [BrandController::class, 'index']);
