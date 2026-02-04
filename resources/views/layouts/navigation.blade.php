@@ -9,7 +9,7 @@
             <button @click="mobileOpen = true" class="md:hidden text-2xl">☰</button>
 
             <a href="{{ route('home') }}" class="text-2xl font-bold text-blue-700">
-                LifeStyle<span class="text-gray-900">Q8</span>
+                A2Z<span class="text-gray-900">KWT</span>
             </a>
         </div>
 
