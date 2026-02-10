@@ -20,4 +20,11 @@ class UsedDeviceService
             $data
         );
     }
+
+    public function remove(Product $product)
+    {
+        $product->update(['is_used' => false]);
+
+        return $product->usedDeviceDetails()->delete();
+    }
 }
