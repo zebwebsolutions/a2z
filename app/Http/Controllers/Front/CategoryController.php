@@ -98,12 +98,12 @@ class CategoryController extends Controller
             }
         }
 
-        if (request()->filled('min')) {
-            $query->where('price', '>=', request('min'));
+        if (request()->filled('min') && (float) request('min') > 0) {
+            $query->where('price', '>=', (float) request('min'));
         }
 
-        if (request()->filled('max')) {
-            $query->where('price', '<=', request('max'));
+        if (request()->filled('max') && (float) request('max') > 0) {
+            $query->where('price', '<=', (float) request('max'));
         }
 
         if (request()->filled('ram')) {
@@ -226,11 +226,11 @@ class CategoryController extends Controller
         // ------------------------------------
         $query = clone $base;
 
-        if ($request->filled('min')) {
+        if ($request->filled('min') && (float) $request->input('min') > 0) {
             $query->where('price', '>=', (float) $request->input('min'));
         }
 
-        if ($request->filled('max')) {
+        if ($request->filled('max') && (float) $request->input('max') > 0) {
             $query->where('price', '<=', (float) $request->input('max'));
         }
 
