@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function ajaxLoad(url, pushState = true) {
         const results    = document.querySelector(resultsSelector);
         const pagination = document.querySelector(paginationSelector);
+        const chips = document.querySelector('#filterChips');
 
         if (!results) return;
         
@@ -169,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             results.innerHTML = data.products ?? '';
             if (pagination) pagination.innerHTML = data.pagination ?? '';
+            if (chips && data.chips !== undefined) chips.innerHTML = data.chips ?? '';
 
             if (pushState) {
                 window.history.pushState({}, '', url);
@@ -291,6 +293,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const maxEl = document.querySelector("input[name='max']");
             if (minEl) minEl.value = serverPriceMin;
             if (maxEl) maxEl.value = serverPriceMax;
+            const ranges = document.querySelectorAll('.range-hidden');
+            if (ranges[0]) ranges[0].value = serverPriceMin;
+            if (ranges[1]) ranges[1].value = serverPriceMax;
 
             // Load base results via AJAX
             debouncedLoad(baseUrl);
