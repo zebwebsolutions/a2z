@@ -322,8 +322,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (maxEl) maxEl.value = serverPriceMax;
 
             const ranges = document.querySelectorAll('.range-hidden');
-            if (ranges[0]) ranges[0].value = serverPriceMin;
-            if (ranges[1]) ranges[1].value = serverPriceMax;
+            if (ranges[0]) {
+                ranges[0].value = serverPriceMin;
+                ranges[0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (ranges[1]) {
+                ranges[1].value = serverPriceMax;
+                ranges[1].dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }
 
         debouncedLoad(buildUrl());
