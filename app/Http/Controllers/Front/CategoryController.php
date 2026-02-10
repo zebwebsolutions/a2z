@@ -124,19 +124,21 @@ class CategoryController extends Controller
         ];
 
         // AJAX RESPONSE
-        // if (request()->ajax()) {
-        //     return view('front.category.partials.ajax-response', [
-        //         'category' => $category,
-        //         'products' => $products,
-        //         'availableBrands' => $availableBrands,
-        //         'availableRAM' => $availableRAM,
-        //         'availableStorage' => $availableStorage,
-        //         'priceMin' => $priceMin,
-        //         'priceMax' => $priceMax,
-        //         'subcategories' => $subcategories,
-        //         'menuCategories' => Category::whereNull('parent_id')->with('menu_items')->get()
-        //     ]);
-        // }
+        if (request()->ajax()) {
+            return response()->json([
+                'products' => view('front.products.partials.product-grid', compact('products'))->render(),
+                'chips' => view('components.filter-chips', [
+                    'category' => $category,
+                    'availableBrands' => $availableBrands,
+                    'priceMin' => $priceMin,
+                    'priceMax' => $priceMax,
+                    'availableRAM' => $availableRAM,
+                    'availableStorage' => $availableStorage,
+                    'subcategories' => $subcategories,
+                ])->render(),
+                'pagination' => $products->links()->render(),
+            ]);
+        }
 
 
         // NORMAL PAGE RESPONSE

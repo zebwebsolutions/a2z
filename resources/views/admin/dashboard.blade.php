@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mx-auto py-8">
-    <h1 class="text-2xl font-bold mb-6">LifeStyleQ8 Analytics Dashboard</h1>
+    <h1 class="text-2xl font-bold mb-6">A2Z Analytics Dashboard</h1>
 
     {{-- Summary Cards --}}
     <div class="grid grid-cols-4 gap-4 mb-8">

@@ -54,7 +54,7 @@
                   @endforeach
               </div>
 
-              <div class="mt-8">
+              <div id="paginationWrapper" class="mt-8">
                   {{ $products->links() }}
               </div>
             @else
@@ -67,6 +67,11 @@
     </div>
 
 </div>
+
+<script>
+  window.LSQ8_priceMin = {!! json_encode($priceMin) !!};
+  window.LSQ8_priceMax = {!! json_encode($priceMax) !!};
+</script>
 
 <script src="{{ asset('js/filter-engine.js') }}"></script>
 

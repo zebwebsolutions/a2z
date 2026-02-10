@@ -102,8 +102,9 @@
                 <tr class="bg-gray-100 border-b">
                     <th class="p-3 text-left">#</th>
                     <th class="p-3 text-left">Customer</th>
-                    <th class="p-3 text-left">Email</th>
+                    <th class="p-3 text-left">Type</th>
                     <th class="p-3 text-left">Phone</th>
+                    <th class="p-3 text-left">Discount</th>
                     <th class="p-3 text-left">Total</th>
                     <th class="p-3 text-left">Status</th>
                     <th class="p-3 text-left">Date</th>
@@ -115,8 +116,11 @@
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-3">{{ $order->id }}</td>
                     <td class="p-3">{{ $order->customer_name ?? 'Guest' }}</td>
-                    <td class="p-3">{{ $order->customer_email ?? '-' }}</td>
+                    <td class="p-3">{{ $order->customer_type ?? '-' }}</td>
                     <td class="p-3">{{ $order->customer_phone ?? '-' }}</td>
+                    <td class="p-3">
+                        {{ number_format($order->discount ?? 0, 2) }}
+                    </td>
                     <td class="p-3 font-semibold">${{ number_format($order->total, 2) }}</td>
                     <td class="p-3">
                         <form action="{{ route('admin.orders.update', $order->id) }}" method="POST">

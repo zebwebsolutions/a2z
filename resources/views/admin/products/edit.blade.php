@@ -80,6 +80,11 @@
             </div>
 
             <div>
+                <label class="block font-medium mb-1">Cost Price (KD)</label>
+                <input type="number" step="0.01" name="cost_price" value="{{ old('cost_price', $product->cost_price) }}" class="border p-2 w-full">
+            </div>
+
+            <div>
                 <label class="block font-medium mb-1">Stock Quantity</label>
                 <input type="number" name="stock" value="{{ old('stock', $product->stock) }}" class="border p-2 w-full" required>
             </div>

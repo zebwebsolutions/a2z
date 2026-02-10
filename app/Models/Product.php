@@ -18,6 +18,7 @@ class Product extends Model
         'sku',
         'description',
         'price',
+        'cost_price',
         'stock',
         'image',
         'gallery',
@@ -34,6 +35,7 @@ class Product extends Model
         'specs' => 'array',
         'gallery' => 'array',
         'price' => 'float',
+        'cost_price' => 'float',
         'stock' => 'integer',
     ];
 

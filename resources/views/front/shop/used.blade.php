@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Used Devices in Kuwait | LifeStyleQ8')
+@section('title', 'Used Devices in Kuwait | A2Z')
 
 @section('content')
 

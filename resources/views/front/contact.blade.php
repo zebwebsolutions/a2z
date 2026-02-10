@@ -35,7 +35,7 @@
                         <div class="text-blue-600 text-2xl">✉️</div>
                         <div>
                             <p class="font-medium">Email</p>
-                            <p class="text-gray-600">support@lifestyleq8.com</p>
+                            <p class="text-gray-600">support@a2z.com</p>
                         </div>
                     </div>
 

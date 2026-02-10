@@ -3,7 +3,7 @@
 
         {{-- Logo + About --}}
         <div>
-            <h2 class="text-white text-2xl font-bold mb-3">LifeStyleQ8</h2>
+            <h2 class="text-white text-2xl font-bold mb-3">A2Z</h2>
             <p class="text-sm leading-relaxed">
                 Your trusted store for Mobiles, Accessories & Gadgets in Kuwait.
                 Original products, best prices, fast delivery — every time.
@@ -49,7 +49,7 @@
 
             <div class="mt-4">
                 <p class="text-sm">📞 +965 515 23533</p>
-                <p class="text-sm">✉ support@lifestyleq8.com</p>
+                <p class="text-sm">✉ support@a2z.com</p>
             </div>
         </div>
 
@@ -57,6 +57,6 @@
 
     {{-- Bottom Bar --}}
     <div class="border-t border-gray-700 mt-10 pt-4 text-center text-sm text-gray-500">
-        © {{ date('Y') }} LifeStyleQ8 — All Rights Reserved.
+        © {{ date('Y') }} A2Z — All Rights Reserved.
     </div>
 </footer>

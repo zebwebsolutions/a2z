@@ -12,9 +12,7 @@ class BrandController extends Controller
 {
     public function show(Request $request, $slug)
     {
-        $category = Category::whereHas('brands', function($q) use ($slug) {
-            $q->where('slug', $slug);
-        })->first();
+        $category = Category::where('slug', 'phones')->first();
 
         // ------------------------------------
         // BRAND
@@ -36,10 +34,11 @@ class BrandController extends Controller
         // ------------------------------------
         // AVAILABLE CATEGORIES (optional sidebar)
         // ------------------------------------
-        $subcategories = Category::whereIn(
-            'id',
-            $baseForFilters->pluck('category_id')->unique()
-        )->orderBy('name')->get();
+        if ($category) {
+            $subcategories = $category->children()->orderBy('name')->get();
+        } else {
+            $subcategories = collect();
+        }
 
         // ------------------------------------
         // AVAILABLE BRANDS (single brand page)

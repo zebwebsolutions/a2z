@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $product->name . ' | LifeStyleQ8')
+@section('title', $product->name . ' | A2Z')
 
 @section('content')
 <div class="container mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">

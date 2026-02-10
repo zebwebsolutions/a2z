@@ -64,6 +64,7 @@ class OrderController extends Controller
         $data = $request->validate([
             'payment_method' => 'required|in:cash,card',
             'total' => 'required|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
 
             // order items
             'items' => 'required|array|min:1',
@@ -73,9 +74,8 @@ class OrderController extends Controller
 
             // OPTIONAL customer fields
             'customer_name' => 'nullable|string|max:255',
-            'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:255',
-            'customer_address' => 'nullable|string',
+            'customer_type' => 'nullable|in:vip,good,normal,bad',
         ]);
 
         return DB::transaction(function () use ($data, $user) {
@@ -84,12 +84,12 @@ class OrderController extends Controller
                 'user_id' => $user->id,
                 'store_id' => $user->store_id ?? null,
                 'customer_name' => $data['customer_name'] ?? null,
-                'customer_email' => $data['customer_email'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
-                'customer_address' => $data['customer_address'] ?? null,
+                'customer_type' => $data['customer_type'] ?? null,
                 'status' => 'completed',
                 'payment_method' => $data['payment_method'],
                 'total' => $data['total'],
+                'discount' => $data['discount'] ?? 0,
             ]);
 
             foreach ($data['items'] as $item) {

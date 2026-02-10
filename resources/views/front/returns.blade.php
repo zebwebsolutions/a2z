@@ -23,7 +23,7 @@
             </div>
 
             <p class="text-gray-600 text-lg leading-relaxed">
-                We want you to shop with confidence at LifeStyleQ8. Below you will find our clear and
+                We want you to shop with confidence at A2Z. Below you will find our clear and
                 customer-friendly returns & refunds guidelines.
             </p>
         </div>

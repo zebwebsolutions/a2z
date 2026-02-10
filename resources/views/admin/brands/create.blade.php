@@ -26,7 +26,8 @@
 
         <div class="mb-4">
             <label class="flex gap-2 items-center">
-                <input type="checkbox" name="is_active" checked>
+                <input type="hidden" name="is_active" value="0">
+                <input type="checkbox" name="is_active" value="1">
                 <span>Active</span>
             </label>
         </div>

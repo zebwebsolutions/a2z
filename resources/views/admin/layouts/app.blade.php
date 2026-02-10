@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeStyleQ8 Admin</title>
+    <title>A2Z Admin</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -14,7 +14,7 @@
         <aside class="w-1/5 bg-blue-800 text-white flex flex-col">
             {{-- Header --}}
             <div class="p-6 text-center border-b border-blue-700">
-                <h1 class="text-2xl text-white font-bold"><a href="{{ route('admin.dashboard') }}">LifeStyleQ8</a></h1>
+                <h1 class="text-2xl text-white font-bold"><a href="{{ route('admin.dashboard') }}">A2Z</a></h1>
                 <p class="text-sm text-blue-300">Admin Panel</p>
             </div>
 
@@ -101,7 +101,7 @@
 
             {{-- Footer --}}
             <div class="p-4 border-t border-blue-700 text-sm text-center text-blue-300">
-                &copy; {{ date('Y') }} LifeStyleQ8
+                &copy; {{ date('Y') }} A2Z
             </div>
         </aside>
 

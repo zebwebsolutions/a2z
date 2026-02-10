@@ -33,11 +33,11 @@ class OrderController extends Controller
                     $q->orWhere('id', $search);
                 }
 
-                // Customer name / email / phone
+                // Customer name / phone / type
                 $q->orWhereHas('user', function ($u) use ($search) {
                     $u->where('customer_name', 'like', "%{$search}%")
-                    ->orWhere('customer_email', 'like', "%{$search}%")
-                    ->orWhere('customer_phone', 'like', "%{$search}%");
+                    ->orWhere('customer_phone', 'like', "%{$search}%")
+                    ->orWhere('customer_type', 'like', "%{$search}%");
                 });
 
                 $q->orWhereHas('items.product', function ($p) use ($search) {

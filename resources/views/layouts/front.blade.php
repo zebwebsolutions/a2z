@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeStyleQ8 — Kuwait Stores</title>
+    <title>A2Z — Kuwait Stores</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -14,7 +14,7 @@
     <nav class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             {{-- 🏬 Logo --}}
-            <a href="{{ route('home') }}" class="font-bold text-2xl tracking-wide">LifeStyleQ8</a>
+            <a href="{{ route('home') }}" class="font-bold text-2xl tracking-wide">A2Z</a>
 
             {{-- 🔗 Menu --}}
             <div class="flex items-center gap-6">
@@ -56,7 +56,7 @@
 
     {{-- Footer --}}
     <footer class="bg-gray-800 text-white text-center py-4 mt-10">
-        <p>&copy; {{ date('Y') }} LifeStyleQ8 — All Rights Reserved</p>
+        <p>&copy; {{ date('Y') }} A2Z — All Rights Reserved</p>
     </footer>
 
 </body>

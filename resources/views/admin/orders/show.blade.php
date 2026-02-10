@@ -9,14 +9,14 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Customer Information</h2>
         <p><strong>Name:</strong> {{ $order->customer_name ?? 'Guest' }}</p>
-        <p><strong>Email:</strong> {{ $order->customer_email ?? 'N/A' }}</p>
+        <p><strong>Type:</strong> {{ $order->customer_type ?? 'N/A' }}</p>
         <p><strong>Phone:</strong> {{ $order->customer_phone ?? 'N/A' }}</p>
-        <p><strong>Address:</strong> {{ $order->customer_address ?? 'N/A' }}</p>
     </div>
 
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Order Summary</h2>
         <p><strong>Status:</strong> {{ ucfirst($order->status) }}</p>
+        <p><strong>Discount:</strong> ${{ number_format($order->discount ?? 0, 2) }}</p>
         <p><strong>Total:</strong> ${{ number_format($order->total, 2) }}</p>
         <p><strong>Placed On:</strong> {{ $order->created_at->format('d M, Y h:i A') }}</p>
     </div>
@@ -38,7 +38,7 @@
                         <td class="p-3">{{ optional($item->product)->name ?? 'Deleted Product' }}</td>
                         <td class="p-3">{{ $item->quantity }}</td>
                         <td class="p-3">${{ number_format($item->price, 2) }}</td>
-                        <td class="p-3">${{ number_format($item->subtotal, 2) }}</td>
+                        <td class="p-3">${{ number_format($item->price * $item->quantity, 2) }}</td>
                     </tr>
                 @empty
                     <tr>

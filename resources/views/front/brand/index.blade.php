@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $brand->name . ' Products | LifeStyleQ8')
+@section('title', $brand->name . ' Products | A2Z')
 
 @section('content')
 
@@ -63,7 +63,7 @@
                         @endforeach
                     </div>
 
-                    <div class="mt-8">
+                    <div id="paginationWrapper" class="mt-8">
                         {{ $products->links() }}
                     </div>
 

@@ -58,6 +58,7 @@ class ProductController extends Controller
             'store_id' => ['required', 'exists:stores,id'],
             'name' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
+            'cost_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
 
             // Optional relations
@@ -143,6 +144,7 @@ class ProductController extends Controller
             'description' => $data['description'] ?? null,
 
             'price' => $data['price'],
+            'cost_price' => $data['cost_price'] ?? null,
             'stock' => $data['stock'],
 
             'sku' => $data['sku'] ?? null,
@@ -181,6 +183,7 @@ class ProductController extends Controller
             'store_id' => ['sometimes', 'exists:stores,id'],
             'name' => ['sometimes', 'string', 'max:255'],
             'price' => ['sometimes', 'numeric', 'min:0'],
+            'cost_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['sometimes', 'integer', 'min:0'],
 
             // Optional relations
@@ -277,6 +280,9 @@ class ProductController extends Controller
                 : $product->description,
 
             'price' => $data['price'] ?? $product->price,
+            'cost_price' => array_key_exists('cost_price', $data)
+                ? $data['cost_price']
+                : $product->cost_price,
             'stock' => $data['stock'] ?? $product->stock,
 
             'sku' => array_key_exists('sku', $data) ? $data['sku'] : $product->sku,

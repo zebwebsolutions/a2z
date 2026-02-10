@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'LifeStyleQ8 | Your Trusted Electronics & Mobile Repair Partner')
+@section('title', 'A2Z | Your Trusted Electronics & Mobile Repair Partner')
 
 @section('content')
     {{-- Hero Section --}}
@@ -94,7 +94,7 @@
             <div>
                 <h2 class="text-3xl font-bold mb-4 text-gray-800">Mobile Repair Services</h2>
                 <p class="text-gray-600 mb-6 leading-relaxed">
-                    Whether your screen is cracked or your device needs a quick fix, LifeStyleQ8’s trained technicians handle all repairs with care and precision.
+                    Whether your screen is cracked or your device needs a quick fix, A2Z’s trained technicians handle all repairs with care and precision.
                     We offer fast turnaround and genuine parts — so your phone feels brand new again.
                 </p>
                 <a href="{{ route('repair.form') }}" class="bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition">

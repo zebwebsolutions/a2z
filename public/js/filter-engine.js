@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const skeletonSelector  = '#productSkeleton';
     const debounceMs = 300;
 
-    const baseUrl = window.location.pathname;
+    const baseUrl = window.LSQ8_baseUrl || window.location.pathname;
 
     const serverPriceMin = window.LSQ8_priceMin ?? 0;
     const serverPriceMax = window.LSQ8_priceMax ?? 0;
@@ -92,13 +92,22 @@ document.addEventListener('DOMContentLoaded', function () {
         // Price (from Alpine hidden inputs)
         const minInput = document.querySelector("input[name='min']");
         const maxInput = document.querySelector("input[name='max']");
+        const rangeInputs = document.querySelectorAll(".range-hidden");
 
-        const min = minInput ? Number(minInput.value) : serverPriceMin;
-    const max = maxInput ? Number(maxInput.value) : serverPriceMax;
+        const rangeMin = rangeInputs[0] ? Number(rangeInputs[0].value) : null;
+        const rangeMax = rangeInputs[1] ? Number(rangeInputs[1].value) : null;
 
-        if (!(min === serverPriceMin && max === serverPriceMax)) {
-            params.set('min', min);
-            params.set('max', max);
+        const min = Number(minInput?.value);
+        const max = Number(maxInput?.value);
+
+        const finalMin = Number.isFinite(min) ? min :
+            (Number.isFinite(rangeMin) ? rangeMin : serverPriceMin);
+        const finalMax = Number.isFinite(max) ? max :
+            (Number.isFinite(rangeMax) ? rangeMax : serverPriceMax);
+
+        if (!(finalMin === serverPriceMin && finalMax === serverPriceMax)) {
+            params.set('min', finalMin);
+            params.set('max', finalMax);
         }
 
         return baseUrl + (params.toString() ? '?' + params.toString() : '');
@@ -189,6 +198,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 debouncedLoad(buildUrl());
             });
         });
+    }
+
+    function bindRangeInputs() {
+        const ranges = document.querySelectorAll('.range-hidden');
+        if (ranges.length < 2) return;
+
+        const minRange = ranges[0];
+        const maxRange = ranges[1];
+        const minInput = document.querySelector("input[name='min']");
+        const maxInput = document.querySelector("input[name='max']");
+
+        const onInput = () => {
+            if (minInput) minInput.value = minRange.value;
+            if (maxInput) maxInput.value = maxRange.value;
+            debouncedLoad(buildUrl());
+        };
+
+        minRange.addEventListener('input', onInput);
+        maxRange.addEventListener('input', onInput);
     }
 
     /* ----------------------------------
@@ -291,4 +319,5 @@ document.addEventListener('DOMContentLoaded', function () {
      * ---------------------------------- */
     bindSidebarInputs();
     bindPagination();
+    bindRangeInputs();
 });

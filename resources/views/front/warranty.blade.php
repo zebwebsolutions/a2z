@@ -23,7 +23,7 @@
             </div>
 
             <p class="text-gray-600 text-lg leading-relaxed">
-                At LifeStyleQ8, your satisfaction and product reliability are our top priorities.
+                At A2Z, your satisfaction and product reliability are our top priorities.
                 Please review our full warranty policy below.
             </p>
         </div>

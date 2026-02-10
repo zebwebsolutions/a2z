@@ -11,8 +11,8 @@ class Order extends Model
         'user_id',
         'customer_name',
         'customer_phone',
-        'customer_email',
-        'customer_address',
+        'customer_type',
+        'discount',
         'total',
         'status',
     ];

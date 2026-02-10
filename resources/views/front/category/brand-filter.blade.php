@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $brand->name . ' ' . $category->name . ' | LifeStyleQ8')
+@section('title', $brand->name . ' ' . $category->name . ' | A2Z')
 
 @section('content')
 
