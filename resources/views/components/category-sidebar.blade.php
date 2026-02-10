@@ -296,10 +296,10 @@ document.addEventListener("DOMContentLoaded", () => {
 .handle {
     position: absolute;
     top: 50%;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: white;
-    border: 3px solid #2563eb; 
+    border: 2px solid #2563eb; 
     border-radius: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -314,8 +314,8 @@ document.addEventListener("DOMContentLoaded", () => {
 .range-hidden {
     position: absolute;
     top: 0;
-    left: 0; /* Ensure strictly aligned */
-    width: 100%;
+    left: -12px; /* center thumb on track */
+    width: calc(100% + 24px);
     height: 100%; /* Cover full height of parent */
     opacity: 0;
     cursor: pointer;
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
 .range-hidden::-webkit-slider-thumb {
     pointer-events: auto; /* Catch the click here */
     -webkit-appearance: none;
-    width: 24px; /* Match or slightly exceed visual handle size */
+    width: 24px; /* Match visual handle size */
     height: 24px;
     cursor: pointer;
     border-radius: 50%;
