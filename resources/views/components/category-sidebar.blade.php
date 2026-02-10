@@ -123,6 +123,7 @@
                     x-model="min"
                     :min="realMin"
                     :max="realMax"
+                    step="0.1"
                     @input="update('min')"
                     class="range-hidden">
 
@@ -130,14 +131,15 @@
                     x-model="max"
                     :min="realMin"
                     :max="realMax"
+                    step="0.1"
                     @input="update('max')"
                     class="range-hidden">
 
             </div>
 
             <div class="flex justify-between text-sm mt-3">
-                <span>Min: <strong x-text="Math.round(min).toLocaleString()"></strong></span>
-                <span>Max: <strong x-text="Math.round(max).toLocaleString()"></strong></span>
+                <span>Min: <strong x-text="Number(min).toFixed(2)"></strong></span>
+                <span>Max: <strong x-text="Number(max).toFixed(2)"></strong></span>
             </div>
 
             <input type="hidden" name="min" :value="min">
