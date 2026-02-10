@@ -114,6 +114,16 @@ class BrandController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'products' => view('front.products.partials.product-grid', compact('products'))->render(),
+                'chips' => view('components.filter-chips', [
+                    'brand' => $brand,
+                    'category' => $category,
+                    'availableBrands' => $availableBrands,
+                    'priceMin' => $priceMin,
+                    'priceMax' => $priceMax,
+                    'availableRAM' => $availableRAM,
+                    'availableStorage' => $availableStorage,
+                    'subcategories' => $subcategories,
+                ])->render(),
                 'pagination' => $products->links()->render(),
             ]);
         }
