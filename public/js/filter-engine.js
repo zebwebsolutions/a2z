@@ -310,6 +310,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (type === 'battery') {
             document.querySelectorAll("input[name='battery[]']").forEach(el => el.checked = false);
         }
+        if (type === 'price') {
+            const minEl = document.querySelector("input[name='min']");
+            const maxEl = document.querySelector("input[name='max']");
+            if (minEl) minEl.value = serverPriceMin;
+            if (maxEl) maxEl.value = serverPriceMax;
+
+            const ranges = document.querySelectorAll('.range-hidden');
+            if (ranges[0]) ranges[0].value = serverPriceMin;
+            if (ranges[1]) ranges[1].value = serverPriceMax;
+        }
 
         debouncedLoad(buildUrl());
     });
