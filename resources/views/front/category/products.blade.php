@@ -82,18 +82,30 @@ function priceSlider(minPrice, maxPrice) {
         realMax: maxPrice,
         min: Number("{{ request('min') ?? $priceMin }}"),
         max: Number("{{ request('max') ?? $priceMax }}"),
+        init() {
+            // Clamp initial values inside range
+            this.min = Math.min(Math.max(this.min, this.realMin), this.realMax);
+            this.max = Math.min(Math.max(this.max, this.realMin), this.realMax);
+            if (this.min > this.max) this.min = this.max;
+        },
 
         get minPercent() {
-            return ((this.min - this.realMin) / (this.realMax - this.realMin)) * 100;
+            const range = (this.realMax - this.realMin) || 1;
+            return ((this.min - this.realMin) / range) * 100;
         },
         get maxPercent() {
-            return ((this.max - this.realMin) / (this.realMax - this.realMin)) * 100;
+            const range = (this.realMax - this.realMin) || 1;
+            return ((this.max - this.realMin) / range) * 100;
         },
 
         update(handle) {
             // Ensure numbers
-            this.min = parseInt(this.min);
-            this.max = parseInt(this.max);
+            this.min = Number(this.min);
+            this.max = Number(this.max);
+
+            // Clamp to range
+            this.min = Math.min(Math.max(this.min, this.realMin), this.realMax);
+            this.max = Math.min(Math.max(this.max, this.realMin), this.realMax);
 
             // Crossing logic: Push the other handle if we cross it
             if (this.min > this.max) {
