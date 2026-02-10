@@ -114,7 +114,9 @@ function priceSlider(minPrice, maxPrice) {
             }
 
             // Dispatch AJAX update
-            let qs = `min=${this.min}&max=${this.max}`;
+            const roundedMin = Math.round(this.min);
+            const roundedMax = Math.round(this.max);
+            let qs = `min=${roundedMin}&max=${roundedMax}`;
             window.dispatchEvent(new CustomEvent("ajaxFilter", { detail: qs }));
         }
     };
