@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Services\Images\ImageOptimizer;
 
 class ProductController extends Controller
 {
@@ -49,7 +50,7 @@ class ProductController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(Request $request, ImageOptimizer $imageOptimizer)
     {
         $user = $request->user();
 
@@ -104,14 +105,19 @@ class ProductController extends Controller
          |---------------------------------*/
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')
-                ->store('products', 'public');
+            $imagePath = $imageOptimizer->storeOptimized(
+                $request->file('image'),
+                'products'
+            );
         }
 
         $gallery = [];
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $img) {
-                $gallery[] = $img->store('products/gallery', 'public');
+                $gallery[] = $imageOptimizer->storeOptimized(
+                    $img,
+                    'products/gallery'
+                );
             }
         }
 
@@ -176,7 +182,7 @@ class ProductController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(Request $request, Product $product, ImageOptimizer $imageOptimizer)
     {
         $data = $request->validate([
             // Required
@@ -228,14 +234,19 @@ class ProductController extends Controller
          | Handle images
          |---------------------------------*/
         if ($request->hasFile('image')) {
-            $product->image = $request->file('image')
-                ->store('products', 'public');
+            $product->image = $imageOptimizer->storeOptimized(
+                $request->file('image'),
+                'products'
+            );
         }
 
         if ($request->hasFile('gallery')) {
             $gallery = [];
             foreach ($request->file('gallery') as $img) {
-                $gallery[] = $img->store('products/gallery', 'public');
+                $gallery[] = $imageOptimizer->storeOptimized(
+                    $img,
+                    'products/gallery'
+                );
             }
             $product->gallery = $gallery;
         }

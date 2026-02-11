@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Brand;
 use App\Services\Products\UsedDeviceService;
+use App\Services\Images\ImageOptimizer;
 use App\Http\Requests\Products\StoreUsedDeviceRequest;
 
 
@@ -82,7 +83,7 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, UsedDeviceService $usedDeviceService)
+    public function store(Request $request, UsedDeviceService $usedDeviceService, ImageOptimizer $imageOptimizer)
     {
         $data = $request->validate([
             'store_id' => 'required|exists:stores,id',
@@ -118,13 +119,19 @@ class ProductController extends Controller
         $data['is_active'] = $request->input('is_active', true);
 
         if($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $data['image'] = $imageOptimizer->storeOptimized(
+                $request->file('image'),
+                'products'
+            );
         }
 
         $galleryPaths = [];
         if($request->hasFile('gallery')) {
             foreach($request->file('gallery') as $img) {
-                $galleryPaths[] = $img->store('products/gallery', 'public');
+                $galleryPaths[] = $imageOptimizer->storeOptimized(
+                    $img,
+                    'products/gallery'
+                );
             }
         }
         if(!empty($galleryPaths)) {
@@ -177,7 +184,7 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id, UsedDeviceService $usedDeviceService)
+    public function update(Request $request, $id, UsedDeviceService $usedDeviceService, ImageOptimizer $imageOptimizer)
     {
         $product = Product::findOrFail($id);
 
@@ -218,13 +225,19 @@ class ProductController extends Controller
             if ($product->image) {
                 Storage::disk('public')->delete($product->image);
             }
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $data['image'] = $imageOptimizer->storeOptimized(
+                $request->file('image'),
+                'products'
+            );
         }
 
         $galleryPaths = [];
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $img) {
-                $galleryPaths[] = $img->store('products/gallery', 'public');
+                $galleryPaths[] = $imageOptimizer->storeOptimized(
+                    $img,
+                    'products/gallery'
+                );
             }
         }
 
