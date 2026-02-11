@@ -18,6 +18,7 @@
         <p><strong>Status:</strong> {{ ucfirst($order->status) }}</p>
         <p><strong>Discount:</strong> ${{ number_format($order->discount ?? 0, 2) }}</p>
         <p><strong>Total:</strong> ${{ number_format($order->total, 2) }}</p>
+        <p><strong>Payment Method:</strong> {{ ucfirst($order->payment_method ?? 'N/A') }}</p>
         <p><strong>Placed On:</strong> {{ $order->created_at->format('d M, Y h:i A') }}</p>
     </div>
 

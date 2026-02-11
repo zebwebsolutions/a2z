@@ -106,6 +106,7 @@
                     <th class="p-3 text-left">Phone</th>
                     <th class="p-3 text-left">Discount</th>
                     <th class="p-3 text-left">Total</th>
+                    <th class="p-3 text-left">Payment</th>
                     <th class="p-3 text-left">Status</th>
                     <th class="p-3 text-left">Date</th>
                     <th class="p-3 text-left">Actions</th>
@@ -122,6 +123,7 @@
                         {{ number_format($order->discount ?? 0, 2) }}
                     </td>
                     <td class="p-3 font-semibold">${{ number_format($order->total, 2) }}</td>
+                    <td class="p-3">{{ ucfirst($order->payment_method ?? '-') }}</td>
                     <td class="p-3">
                         <form action="{{ route('admin.orders.update', $order->id) }}" method="POST">
                             @csrf
