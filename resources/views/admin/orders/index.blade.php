@@ -138,7 +138,8 @@
                     <td class="p-3">{{ $order->created_at->format('d M, Y') }}</td>
                     <td class="p-3">
                         <a href="{{ route('admin.orders.show', $order->id) }}" class="text-blue-600 hover:underline">View</a>
-                        <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="inline">
+                        <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="inline"
+                              onsubmit="return confirm('Are you sure you want to delete this order? This cannot be undone.')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600 hover:underline ml-2">Delete</button>
