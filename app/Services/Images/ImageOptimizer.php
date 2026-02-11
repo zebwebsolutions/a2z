@@ -4,6 +4,7 @@ namespace App\Services\Images;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 
@@ -20,7 +21,8 @@ class ImageOptimizer
         UploadedFile $file,
         string $directory,
         int $maxWidth = 1600,
-        int $quality = 82
+        int $quality = 82,
+        ?string $slugSource = null
     ): string {
         $image = $this->manager->read($file->getPathname());
 
@@ -28,7 +30,8 @@ class ImageOptimizer
         $image->scaleDown(width: $maxWidth);
 
         $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $baseName = pathinfo($file->hashName(), PATHINFO_FILENAME);
+        $slug = $slugSource ? Str::slug($slugSource) : 'image';
+        $shortHash = Str::lower(Str::random(6));
 
         switch ($extension) {
             case 'png':
@@ -47,7 +50,7 @@ class ImageOptimizer
                 break;
         }
 
-        $path = trim($directory, '/').'/'.$baseName.'.'.$finalExt;
+        $path = trim($directory, '/').'/'.$slug.'-'.$shortHash.'.'.$finalExt;
 
         Storage::disk('public')->put($path, $encoded->toString());
 

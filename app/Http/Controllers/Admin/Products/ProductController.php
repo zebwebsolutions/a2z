@@ -121,7 +121,10 @@ class ProductController extends Controller
         if($request->hasFile('image')) {
             $data['image'] = $imageOptimizer->storeOptimized(
                 $request->file('image'),
-                'products'
+                'products',
+                1600,
+                82,
+                $data['name'] ?? null
             );
         }
 
@@ -130,7 +133,10 @@ class ProductController extends Controller
             foreach($request->file('gallery') as $img) {
                 $galleryPaths[] = $imageOptimizer->storeOptimized(
                     $img,
-                    'products/gallery'
+                    'products/gallery',
+                    1600,
+                    82,
+                    $data['name'] ?? null
                 );
             }
         }
@@ -227,7 +233,10 @@ class ProductController extends Controller
             }
             $data['image'] = $imageOptimizer->storeOptimized(
                 $request->file('image'),
-                'products'
+                'products',
+                1600,
+                82,
+                $data['name'] ?? $product->name
             );
         }
 
@@ -236,7 +245,10 @@ class ProductController extends Controller
             foreach ($request->file('gallery') as $img) {
                 $galleryPaths[] = $imageOptimizer->storeOptimized(
                     $img,
-                    'products/gallery'
+                    'products/gallery',
+                    1600,
+                    82,
+                    $data['name'] ?? $product->name
                 );
             }
         }
