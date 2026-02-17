@@ -3,7 +3,7 @@
 @section('title', $product->name . ' | A2Z')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div id="product-detail" class="scroll-mt-[120px] container mx-auto px-4 py-8">
     <x-breadcrumb :items="$breadcrumbItems" />
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         @php
@@ -71,7 +71,11 @@
                 ${{ number_format($product->price, 2) }}
             </p>
 
-            <a href="{{ route('cart.add', $product->id) }}" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">
+            <a href="{{ route('cart.add', [
+                'id' => $product->id,
+                'return' => url()->full(),
+                'anchor' => 'product-detail',
+            ]) }}" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">
                 Add to Cart
             </a>
 
@@ -118,4 +122,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
-

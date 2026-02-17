@@ -36,6 +36,20 @@ class CartController extends Controller
         }
 
         session()->put('cart', $cart);
+
+        // Keep users in the same area after add-to-cart (especially on mobile).
+        $returnUrl = $request->query('return');
+        $anchor = ltrim((string) $request->query('anchor', ''), '#');
+
+        if ($returnUrl && (str_starts_with($returnUrl, url('/')) || str_starts_with($returnUrl, '/'))) {
+            $target = $returnUrl;
+            if ($anchor !== '') {
+                $target .= '#' . $anchor;
+            }
+
+            return redirect()->to($target)->with('success', "{$product->name} added to cart!");
+        }
+
         return redirect()->back()->with('success', "{$product->name} added to cart!");
     }
 

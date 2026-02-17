@@ -1,4 +1,4 @@
-<div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
+<div id="product-{{ $product->id }}" class="scroll-mt-[120px] bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
 
     @php
         // Determine which image to display
@@ -30,7 +30,11 @@
             KWD {{ number_format($product->price, 2) }}
         </span>
 
-        <a href="{{ route('cart.add', $product->id) }}"
+        <a href="{{ route('cart.add', [
+            'id' => $product->id,
+            'return' => url()->full(),
+            'anchor' => 'product-' . $product->id,
+        ]) }}"
            class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700">
             Add to Cart
         </a>
