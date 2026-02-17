@@ -8,6 +8,7 @@ use App\Http\Controllers\Front\CategoryController;
 use App\Http\Controllers\Front\BrandController;
 use App\Http\Controllers\Front\CartController;
 use App\Http\Controllers\Front\RepairController;
+use App\Http\Controllers\Front\ContactController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 
 // Home
@@ -42,7 +43,9 @@ Route::post('/cart/place-order', [CartController::class, 'placeOrder'])->name('c
 Route::get('/cart/success/{id}', [CartController::class, 'success'])->name('cart.success');
 
 // Static pages
-Route::view('/contact', 'front.contact')->name('contact');
+Route::view('/about-us', 'front.about')->name('about');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 Route::view('/warranty-policy', 'front.warranty', [
     'policy' => file_get_contents(resource_path('text/warranty.txt'))
 ])->name('warranty.policy');
