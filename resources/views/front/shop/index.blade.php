@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="container mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="container mx-auto px-3 md:px-4 lg:px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
 
     {{-- ⭐ Premium Sidebar --}}
     <aside 

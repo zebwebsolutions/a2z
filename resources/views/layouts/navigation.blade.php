@@ -165,11 +165,30 @@
     </div>
 
     {{-- MOBILE DRAWER --}}
-    <div x-show="mobileOpen" x-cloak>
+    <div x-cloak>
 
-        <div class="fixed inset-0 bg-black bg-opacity-40 z-40" @click="mobileOpen = false"></div>
+        <div
+            x-show="mobileOpen"
+            class="fixed inset-0 bg-black bg-opacity-40 z-40"
+            @click="mobileOpen = false"
+            x-transition:enter="transition-opacity ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+        ></div>
 
-        <aside class="fixed top-0 left-0 w-80 h-full bg-white z-50 overflow-y-auto shadow-lg">
+        <aside
+            x-show="mobileOpen"
+            class="fixed top-0 left-0 w-80 h-full bg-white z-50 overflow-y-auto shadow-lg"
+            x-transition:enter="transform transition ease-out duration-300"
+            x-transition:enter-start="-translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transform transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full"
+        >
 
             <div class="p-4 flex justify-between items-center border-b">
                 <h2 class="text-lg font-semibold">Menu</h2>

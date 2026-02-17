@@ -5,7 +5,7 @@
 <div class="bg-gray-100 py-10">
 
     {{-- Breadcrumb --}}
-    <div class="container mx-auto px-6 mb-6">
+    <div class="container mx-auto px-3 md:px-4 lg:px-6 mb-6">
         <nav class="text-sm text-gray-600 flex items-center gap-2">
             <a href="{{ url('/') }}" class="hover:text-blue-600">Home</a>
             <span>/</span>
@@ -13,7 +13,7 @@
         </nav>
     </div>
 
-    <div class="container mx-auto px-6">
+    <div class="container mx-auto px-3 md:px-4 lg:px-6">
 
         {{-- Page Header --}}
         <div class="bg-white p-8 rounded-xl shadow-sm mb-8 border">

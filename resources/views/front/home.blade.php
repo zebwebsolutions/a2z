@@ -8,7 +8,7 @@
 
     {{-- Categories Section --}}
     <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6">
             <h2 class="text-3xl font-bold text-center mb-10">Shop by Category</h2>
 
             {{-- Carousel Wrapper --}}
@@ -77,7 +77,7 @@
 
     {{-- Featured Products --}}
     <section class="py-16 bg-white">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6">
             <h2 class="text-3xl font-bold text-center mb-10">Featured Products</h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -90,7 +90,7 @@
 
     {{-- About / Repair Service Section --}}
     <section class="bg-gray-100 py-20">
-        <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6 grid md:grid-cols-2 gap-12 items-center">
             <div>
                 <h2 class="text-3xl font-bold mb-4 text-gray-800">Mobile Repair Services</h2>
                 <p class="text-gray-600 mb-6 leading-relaxed">

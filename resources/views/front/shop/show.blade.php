@@ -3,7 +3,7 @@
 @section('title', $product->name . ' | A2Z')
 
 @section('content')
-<div class="container mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+<div class="container mx-auto px-3 md:px-4 lg:px-6 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
 
     {{-- Product Images --}}
     <div>

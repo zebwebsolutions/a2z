@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="container mx-auto px-6 py-10">
+<div class="container mx-auto px-3 md:px-4 lg:px-6 py-10">
 
     {{-- Page Header --}}
     <div class="mb-8">
