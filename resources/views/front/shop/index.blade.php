@@ -4,34 +4,88 @@
 
 @section('content')
 
-<div class="container mx-auto px-3 md:px-4 lg:px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
+<div
+    class="container mx-auto px-3 md:px-4 lg:px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-8"
+    x-data="{
+        filtersOpen: {{ request()->anyFilled(['category','ram','processor','screen_size','min_price','max_price']) ? 'true' : 'false' }},
+        isDesktop: window.matchMedia('(min-width: 768px)').matches,
+        open: {
+            category: true,
+            ram: true,
+            storage: true,
+            screen: true,
+            price: true
+        },
+        init() {
+            const mq = window.matchMedia('(min-width: 768px)');
+            const sync = () => this.isDesktop = mq.matches;
+            sync();
+            mq.addEventListener('change', sync);
+        },
+    }"
+>
+
+    {{-- Mobile Filter Toggle --}}
+    <div class="md:hidden">
+        <button
+            type="button"
+            @click="filtersOpen = !filtersOpen"
+            class="w-full inline-flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 bg-white shadow-sm"
+        >
+            <span class="inline-flex items-center gap-2 font-semibold text-gray-800">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                <span x-text="filtersOpen ? 'Hide Filters' : 'Show Filters'"></span>
+            </span>
+            @if(request()->anyFilled(['category','ram','processor','screen_size','min_price','max_price']))
+                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Applied</span>
+            @endif
+        </button>
+    </div>
+
+    {{-- Mobile Backdrop --}}
+    <div
+        x-show="!isDesktop && filtersOpen"
+        x-cloak
+        @click="filtersOpen = false"
+        class="fixed inset-0 bg-black/40 z-40 md:hidden"
+        x-transition:enter="transition-opacity ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    ></div>
 
     {{-- ⭐ Premium Sidebar --}}
-    <aside 
-        class="md:col-span-1 bg-white p-6 rounded-xl shadow border border-gray-200 sticky top-24 h-fit"
-        x-data="{ 
-            open: {
-                category: true,
-                ram: true,
-                storage: true,
-                screen: true,
-                price: true
-            } 
-        }">
+    <aside
+        x-show="isDesktop || filtersOpen"
+        x-cloak
+        class="fixed top-0 left-0 z-50 h-full w-[86vw] max-w-sm overflow-y-auto bg-white p-5 shadow-2xl border-r border-gray-200 rounded-r-2xl md:rounded-xl md:border md:shadow md:sticky md:top-24 md:h-fit md:w-auto md:max-w-none md:col-span-1"
+        x-transition:enter="transform transition ease-out duration-300"
+        x-transition:enter-start="-translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in duration-200"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="-translate-x-full"
+    >
 
         {{-- Header --}}
         <div class="flex justify-between items-center mb-5">
             <h2 class="text-2xl font-bold text-gray-800">Filters</h2>
-
-            @if(request()->anyFilled(['category','ram','processor','screen_size','min_price','max_price']))
-                <a href="{{ route('shop.index') }}" 
-                   class="text-sm text-red-500 hover:underline">
-                   Clear All
-                </a>
-            @endif
+            <div class="flex items-center gap-3">
+                @if(request()->anyFilled(['category','ram','processor','screen_size','min_price','max_price']))
+                    <a href="{{ route('shop.index') }}" 
+                       class="text-sm text-red-500 hover:underline">
+                       Clear All
+                    </a>
+                @endif
+                <button type="button" @click="filtersOpen = false" class="md:hidden text-sm text-gray-500 hover:text-gray-700">
+                    Close
+                </button>
+            </div>
         </div>
 
-        <form method="GET" action="{{ route('shop.index') }}" class="space-y-8">
+        <form id="filterForm" method="GET" action="{{ route('shop.index') }}" class="space-y-8">
 
             {{-- CATEGORY --}}
             <div>
@@ -194,7 +248,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    const form = document.querySelector('form');
+    const form = document.querySelector('#filterForm');
     const wrapper = document.querySelector('#products-wrapper');
     if (!form || !wrapper) return;
 

@@ -19,7 +19,7 @@
     }
 @endphp
 
-<div class="hidden md:block w-64 p-4 bg-white rounded-lg border shadow-sm h-fit space-y-8">
+<div class="w-full md:w-64 p-4 bg-white rounded-lg border shadow-sm h-fit space-y-8">
     <form id="filterForm" class="space-y-6">
 
         {{-- ===========================
