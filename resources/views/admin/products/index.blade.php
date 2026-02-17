@@ -96,7 +96,7 @@
                 <td class="p-3">{{ $product->name }}</td>
                 <td class="p-3">{{ $product->store->name }}</td>
                 <td class="p-3">{{ $product->category?->name ?? '-' }}</td>
-                <td class="p-3">${{ number_format($product->price, 2) }}</td>
+                <td class="p-3">{{ number_format($product->price, 2) }} KD</td>
                 <td class="p-3">{{ $product->stock }}</td>
                 <td class="p-3">
                     @if($product->image)

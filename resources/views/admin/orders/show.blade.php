@@ -16,8 +16,8 @@
     <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Order Summary</h2>
         <p><strong>Status:</strong> {{ ucfirst($order->status) }}</p>
-        <p><strong>Discount:</strong> ${{ number_format($order->discount ?? 0, 2) }}</p>
-        <p><strong>Total:</strong> ${{ number_format($order->total, 2) }}</p>
+        <p><strong>Discount:</strong> KD {{ number_format($order->discount ?? 0, 2) }}</p>
+        <p><strong>Total:</strong> KD {{ number_format($order->total, 2) }}</p>
         <p><strong>Payment Method:</strong> {{ ucfirst($order->payment_method ?? 'N/A') }}</p>
         <p><strong>Placed On:</strong> {{ $order->created_at->format('d M, Y h:i A') }}</p>
     </div>
@@ -38,8 +38,8 @@
                     <tr class="border-b">
                         <td class="p-3">{{ optional($item->product)->name ?? 'Deleted Product' }}</td>
                         <td class="p-3">{{ $item->quantity }}</td>
-                        <td class="p-3">${{ number_format($item->price, 2) }}</td>
-                        <td class="p-3">${{ number_format($item->price * $item->quantity, 2) }}</td>
+                        <td class="p-3">KD {{ number_format($item->price, 2) }}</td>
+                        <td class="p-3">KD {{ number_format($item->price * $item->quantity, 2) }}</td>
                     </tr>
                 @empty
                     <tr>
