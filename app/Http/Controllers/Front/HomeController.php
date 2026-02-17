@@ -12,8 +12,15 @@ class HomeController extends Controller
     public function index()
     {
         $categories = Category::where('is_active', true)
-            ->take(8)
-            ->get();
+        ->whereNull('parent_id') // only main categories
+        ->withCount(['products' => function ($query) {
+            $query->where('is_active', true);
+        }])
+        ->having('products_count', '>', 0) // remove if you want empty ones
+        ->orderByDesc('products_count')
+        ->take(8)
+        ->get();
+
 
         $products = Product::where('is_active', true)
             ->take(8)
