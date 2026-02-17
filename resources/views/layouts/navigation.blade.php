@@ -219,8 +219,12 @@
 
 <div class=" bg-white border-t">
     <div class="container mx-auto py-4 px-6 flex flex-col md:flex-row md:items-center justify-between md:gap-6">
-        <div>
-            <a class="font-bold text-lg" href="{{ route('repair.form') }}">Repairing Service</a>
+        <div class="flex justify-center md:justify-start mb-3 md:mb-0">
+            <a href="{{ route('repair.form') }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-semibold text-sm md:text-base hover:bg-blue-100 hover:border-blue-300 transition">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+                <span>Repairing Service</span>
+            </a>
         </div>
         <form action="{{ route('search') }}" method="GET" class="w-full max-w-md mb-0">
             <div class="relative">

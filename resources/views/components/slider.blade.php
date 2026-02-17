@@ -12,12 +12,12 @@ $slider = \App\Models\Slider::with('images')
     <div class="swiper-wrapper">
 
         @foreach($slider->images->sortBy('sort_order') as $slide)
-            <div class="swiper-slide">
+            <div class="swiper-slide overflow-hidden">
                 @if($slide->url)
                 <a href="{{ $slide->url }}" class="block">
                     <img
                         src="{{ asset('storage/'.$slide->image) }}"
-                        class="w-full object-cover"
+                        class="w-full object-cover scale-[1.08] md:scale-100 transform origin-center"
                         alt="Promotion"
                         loading="lazy"
                     >
@@ -25,7 +25,7 @@ $slider = \App\Models\Slider::with('images')
                 @else
                     <img
                         src="{{ asset('storage/'.$slide->image) }}"
-                        class="w-full object-cover"
+                        class="w-full object-cover scale-[1.08] md:scale-100 transform origin-center"
                         alt="Promotion"
                         loading="lazy"
                     >
