@@ -43,5 +43,34 @@
             @include('layouts.footer')
         </div>
         <script src="{{ asset('js/live-search.js') }}" defer></script>
+        <script>
+            // Preserve exact scroll position when adding to cart and returning back.
+            document.addEventListener('click', function (event) {
+                const link = event.target.closest('a[href*="/cart/add/"]');
+                if (!link) return;
+
+                sessionStorage.setItem('a2z_cart_scroll_y', String(window.scrollY));
+                sessionStorage.setItem('a2z_cart_scroll_path', window.location.pathname + window.location.search);
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const savedY = sessionStorage.getItem('a2z_cart_scroll_y');
+                const savedPath = sessionStorage.getItem('a2z_cart_scroll_path');
+                const currentPath = window.location.pathname + window.location.search;
+
+                if (!savedY || !savedPath || savedPath !== currentPath) return;
+
+                const y = parseInt(savedY, 10);
+                if (Number.isNaN(y)) return;
+
+                // Run multiple times to override browser hash jump and late layout shifts.
+                window.scrollTo(0, y);
+                requestAnimationFrame(() => window.scrollTo(0, y));
+                setTimeout(() => window.scrollTo(0, y), 120);
+
+                sessionStorage.removeItem('a2z_cart_scroll_y');
+                sessionStorage.removeItem('a2z_cart_scroll_path');
+            });
+        </script>
     </body>
 </html>
