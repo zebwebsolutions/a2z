@@ -46,13 +46,13 @@
         <div class="md:col-span-3 relative">
 
             {{-- Skeleton --}}
-            <div id="productSkeleton" class=" absolute inset-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden z-30">    
+            <div id="productSkeleton" class=" absolute inset-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden z-30">    
             </div>
 
             {{-- Results --}}
             <div id="productResults" class="transition-opacity duration-500 relative z-10">
                 @if($products->count() > 0)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         @foreach($products as $product)
                             @include('front.products.partials.product-card', ['product' => $product])
                         @endforeach

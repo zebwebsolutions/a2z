@@ -64,7 +64,7 @@
     @foreach ($sections as $section)
         <section class="container mx-auto px-4 py-6">
             <h2 class="text-3xl text-center font-bold mb-10">{{ $section->title }}</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach ($section->ordered_products as $product)
                     @include('front.products.partials.product-card', ['product' => $product])
                 @endforeach
@@ -80,7 +80,7 @@
         <div class="container mx-auto px-6">
             <h2 class="text-3xl font-bold text-center mb-10">Featured Products</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @foreach($products as $product)
                     @include('front.products.partials.product-card', ['product' => $product])
                 @endforeach

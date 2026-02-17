@@ -41,14 +41,14 @@
       <div class="md:col-span-3">
 
           {{-- Skeleton Loader --}}
-          <div id="productSkeleton" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden">
+          <div id="productSkeleton" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
               {{-- Will be filled by JavaScript --}}
           </div>
 
           {{-- Actual Products --}}
           <div id="productResults">
             @if($products->count())
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   @foreach($products as $product)
                       @include('front.products.partials.product-card', ['product' => $product])
                   @endforeach
