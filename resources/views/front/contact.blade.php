@@ -24,15 +24,16 @@
                 <div class="space-y-4">
 
                     <div class="flex items-start gap-3">
-                        <div class="text-blue-600 text-2xl">📞</div>
+                        <i data-lucide="phone" class="w-6 h-6 text-blue-600 mt-0.5"></i>
                         <div>
                             <p class="font-medium">Phone</p>
-                            <p class="text-gray-600">+965 977 64165</p>
+                            <a href="tel:+96551523533" class="text-gray-600 block">+965 515 23533</a>
+                            <a href="tel:+96597764165" class="text-gray-600 block">+965 977 64165</a>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-3">
-                        <div class="text-blue-600 text-2xl">✉️</div>
+                        <i data-lucide="mail" class="w-6 h-6 text-blue-600 mt-0.5"></i>
                         <div>
                             <p class="font-medium">Email</p>
                             <p class="text-gray-600">support@a2z.com</p>
@@ -40,7 +41,7 @@
                     </div>
 
                     <div class="flex items-start gap-3">
-                        <div class="text-blue-600 text-2xl">📍</div>
+                        <i data-lucide="map-pin" class="w-6 h-6 text-blue-600 mt-0.5"></i>
                         <div>
                             <p class="font-medium">Address</p>
                             <p class="text-gray-600">Khalid Bin Waleed Street, Block 6, Kazmi 10 Building, Shop 2, Sharq, Kuwait</p>
@@ -64,8 +65,9 @@
             {{-- WhatsApp --}}
             <a href="https://wa.me/96597764165"
                target="_blank"
-               class="block text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-lg font-semibold shadow">
-                💬 Message Us on WhatsApp
+               class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-lg font-semibold shadow">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                <span>Message Us on WhatsApp</span>
             </a>
         </div>
 
