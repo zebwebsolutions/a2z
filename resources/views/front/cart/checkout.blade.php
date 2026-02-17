@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto py-10">
+<div class="container mx-auto py-10 px-4 sm:px-6">
     <h1 class="text-2xl font-bold mb-6">Checkout</h1>
 
     <form action="{{ route('cart.placeOrder') }}" method="POST" class="space-y-4 max-w-lg">
