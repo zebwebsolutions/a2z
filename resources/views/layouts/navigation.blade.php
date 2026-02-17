@@ -250,8 +250,8 @@
         <div class="hotline-phone hidden md:flex items-start gap-2">
             <i data-lucide="phone" class="inline-block w-6 h-6 mt-2 text-blue-600"></i>
             <div class="leading-tight">
-                <a href="tel:+96522242220" class="block text-blue-600 font-semibold text-md lg:text-base">+965 515 23533</a>
-                <a href="tel:+96597764165" class="block text-blue-600 font-semibold text-md lg:text-base">+965 977 64165</a>
+                <a href="tel:+96522242220" class="block text-blue-500 font-semibold text-md lg:text-base hover:text-gray-800">+965 515 23533</a>
+                <a href="tel:+96597764165" class="block text-blue-500 font-semibold text-md lg:text-base hover:text-gray-800">+965 977 64165</a>
             </div>
         </div>
     </div>
