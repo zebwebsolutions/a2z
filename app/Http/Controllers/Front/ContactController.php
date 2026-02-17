@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactMessage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Throwable;
 
 class ContactController extends Controller
 {
@@ -23,24 +22,15 @@ class ContactController extends Controller
             'message' => ['required', 'string', 'max:2000'],
         ]);
 
-        $emailBody = "New contact form submission\n\n"
-            . "Name: {$data['name']}\n"
-            . "Email: {$data['email']}\n"
-            . "Phone: " . ($data['phone'] ?: 'N/A') . "\n\n"
-            . "Message:\n{$data['message']}\n";
+        ContactMessage::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'message' => $data['message'],
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 65535),
+        ]);
 
-        try {
-            Mail::raw($emailBody, function ($mail) use ($data) {
-                $mail->to('rahmanzeb@gmail.com')
-                    ->subject('New Contact Form Message - A2Z')
-                    ->replyTo($data['email'], $data['name']);
-            });
-        } catch (Throwable $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'We could not send your message right now. Please try again.');
-        }
-
-        return back()->with('success', 'Your message has been sent successfully.');
+        return back()->with('success', 'Your message has been submitted successfully.');
     }
 }

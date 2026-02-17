@@ -122,6 +122,7 @@ class User extends Authenticatable
             'sliders'        => $role === 'admin',
             'home-sections'  => $role === 'admin',
             'users'          => $role === 'admin',
+            'contact-messages' => $role === 'admin',
             default          => false,
         };
     }

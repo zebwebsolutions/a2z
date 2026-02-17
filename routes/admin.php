@@ -13,7 +13,8 @@ use App\Http\Controllers\Admin\{
     SliderImageController,
     SparePartController,
     SparePartSaleController,
-    UserController
+    UserController,
+    ContactMessageController
 };
 use App\Http\Controllers\Api\BarcodeScanController;
 use App\Http\Controllers\Admin\Products\ProductController;
@@ -29,6 +30,12 @@ Route::middleware(['auth', 'active', 'role:admin'])
         Route::resource('sliders', SliderController::class);
         Route::resource('spare-parts', SparePartController::class);
         Route::resource('users', UserController::class);
+
+        Route::get('contact-messages', [ContactMessageController::class, 'index'])
+            ->name('contact-messages.index');
+
+        Route::delete('contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])
+            ->name('contact-messages.destroy');
 
         Route::get('spare-parts-sales', [SparePartSaleController::class, 'index'])
             ->name('spare-parts.sales');
