@@ -46,6 +46,7 @@
                 <li><a href="/contact" class="hover:text-white">Contact Us</a></li>
                 <li><a href="/warranty-policy" class="hover:text-white">Warranty Policy</a></li>
                 <li><a href="/returns-refunds" class="hover:text-white">Returns & Refunds</a></li>
+                <li><a href="{{ route('privacy.policy') }}" class="hover:text-white">Privacy Policy</a></li>
             </ul>
 
             <div class="mt-4 space-y-1">

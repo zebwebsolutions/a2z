@@ -28,6 +28,7 @@ Route::get('/sitemap.xml', function () {
         route('repair.form'),
         route('warranty.policy'),
         route('returns.policy'),
+        route('privacy.policy'),
     ];
 
     $dynamicUrls = collect()
@@ -97,6 +98,8 @@ Route::view('/warranty-policy', 'front.warranty', [
 Route::view('/returns-refunds', 'front.returns', [
     'policy' => file_get_contents(resource_path('text/returns.txt'))
 ])->name('returns.policy');
+
+Route::view('/privacy-policy', 'front.privacy')->name('privacy.policy');
 
 Route::middleware(['auth', 'active', 'role:admin,salesman,technician'])
     ->prefix('admin')
