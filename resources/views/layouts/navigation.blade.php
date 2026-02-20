@@ -8,8 +8,12 @@
         <div class="flex items-center gap-3">
             <button @click="mobileOpen = true" class="md:hidden text-2xl">☰</button>
 
-            <a href="{{ route('home') }}" class="text-2xl font-bold text-blue-700">
-                A<span class="text-gray-900">2</span>Z
+            <a href="{{ route('home') }}" class="flex items-center">
+                <img
+                    src="{{ asset('images/a2z-logo.png') }}"
+                    alt="A to Z Electronics & Repairing"
+                    class="h-11 md:h-12 w-auto object-contain"
+                >
             </a>
         </div>
 

@@ -21,7 +21,7 @@
                 'name' => 'A to Z Electronics & Repairing',
                 'alternateName' => 'A2Z Kuwait',
                 'url' => url('/'),
-                'logo' => asset('favicon.png'),
+                'logo' => asset('images/a2z-logo.png'),
                 'contactPoint' => [[
                     '@type' => 'ContactPoint',
                     'telephone' => '+96597764165',

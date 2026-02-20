@@ -3,7 +3,12 @@
 
         {{-- Logo + About --}}
         <div>
-            <h2 class="text-white text-2xl font-bold mb-3">A to Z Electronics & Repairing</h2>
+            <img
+                src="{{ asset('images/a2z-logo.png') }}"
+                alt="A to Z Electronics & Repairing"
+                class="h-14 w-auto object-contain mb-3"
+            >
+            <h2 class="text-white text-xl font-bold mb-3">A to Z Electronics & Repairing</h2>
             <p class="text-sm leading-relaxed">
                 Your trusted store for Mobiles, Accessories & Gadgets in Kuwait.
                 Original products, best prices, reliable repairing, fast delivery - every time.
