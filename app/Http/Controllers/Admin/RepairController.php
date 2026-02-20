@@ -41,6 +41,7 @@ class RepairController extends Controller
             'device_model' => 'required|string|max:255',
             'imei' => 'nullable|string|max:50',
             'problem_description' => 'required|string',
+            'warranty' => 'nullable|string|max:100',
             'total_cost' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);
@@ -90,6 +91,7 @@ class RepairController extends Controller
             'device_model' => 'required|string|max:255',
             'imei' => 'nullable|string|max:255',
             'problem_description' => 'required|string',
+            'warranty' => 'nullable|string|max:100',
             'total_cost' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);

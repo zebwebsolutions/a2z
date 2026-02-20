@@ -3,10 +3,10 @@
 
         {{-- Logo + About --}}
         <div>
-            <h2 class="text-white text-2xl font-bold mb-3">A2Z</h2>
+            <h2 class="text-white text-2xl font-bold mb-3">A to Z Electronics & Repairing</h2>
             <p class="text-sm leading-relaxed">
                 Your trusted store for Mobiles, Accessories & Gadgets in Kuwait.
-                Original products, best prices, fast delivery - every time.
+                Original products, best prices, reliable repairing, fast delivery - every time.
             </p>
         </div>
 
@@ -83,6 +83,6 @@
 
     {{-- Bottom Bar --}}
     <div class="border-t border-gray-700 mt-10 pt-4 text-center text-sm text-gray-500">
-        &copy; {{ date('Y') }} A2Z - All Rights Reserved.
+        &copy; {{ date('Y') }} A to Z Electronics & Repairing - All Rights Reserved.
     </div>
 </footer>

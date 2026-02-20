@@ -19,7 +19,7 @@
         {{-- Customer Info --}}
         <div class="grid grid-cols-2 gap-4">
             <input type="text" name="customer_name" placeholder="Customer Name" class="border p-2 rounded" required>
-            <input type="text" name="customer_phone" placeholder="Customer Phone" class="border p-2 rounded" required>
+            <input type="text" name="customer_phone" placeholder="Customer Phone Number" class="border p-2 rounded" required>
         </div>
 
         {{-- Device Info --}}
@@ -29,6 +29,7 @@
         </div>
 
         <textarea name="problem_description" placeholder="Problem Description" class="border p-2 w-full rounded" required></textarea>
+        <input type="text" name="warranty" placeholder="Warranty (e.g. 30 days / 3 months)" class="border p-2 w-full rounded">
 
         {{-- Parts Section --}}
         <div id="parts-section" class="mt-4 space-y-2">

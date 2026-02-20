@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'About A to Z Electronics & Repairing | Kuwait')
+@section('meta_description', 'A to Z Electronics & Repairing is the business behind Life Style, Nada Phone, International Link, and A2Z in Kuwait. We buy, sell, and repair phones, tablets, and watches.')
+
 @section('content')
 <div class="bg-gray-100 py-10">
     <div class="container mx-auto px-3 md:px-4 lg:px-6 mb-6">
@@ -13,6 +16,10 @@
     <div class="container mx-auto px-3 md:px-4 lg:px-6 space-y-8">
         <div class="bg-white p-8 rounded-xl shadow-sm border">
             <h1 class="text-4xl font-extrabold tracking-tight mb-4">About Us</h1>
+            <p class="text-gray-700 leading-relaxed mb-4">
+                <strong>A to Z Electronics &amp; Repairing</strong> is our registered business name in Kuwait.
+                You may also know us as <strong>A2Z</strong>.
+            </p>
             <p class="text-gray-700 text-lg leading-relaxed">
                 Life Style, Nada Phone, International Link, and A2Z operate under the same owner,
                 with one shared mission: to deliver trusted mobile solutions and reliable service across Kuwait.

@@ -17,6 +17,7 @@ class Repair extends Model
         'device_model',
         'imei',
         'problem_description',
+        'warranty',
         'total_cost',
         'status',
     ];

@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Contact A2Z Kuwait | Phones, Accessories & Repairs')
+@section('meta_description', 'Contact A2Z Kuwait for product inquiries, repair bookings, WhatsApp support, and store location in Sharq, Kuwait.')
+
 @section('content')
 
 <div class="container mx-auto py-12 px-6">

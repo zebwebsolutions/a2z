@@ -5,8 +5,55 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="shortcut icon" href="{{ asset('favicon.png') }}" type="image/x-icon">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        @php
+            $defaultTitle = 'A2Z Kuwait | New & Used Phones, Tablets, Accessories & Repairs';
+            $pageTitle = trim($__env->yieldContent('title')) ?: $defaultTitle;
+            $defaultDescription = 'A2Z Kuwait offers new and used phones, tablets, accessories, and expert repair services for phones, tablets, and smart watches in Sharq, Kuwait.';
+            $pageDescription = trim($__env->yieldContent('meta_description')) ?: $defaultDescription;
+            $metaRobots = trim($__env->yieldContent('meta_robots')) ?: 'index,follow';
+            $canonicalUrl = trim($__env->yieldContent('canonical')) ?: url()->current();
+            $ogTitle = trim($__env->yieldContent('og_title')) ?: $pageTitle;
+            $ogDescription = trim($__env->yieldContent('og_description')) ?: $pageDescription;
+            $ogImage = trim($__env->yieldContent('og_image')) ?: asset('favicon.png');
+            $organizationSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'name' => 'A to Z Electronics & Repairing',
+                'alternateName' => 'A2Z Kuwait',
+                'url' => url('/'),
+                'logo' => asset('favicon.png'),
+                'contactPoint' => [[
+                    '@type' => 'ContactPoint',
+                    'telephone' => '+96597764165',
+                    'contactType' => 'customer service',
+                    'areaServed' => 'KW',
+                ]],
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => 'Khalid Bin Waleed Street, Kazmi 10 Building, Shop 2',
+                    'addressLocality' => 'Sharq',
+                    'addressCountry' => 'KW',
+                ],
+            ];
+        @endphp
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ $pageTitle }}</title>
+        <meta name="description" content="{{ $pageDescription }}">
+        <meta name="robots" content="{{ $metaRobots }}">
+        <link rel="canonical" href="{{ $canonicalUrl }}">
+        <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ url('/sitemap.xml') }}">
+
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="A2Z Kuwait">
+        <meta property="og:title" content="{{ $ogTitle }}">
+        <meta property="og:description" content="{{ $ogDescription }}">
+        <meta property="og:url" content="{{ request()->fullUrl() }}">
+        <meta property="og:image" content="{{ $ogImage }}">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $ogTitle }}">
+        <meta name="twitter:description" content="{{ $ogDescription }}">
+        <meta name="twitter:image" content="{{ $ogImage }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -14,6 +61,10 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <script type="application/ld+json">
+            @json($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        </script>
     </head>
     <body class="font-sans antialiased">
 

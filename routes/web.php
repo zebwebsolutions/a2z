@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Product;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\ShopController;
 use App\Http\Controllers\Front\ProductController;
@@ -13,6 +16,47 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 
 // Home
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/sitemap.xml', function () {
+    $staticUrls = [
+        route('home'),
+        route('shop.index'),
+        route('products.index'),
+        route('shop.used'),
+        route('about'),
+        route('contact'),
+        route('repair.form'),
+        route('warranty.policy'),
+        route('returns.policy'),
+    ];
+
+    $dynamicUrls = collect()
+        ->merge(Product::select('slug', 'updated_at')->where('is_active', 1)->get()->map(function ($product) {
+            return [
+                'loc' => route('product.show', $product->slug),
+                'lastmod' => optional($product->updated_at)->toAtomString(),
+            ];
+        }))
+        ->merge(Category::select('slug', 'updated_at')->where('is_active', 1)->get()->map(function ($category) {
+            return [
+                'loc' => route('category.show', $category->slug),
+                'lastmod' => optional($category->updated_at)->toAtomString(),
+            ];
+        }))
+        ->merge(Brand::select('slug', 'updated_at')->where('is_active', 1)->get()->map(function ($brand) {
+            return [
+                'loc' => route('brand.index', $brand->slug),
+                'lastmod' => optional($brand->updated_at)->toAtomString(),
+            ];
+        }));
+
+    $urls = collect($staticUrls)->map(fn ($url) => ['loc' => $url, 'lastmod' => now()->toAtomString()])
+        ->merge($dynamicUrls);
+
+    $xml = view('sitemap', ['urls' => $urls]);
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
+})->name('sitemap');
 
 // Shop & Products
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');

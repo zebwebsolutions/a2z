@@ -1,6 +1,19 @@
 @extends('layouts.app')
 
-@section('title', 'Products | A2Z')
+@section('title', 'Shop Electronics in Kuwait | A2Z')
+
+@section('meta_description',
+    'Shop electronics, smartphones, accessories and repair services in Kuwait. Best prices, original products and fast delivery from A2Z.'
+)
+
+@section('og_title', 'Shop Electronics in Kuwait | A2Z')
+
+@section('og_description',
+    'Browse our full range of electronics, smartphones and accessories in Kuwait. Genuine products and expert service.'
+)
+
+@section('og_image', asset('favicon.png'))
+
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -192,4 +205,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endsection
-

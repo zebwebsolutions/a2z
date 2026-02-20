@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Shop | A2Z')
+@section('meta_description', 'Shop new and used phones, tablets, and accessories in Kuwait. Filter by category, specs, and price at A2Z.')
 
 @section('content')
 

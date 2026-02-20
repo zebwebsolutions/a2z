@@ -1,2 +1,3 @@
 User-agent: *
 Disallow:
+Sitemap: https://a2zkwt.com/sitemap.xml

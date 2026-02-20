@@ -12,6 +12,7 @@
                 <th class="p-3">Device</th>
                 <th class="p-3">Store</th>
                 <th class="p-3">Salesman</th>
+                <th class="p-3">Warranty</th>
                 <th class="p-3">Status</th>
                 <th class="p-3">Total</th>
                 <th class="p-3">Actions</th>
@@ -24,6 +25,7 @@
                 <td class="p-3">{{ $r->device_model }}</td>
                 <td class="p-3">{{ $r->store->name }}</td>
                 <td class="p-3">{{ $r->salesman->name }}</td>
+                <td class="p-3">{{ $r->warranty ?: '-' }}</td>
                 <td class="p-3 capitalize">{{ $r->status }}</td>
                 <td class="p-3">${{ number_format($r->total_cost, 2) }}</td>
                 <td class="p-3">
