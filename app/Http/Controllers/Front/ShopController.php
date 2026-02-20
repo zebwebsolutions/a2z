@@ -15,6 +15,7 @@ class ShopController extends Controller
     public function index(Request $request)
     {
         $query = Product::query()->where('is_active', true);
+        $baseForFilters = Product::query()->where('is_active', true);
 
         // CATEGORY FILTER
         if ($request->filled('category')) {
@@ -49,13 +50,42 @@ class ShopController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
+        if ($request->filled('min')) {
+            $query->where('price', '>=', $request->min);
+        }
+
+        if ($request->filled('max')) {
+            $query->where('price', '<=', $request->max);
+        }
+
         // APPLY SPEC FILTERS
         if ($request->filled('ram')) {
-            $query->whereIn('specs->RAM', $request->ram);
+            $ramValues = is_array($request->ram) ? $request->ram : [$request->ram];
+            $query->where(function ($q) use ($ramValues) {
+                foreach ($ramValues as $ram) {
+                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.RAM')) = ?", [$ram])
+                      ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Ram')) = ?", [$ram]);
+                }
+            });
+        }
+
+        if ($request->filled('storage')) {
+            $storageValues = is_array($request->storage) ? $request->storage : [$request->storage];
+            $query->where(function ($q) use ($storageValues) {
+                foreach ($storageValues as $storage) {
+                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.STORAGE')) = ?", [$storage])
+                      ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Storage')) = ?", [$storage]);
+                }
+            });
         }
 
         if ($request->filled('processor')) {
-            $query->whereIn('specs->Processor', $request->processor);
+            $processorValues = is_array($request->processor) ? $request->processor : [$request->processor];
+            $query->where(function ($q) use ($processorValues) {
+                foreach ($processorValues as $processor) {
+                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Processor')) = ?", [$processor]);
+                }
+            });
         }
 
         if ($request->filled('screen_size')) {
@@ -63,26 +93,39 @@ class ShopController extends Controller
         }
 
 
-        // BUILD FILTER OPTIONS
-        $ramOptions = Product::selectRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Ram')) AS ram")
-            ->whereNotNull('specs')
-            ->groupBy('ram')
-            ->pluck('ram')
-            ->filter(fn($v) => !empty($v));
+        // BUILD FILTER OPTIONS FROM STORED SPECS JSON
+        $specsRaw = (clone $baseForFilters)->whereNotNull('specs')->pluck('specs');
 
-        $processors = Product::selectRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Processor')) AS processor")
-            ->whereNotNull('specs')
-            ->groupBy('processor')
-            ->pluck('processor')
-            ->filter(fn($v) => !empty($v));
+        $ramOptions = collect();
+        $storageOptions = collect();
 
-        $screenSizes = Product::selectRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.ScreenSize')) AS screenSize")
-            ->whereNotNull('specs')
-            ->groupBy('screenSize')
-            ->pluck('screenSize')
-            ->filter(fn($v) => !empty($v));
+        foreach ($specsRaw as $spec) {
+            if (!is_array($spec)) {
+                continue;
+            }
+
+            $ram = $spec['RAM'] ?? $spec['Ram'] ?? $spec['ram'] ?? null;
+            $storage = $spec['STORAGE'] ?? $spec['Storage'] ?? $spec['storage'] ?? null;
+
+            if (!empty($ram)) {
+                $ramOptions->push($ram);
+            }
+            if (!empty($storage)) {
+                $storageOptions->push($storage);
+            }
+        }
+
+        $ramOptions = $ramOptions->unique()->sort()->values();
+        $storageOptions = $storageOptions->unique()->sort()->values();
 
         $products = $query->paginate(12)->withQueryString();
+        $products->withPath(route('shop.index'));
+
+        $availableBrandIds = (clone $baseForFilters)->pluck('brand_id')->filter()->unique();
+        $availableBrands = Brand::whereIn('id', $availableBrandIds)->orderBy('name')->get();
+        $priceMin = (clone $baseForFilters)->min('price') ?? 0;
+        $priceMax = (clone $baseForFilters)->max('price') ?? 0;
+        $virtualCategory = (object) ['id' => null, 'slug' => null];
 
         $categories = Category::with('brands')
             ->where('is_active', true)
@@ -91,13 +134,24 @@ class ShopController extends Controller
 
         $stores = Store::all();
 
-        return view('front.shop.index', compact('products', 'categories', 'stores', 'ramOptions', 'processors', 'screenSizes'));
+        return view('front.shop.index', compact(
+            'products',
+            'categories',
+            'stores',
+            'ramOptions',
+            'storageOptions',
+            'availableBrands',
+            'priceMin',
+            'priceMax',
+            'virtualCategory'
+        ));
     }
 
     public function ajaxProducts(Request $request)
     {
         // Copy SAME FILTER LOGIC from index()
         $query = Product::query()->where('is_active', true);
+        $baseForFilters = Product::query()->where('is_active', true);
 
         if ($request->filled('category')) {
             $query->whereHas('category', fn($q) =>
@@ -106,25 +160,21 @@ class ShopController extends Controller
         }
 
         if ($request->filled('ram')) {
-            $query->where(function ($q) use ($request) {
-                foreach ($request->ram as $ram) {
+            $ramValues = is_array($request->ram) ? $request->ram : [$request->ram];
+            $query->where(function ($q) use ($ramValues) {
+                foreach ($ramValues as $ram) {
                     $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Ram')) = ?", [$ram]);
+                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.RAM')) = ?", [$ram]);
                 }
             });
         }
 
-        if ($request->filled('processor')) {
-            $query->where(function ($q) use ($request) {
-                foreach ($request->processor as $processor) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Processor')) = ?", [$processor]);
-                }
-            });
-        }
-
-        if ($request->filled('screen_size')) {
-            $query->where(function ($q) use ($request) {
-                foreach ($request->screen_size as $screen) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.ScreenSize')) = ?", [$screen]);
+        if ($request->filled('storage')) {
+            $storageValues = is_array($request->storage) ? $request->storage : [$request->storage];
+            $query->where(function ($q) use ($storageValues) {
+                foreach ($storageValues as $storage) {
+                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Storage')) = ?", [$storage]);
+                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.STORAGE')) = ?", [$storage]);
                 }
             });
         }
@@ -133,13 +183,46 @@ class ShopController extends Controller
             $query->where('price', '<=', (int) $request->max_price);
         }
 
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', (int) $request->min_price);
+        }
+
+        if ($request->filled('max')) {
+            $query->where('price', '<=', (float) $request->max);
+        }
+
+        if ($request->filled('min')) {
+            $query->where('price', '>=', (float) $request->min);
+        }
+
+        if ($request->filled('brand')) {
+            $query->whereHas('brand', fn ($q) => $q->where('slug', $request->brand));
+        }
+
+        if ($request->filled('store')) {
+            $query->where('store_id', $request->store);
+        }
+
         // Fetch products
         $products = $query->paginate(12)->withQueryString();
+        $products->withPath(route('shop.index'));
+
+        $availableBrandIds = (clone $baseForFilters)->pluck('brand_id')->filter()->unique();
+        $availableBrands = Brand::whereIn('id', $availableBrandIds)->orderBy('name')->get();
+        $priceMin = (clone $baseForFilters)->min('price') ?? 0;
+        $priceMax = (clone $baseForFilters)->max('price') ?? 0;
+        $virtualCategory = (object) ['id' => null, 'slug' => null];
 
         // Return only the product grid HTML (partial)
         return response()->json([
             'html' => view('front.products.partials.product-grid', compact('products'))->render(),
-            'pagination' => view('front.products.partials.pagination', compact('products'))->render()
+            'pagination' => view('front.products.partials.pagination', compact('products'))->render(),
+            'chips' => view('components.filter-chips', [
+                'category' => $virtualCategory,
+                'availableBrands' => $availableBrands,
+                'priceMin' => $priceMin,
+                'priceMax' => $priceMax,
+            ])->render(),
         ]);
     }
 

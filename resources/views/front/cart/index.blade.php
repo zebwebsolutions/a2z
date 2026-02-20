@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-bold mb-6">Shopping Cart</h1>
 
     @if(empty($cart))
-        <p>Your cart is empty. <a href="{{ route('products.index') }}" class="text-blue-600 underline">Go shopping</a>.</p>
+        <p>Your cart is empty. <a href="{{ route('shop.index') }}" class="text-blue-600 underline">Go shopping</a>.</p>
     @else
         <div class="bg-white shadow rounded overflow-hidden">
             <div class="overflow-x-auto">

@@ -5,5 +5,9 @@
   <h1 class="text-2xl font-bold mb-4">{{ $category->name }}</h1>
 
   @include('front.products.partials.product-grid', ['products' => $products])
+
+  <div class="mt-8">
+    {{ $products->links() }}
+  </div>
 </div>
 @endsection

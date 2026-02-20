@@ -50,42 +50,6 @@
         @endif
 
         {{-- ===========================
-            SUBCATEGORIES
-        ============================ --}}
-        @if($subcategories && $subcategories->count())
-            <div x-data="{ open: true }" class="border-b pb-4">
-                <button type="button" 
-                        @click="open = !open"
-                        class="w-full flex justify-between items-center font-semibold text-lg mb-2 focus:outline-none">
-                    Categories
-                    <span x-text="open ? '−' : '+'" class="text-xl leading-none"></span>
-                </button>
-
-                <ul x-show="open" x-collapse class="space-y-1 text-sm">
-                    @foreach($subcategories as $sub)
-                        <li>
-                            @if($currentBrand)
-                                <a href="{{ route('brand.category', [
-                                    'category' => $sub->slug,
-                                    'brand' => $currentBrand
-                                ]) }}"
-                                class="block px-2 py-1 rounded hover:bg-gray-100">
-                                    {{ $sub->name }}
-                                </a>
-                            @else
-                                <a href="{{ route('category.show', $sub->slug) }}"
-                                class="block px-2 py-1 rounded hover:bg-gray-100">
-                                    {{ $sub->name }}
-                                </a>
-                            @endif
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-
-        {{-- ===========================
             BEAUTIFUL PRICE SLIDER
         =========================== --}}
         @if($priceMin < $priceMax)
@@ -230,6 +194,41 @@
                         </label>
                     @endforeach
                 </div>
+            </div>
+        @endif
+
+        {{-- ===========================
+            SUBCATEGORIES
+        ============================ --}}
+        @if($subcategories && $subcategories->count())
+            <div x-data="{ open: true }" class="border-b pb-4">
+                <button type="button"
+                        @click="open = !open"
+                        class="w-full flex justify-between items-center font-semibold text-lg mb-2 focus:outline-none">
+                    Categories
+                    <span x-text="open ? '−' : '+'" class="text-xl leading-none"></span>
+                </button>
+
+                <ul x-show="open" x-collapse class="space-y-1 text-sm">
+                    @foreach($subcategories as $sub)
+                        <li>
+                            @if($currentBrand)
+                                <a href="{{ route('brand.category', [
+                                    'category' => $sub->slug,
+                                    'brand' => $currentBrand
+                                ]) }}"
+                                class="block px-2 py-1 rounded hover:bg-gray-100">
+                                    {{ $sub->name }}
+                                </a>
+                            @else
+                                <a href="{{ route('category.show', $sub->slug) }}"
+                                class="block px-2 py-1 rounded hover:bg-gray-100">
+                                    {{ $sub->name }}
+                                </a>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 

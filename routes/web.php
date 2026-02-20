@@ -21,7 +21,6 @@ Route::get('/sitemap.xml', function () {
     $staticUrls = [
         route('home'),
         route('shop.index'),
-        route('products.index'),
         route('shop.used'),
         route('about'),
         route('contact'),
@@ -62,7 +61,7 @@ Route::get('/sitemap.xml', function () {
 // Shop & Products
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/ajax', [ShopController::class, 'ajaxProducts'])->name('shop.ajax');
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::redirect('/products', '/shop', 301)->name('products.index');
 Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
 Route::get('/used-devices', [ShopController::class, 'used'])->name('shop.used');
 

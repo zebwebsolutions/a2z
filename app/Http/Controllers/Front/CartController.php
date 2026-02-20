@@ -69,7 +69,7 @@ class CartController extends Controller
     {
         $cart = session()->get('cart', []);
         if (empty($cart)) {
-            return redirect()->route('products.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('shop.index')->with('error', 'Your cart is empty.');
         }
 
         return view('front.cart.checkout', compact('cart'));
@@ -80,7 +80,7 @@ class CartController extends Controller
     {
         $cart = session()->get('cart', []);
         if (empty($cart)) {
-            return redirect()->route('products.index');
+            return redirect()->route('shop.index');
         }
 
         $data = $request->validate([

@@ -3,8 +3,3 @@
         @include('front.products.partials.product-card', ['product' => $product])
     @endforeach
 </div>
-
-<div class="mt-8">
-    {{-- Render pagination links here so JSON also contains them if needed --}}
-    {{ $products->links() }}
-</div>

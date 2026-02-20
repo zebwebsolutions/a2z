@@ -6,6 +6,12 @@
             ?: ($product->gallery[0] ?? null);
     @endphp
 
+    @php
+        $returnUrl = request()->routeIs('shop.ajax')
+            ? route('shop.index') . (request()->getQueryString() ? ('?' . request()->getQueryString()) : '')
+            : url()->full();
+    @endphp
+
     <a href="{{ route('product.show', $product->slug) }}">
         @if($displayImage)
             <img src="{{ asset('storage/' . $displayImage) }}"
@@ -32,7 +38,7 @@
 
         <a href="{{ route('cart.add', [
             'id' => $product->id,
-            'return' => url()->full(),
+            'return' => $returnUrl,
             'anchor' => 'product-' . $product->id,
         ]) }}"
            class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700">

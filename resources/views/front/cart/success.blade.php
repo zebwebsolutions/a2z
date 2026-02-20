@@ -34,7 +34,7 @@
     <h3 class="mt-6 text-lg font-bold">Total: {{ $order->total_amount }} KWD</h3>
 
     <div class="mt-8">
-        <a href="{{ route('products.index') }}" class="bg-blue-600 text-white px-4 py-2 rounded">Continue Shopping</a>
+        <a href="{{ route('shop.index') }}" class="bg-blue-600 text-white px-4 py-2 rounded">Continue Shopping</a>
     </div>
 </div>
 @endsection
