@@ -238,7 +238,7 @@
 </nav>
 
 {{-- Spacer --}}
-<div class="h-[56px]"></div>
+<div class="h-[72px]"></div>
 
 <div class=" bg-white border-t">
     <div class="container mx-auto py-4 px-6 flex flex-col md:flex-row md:items-center justify-between md:gap-6">

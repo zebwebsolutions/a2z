@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Http\Helpers\PhoneNumber;
+use App\Services\OrderReceiptService;
+use App\Services\MetaCloudWhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
@@ -76,7 +80,11 @@ class CartController extends Controller
     }
 
     // Place order
-    public function placeOrder(Request $request)
+    public function placeOrder(
+        Request $request,
+        OrderReceiptService $orderReceiptService,
+        MetaCloudWhatsAppService $metaCloudWhatsAppService
+    )
     {
         $cart = session()->get('cart', []);
         if (empty($cart)) {
@@ -86,9 +94,19 @@ class CartController extends Controller
         $data = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email',
-            'customer_phone' => 'nullable|string|max:20',
+            'customer_phone' => 'nullable|string|max:40',
             'customer_address' => 'nullable|string|max:255',
         ]);
+
+        $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
+        if (!empty($data['customer_phone']) && !$normalizedPhone) {
+            throw ValidationException::withMessages([
+                'customer_phone' => 'Please enter a valid Kuwait phone number (e.g. +965 977 64165).',
+            ]);
+        }
+
+        $data['customer_phone'] = isset($data['customer_phone']) ? trim($data['customer_phone']) : null;
+        $data['customer_phone_e164'] = $normalizedPhone;
 
         $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
 
@@ -107,6 +125,11 @@ class CartController extends Controller
                 'price' => $item['price'],
                 'subtotal' => $item['price'] * $item['quantity'],
             ]);
+        }
+
+        $pdfPath = $orderReceiptService->generate($order);
+        if ($pdfPath) {
+            $metaCloudWhatsAppService->sendReceipt($order, $pdfPath);
         }
 
         session()->forget('cart');

@@ -7,8 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Http\Helpers\PhoneNumber;
+use App\Services\OrderReceiptService;
+use App\Services\MetaCloudWhatsAppService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -53,7 +57,11 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    public function store(Request $request)
+    public function store(
+        Request $request,
+        OrderReceiptService $orderReceiptService,
+        MetaCloudWhatsAppService $metaCloudWhatsAppService
+    )
     {
         $user = $request->user(); 
 
@@ -78,13 +86,21 @@ class OrderController extends Controller
             'customer_type' => 'nullable|in:vip,good,normal,bad',
         ]);
 
-        return DB::transaction(function () use ($data, $user) {
+        $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
+        if (!empty($data['customer_phone']) && !$normalizedPhone) {
+            throw ValidationException::withMessages([
+                'customer_phone' => ['Please enter a valid Kuwait phone number (e.g. +965 977 64165).'],
+            ]);
+        }
+
+        $order = DB::transaction(function () use ($data, $user, $normalizedPhone) {
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'store_id' => $user->store_id ?? null,
                 'customer_name' => $data['customer_name'] ?? null,
-                'customer_phone' => $data['customer_phone'] ?? null,
+                'customer_phone' => isset($data['customer_phone']) ? trim($data['customer_phone']) : null,
+                'customer_phone_e164' => $normalizedPhone,
                 'customer_type' => $data['customer_type'] ?? null,
                 'status' => 'completed',
                 'payment_method' => $data['payment_method'],
@@ -111,11 +127,18 @@ class OrderController extends Controller
                 ]);
             }
 
-            return response()->json([
-                'success' => true,
-                'order_id' => $order->id,
-            ]);
+            return $order;
         });
+
+        $pdfPath = $orderReceiptService->generate($order);
+        if ($pdfPath) {
+            $metaCloudWhatsAppService->sendReceipt($order, $pdfPath);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order_id' => $order->id,
+        ]);
     }
 
     public function show(Order $order)
