@@ -48,10 +48,6 @@ class MetaCloudWhatsAppService
                         'language'   => ['code' => $templateLang],
                         'components' => [
                             [
-                                'type'       => 'body',
-                                'parameters' => [],
-                            ],
-                            [
                                 'type'       => 'button',
                                 'sub_type'   => 'url',
                                 'index'      => (string) $buttonIndex,
