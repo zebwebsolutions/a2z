@@ -14,9 +14,11 @@ class MetaCloudWhatsAppService
         $token = (string) config('services.whatsapp.token');
         $phoneNumberId = (string) config('services.whatsapp.phone_number_id');
         $apiVersion = (string) config('services.whatsapp.api_version', 'v21.0');
+        $templateName = (string) config('services.whatsapp.template_receipt', 'send_order_receipt');
+        $templateLang = (string) config('services.whatsapp.template_lang', 'en');
 
-        if ($token === '' || $phoneNumberId === '') {
-            Log::warning('WhatsApp receipt skipped: missing token or phone number id.');
+        if ($token === '' || $phoneNumberId === '' || $templateName === '') {
+            Log::warning('WhatsApp receipt skipped: missing token, phone number id, or template name.');
             return false;
         }
 
@@ -29,46 +31,53 @@ class MetaCloudWhatsAppService
             return false;
         }
 
-        $to = ltrim($to, '+'); // Meta expects digits only.
         $baseUrl = "https://graph.facebook.com/{$apiVersion}/{$phoneNumberId}";
+        $pdfUrl = $this->publicReceiptUrl($pdfAbsolutePath);
+        if (!$pdfUrl) {
+            Log::warning('WhatsApp receipt skipped: receipt URL is not publicly accessible.', [
+                'order_id' => $order->id,
+                'path' => $pdfAbsolutePath,
+            ]);
+            return false;
+        }
 
         try {
-            $upload = Http::withToken($token)
-                ->timeout(30)
-                ->attach('file', fopen($pdfAbsolutePath, 'r'), basename($pdfAbsolutePath))
-                ->post($baseUrl . '/media', [
-                    'messaging_product' => 'whatsapp',
-                    'type' => 'application/pdf',
-                ]);
-
-            if (!$upload->successful()) {
-                Log::error('WhatsApp media upload failed', [
-                    'order_id' => $order->id,
-                    'status' => $upload->status(),
-                    'body' => $upload->body(),
-                ]);
-                return false;
-            }
-
-            $mediaId = $upload->json('id');
-            if (!$mediaId) {
-                Log::error('WhatsApp media upload missing media id', [
-                    'order_id' => $order->id,
-                    'response' => $upload->json(),
-                ]);
-                return false;
-            }
-
             $send = Http::withToken($token)
                 ->timeout(30)
                 ->post($baseUrl . '/messages', [
                     'messaging_product' => 'whatsapp',
                     'to' => $to,
-                    'type' => 'document',
-                    'document' => [
-                        'id' => $mediaId,
-                        'filename' => 'receipt-order-' . $order->id . '.pdf',
-                        'caption' => 'Thank you. Your receipt for Order #' . $order->id,
+                    'type' => 'template',
+                    'template' => [
+                        'name' => $templateName,
+                        'language' => ['code' => $templateLang],
+                        'components' => [
+                            [
+                                'type' => 'header',
+                                'parameters' => [[
+                                    'type' => 'document',
+                                    'document' => [
+                                        'link' => $pdfUrl,
+                                        'filename' => 'receipt-order-' . $order->id . '.pdf',
+                                    ],
+                                ]],
+                            ],
+                            [
+                                'type' => 'body',
+                                'parameters' => [
+                                    [
+                                        'type' => 'text',
+                                        'parameter_name' => 'customer_name',
+                                        'text' => (string) ($order->customer_name ?: 'Customer'),
+                                    ],
+                                    [
+                                        'type' => 'text',
+                                        'parameter_name' => 'order_number',
+                                        'text' => (string) $order->id,
+                                    ],
+                                ],
+                            ],
+                        ],
                     ],
                 ]);
 
@@ -90,5 +99,22 @@ class MetaCloudWhatsAppService
             return false;
         }
     }
-}
 
+    private function publicReceiptUrl(string $absolutePath): ?string
+    {
+        $publicStorageRoot = storage_path('app/public') . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($absolutePath, $publicStorageRoot)) {
+            return null;
+        }
+
+        $relative = substr($absolutePath, strlen($publicStorageRoot));
+        $relative = str_replace(DIRECTORY_SEPARATOR, '/', $relative);
+        $base = rtrim((string) config('app.url'), '/');
+
+        if ($base === '') {
+            return null;
+        }
+
+        return $base . '/storage/' . ltrim($relative, '/');
+    }
+}
