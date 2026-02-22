@@ -23,15 +23,15 @@ class MetaCloudWhatsAppService
             return false;
         }
 
-        $to = $order->customer_phone_e164 ?: PhoneNumber::normalizeKuwait($order->customer_phone);
+        $to = $this->resolveRecipientNumber($order);
         if (!$to) {
             Log::warning('WhatsApp receipt skipped: invalid customer phone.', [
                 'order_id' => $order->id,
+                'customer_phone_e164' => $order->customer_phone_e164,
                 'customer_phone' => $order->customer_phone,
             ]);
             return false;
         }
-        $to = ltrim($to, '+');
 
         $baseUrl = "https://graph.facebook.com/{$apiVersion}/{$phoneNumberId}";
         $buttonUrlParam = $this->receiptButtonParam($pdfAbsolutePath);
@@ -72,6 +72,7 @@ class MetaCloudWhatsAppService
             if (!$send->successful()) {
                 Log::error('WhatsApp receipt message failed', [
                     'order_id' => $order->id,
+                    'to' => $to,
                     'status' => $send->status(),
                     'body' => $send->body(),
                 ]);
@@ -92,5 +93,36 @@ class MetaCloudWhatsAppService
     {
         $file = basename($absolutePath);
         return $file !== '' ? $file : null;
+    }
+
+    /**
+     * Resolve WhatsApp recipient to digits-only international format.
+     */
+    private function resolveRecipientNumber(Order $order): ?string
+    {
+        $candidate = $order->customer_phone_e164
+            ?: PhoneNumber::normalizeKuwait($order->customer_phone)
+            ?: $order->customer_phone;
+
+        if (!$candidate) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', (string) $candidate) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+
+        // Support numbers entered as 00<country><number>
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        // WhatsApp expects international recipient, usually 10-15 digits.
+        if (strlen($digits) < 10 || strlen($digits) > 15) {
+            return null;
+        }
+
+        return $digits;
     }
 }
