@@ -12,7 +12,6 @@ use App\Services\OrderReceiptService;
 use App\Services\MetaCloudWhatsAppService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -87,11 +86,6 @@ class OrderController extends Controller
         ]);
 
         $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
-        if (!empty($data['customer_phone']) && !$normalizedPhone) {
-            throw ValidationException::withMessages([
-                'customer_phone' => ['Please enter a valid Kuwait phone number (e.g. +965 977 64165).'],
-            ]);
-        }
 
         $order = DB::transaction(function () use ($data, $user, $normalizedPhone) {
 
