@@ -4,6 +4,14 @@
 @section('meta_description', 'A2Z Kuwait provides new and used phones, tablets, accessories, and trusted repair services with fast support in Sharq, Kuwait.')
 
 @section('content')
+    <section class="bg-white border-b">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6 py-3">
+            <p class="text-sm text-gray-700">
+                Legal business name: <strong>A to Z Electronics &amp; Repairing</strong> (also known as A2Z Kuwait).
+            </p>
+        </div>
+    </section>
+
     {{-- Hero Section --}}
     <x-slider name="homepage_slider" />
 

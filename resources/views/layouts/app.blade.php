@@ -6,7 +6,7 @@
         <link rel="shortcut icon" href="{{ asset('favicon.png') }}" type="image/x-icon">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @php
-            $defaultTitle = 'A2Z Kuwait | New & Used Phones, Tablets, Accessories & Repairs';
+            $defaultTitle = 'A to Z Electronics & Repairing | New & Used Phones, Tablets, Accessories & Repairs';
             $pageTitle = trim($__env->yieldContent('title')) ?: $defaultTitle;
             $defaultDescription = 'A2Z Kuwait offers new and used phones, tablets, accessories, and expert repair services for phones, tablets, and smart watches in Sharq, Kuwait.';
             $pageDescription = trim($__env->yieldContent('meta_description')) ?: $defaultDescription;
@@ -44,7 +44,7 @@
         <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ url('/sitemap.xml') }}">
 
         <meta property="og:type" content="website">
-        <meta property="og:site_name" content="A2Z Kuwait">
+        <meta property="og:site_name" content="A to Z Electronics & Repairing">
         <meta property="og:title" content="{{ $ogTitle }}">
         <meta property="og:description" content="{{ $ogDescription }}">
         <meta property="og:url" content="{{ request()->fullUrl() }}">
