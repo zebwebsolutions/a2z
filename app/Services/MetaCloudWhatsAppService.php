@@ -23,7 +23,7 @@ class MetaCloudWhatsAppService
             return false;
         }
 
-        $to = $order->customer_phone_e164 ?: PhoneNumber::normalizeKuwait($order->customer_phone);
+        $to = $this->resolveRecipientNumber($order);
 
         if (!$to) {
             Log::warning('WhatsApp receipt skipped: invalid customer phone.', [
@@ -32,8 +32,6 @@ class MetaCloudWhatsAppService
             ]);
             return false;
         }
-
-        $to = ltrim($to, '+');
 
         $baseUrl  = "https://graph.facebook.com/{$apiVersion}/{$phoneNumberId}";
         $filename = basename($pdfAbsolutePath);
@@ -92,5 +90,33 @@ class MetaCloudWhatsAppService
             ]);
             return false;
         }
+    }
+
+    private function resolveRecipientNumber(Order $order): ?string
+    {
+        $candidate = $order->customer_phone_e164
+            ?: PhoneNumber::normalizeKuwait($order->customer_phone)
+            ?: $order->customer_phone;
+
+        if (!$candidate) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', (string) $candidate) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+
+        // Convert 00<country><number> to <country><number>
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        // WhatsApp API expects international digits only (no +), usually 10-15.
+        if (strlen($digits) < 10 || strlen($digits) > 15) {
+            return null;
+        }
+
+        return $digits;
     }
 }
