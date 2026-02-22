@@ -30,6 +30,7 @@ class MetaCloudWhatsAppService
             ]);
             return false;
         }
+        $to = ltrim($to, '+');
 
         $baseUrl = "https://graph.facebook.com/{$apiVersion}/{$phoneNumberId}";
         $pdfUrl = $this->publicReceiptUrl($pdfAbsolutePath);
