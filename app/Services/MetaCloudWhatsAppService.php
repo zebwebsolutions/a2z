@@ -16,6 +16,7 @@ class MetaCloudWhatsAppService
         $apiVersion = (string) config('services.whatsapp.api_version', 'v21.0');
         $templateName = (string) config('services.whatsapp.template_receipt', 'send_order_receipt');
         $templateLang = (string) config('services.whatsapp.template_lang', 'en');
+        $buttonIndex = (string) config('services.whatsapp.template_button_index', '0');
 
         if ($token === '' || $phoneNumberId === '' || $templateName === '') {
             Log::warning('WhatsApp receipt skipped: missing token, phone number id, or template name.');
@@ -33,9 +34,9 @@ class MetaCloudWhatsAppService
         $to = ltrim($to, '+');
 
         $baseUrl = "https://graph.facebook.com/{$apiVersion}/{$phoneNumberId}";
-        $pdfUrl = $this->publicReceiptUrl($pdfAbsolutePath);
-        if (!$pdfUrl) {
-            Log::warning('WhatsApp receipt skipped: receipt URL is not publicly accessible.', [
+        $buttonUrlParam = $this->receiptButtonParam($pdfAbsolutePath);
+        if (!$buttonUrlParam) {
+            Log::warning('WhatsApp receipt skipped: receipt filename could not be resolved.', [
                 'order_id' => $order->id,
                 'path' => $pdfAbsolutePath,
             ]);
@@ -43,43 +44,29 @@ class MetaCloudWhatsAppService
         }
 
         try {
+            $templatePayload = [
+                'name' => $templateName,
+                'language' => ['code' => $templateLang],
+                'components' => [
+                    [
+                        'type' => 'button',
+                        'sub_type' => 'url',
+                        'index' => $buttonIndex,
+                        'parameters' => [[
+                            'type' => 'text',
+                            'text' => $buttonUrlParam,
+                        ]],
+                    ],
+                ],
+            ];
+
             $send = Http::withToken($token)
                 ->timeout(30)
                 ->post($baseUrl . '/messages', [
                     'messaging_product' => 'whatsapp',
                     'to' => $to,
                     'type' => 'template',
-                    'template' => [
-                        'name' => $templateName,
-                        'language' => ['code' => $templateLang],
-                        'components' => [
-                            [
-                                'type' => 'header',
-                                'parameters' => [[
-                                    'type' => 'document',
-                                    'document' => [
-                                        'link' => $pdfUrl,
-                                        'filename' => 'receipt-order-' . $order->id . '.pdf',
-                                    ],
-                                ]],
-                            ],
-                            [
-                                'type' => 'body',
-                                'parameters' => [
-                                    [
-                                        'type' => 'text',
-                                        'parameter_name' => 'customer_name',
-                                        'text' => (string) ($order->customer_name ?: 'Customer'),
-                                    ],
-                                    [
-                                        'type' => 'text',
-                                        'parameter_name' => 'order_number',
-                                        'text' => (string) $order->id,
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
+                    'template' => $templatePayload,
                 ]);
 
             if (!$send->successful()) {
@@ -101,21 +88,9 @@ class MetaCloudWhatsAppService
         }
     }
 
-    private function publicReceiptUrl(string $absolutePath): ?string
+    private function receiptButtonParam(string $absolutePath): ?string
     {
-        $publicStorageRoot = storage_path('app/public') . DIRECTORY_SEPARATOR;
-        if (!str_starts_with($absolutePath, $publicStorageRoot)) {
-            return null;
-        }
-
-        $relative = substr($absolutePath, strlen($publicStorageRoot));
-        $relative = str_replace(DIRECTORY_SEPARATOR, '/', $relative);
-        $base = rtrim((string) config('app.url'), '/');
-
-        if ($base === '') {
-            return null;
-        }
-
-        return $base . '/storage/' . ltrim($relative, '/');
+        $file = basename($absolutePath);
+        return $file !== '' ? $file : null;
     }
 }
