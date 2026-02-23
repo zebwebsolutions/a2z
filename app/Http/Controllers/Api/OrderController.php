@@ -86,9 +86,14 @@ class OrderController extends Controller
             'receipt_language' => 'nullable|in:en,ar',
         ]);
 
+        $receiptLanguage = strtolower((string) $request->input('receipt_language', 'en'));
+        if (!in_array($receiptLanguage, ['en', 'ar'], true)) {
+            $receiptLanguage = 'en';
+        }
+
         $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
 
-        $order = DB::transaction(function () use ($data, $user, $normalizedPhone) {
+        $order = DB::transaction(function () use ($data, $user, $normalizedPhone, $receiptLanguage) {
 
             $order = Order::create([
                 'user_id' => $user->id,
@@ -96,7 +101,7 @@ class OrderController extends Controller
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => isset($data['customer_phone']) ? trim($data['customer_phone']) : null,
                 'customer_phone_e164' => $normalizedPhone,
-                'receipt_language' => $data['receipt_language'] ?? 'en',
+                'receipt_language' => $receiptLanguage,
                 'customer_type' => $data['customer_type'] ?? null,
                 'status' => 'completed',
                 'payment_method' => $data['payment_method'],
