@@ -83,6 +83,7 @@ class OrderController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:255',
             'customer_type' => 'nullable|in:vip,good,normal,bad',
+            'receipt_language' => 'nullable|in:en,ar',
         ]);
 
         $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
@@ -95,6 +96,7 @@ class OrderController extends Controller
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => isset($data['customer_phone']) ? trim($data['customer_phone']) : null,
                 'customer_phone_e164' => $normalizedPhone,
+                'receipt_language' => $data['receipt_language'] ?? 'en',
                 'customer_type' => $data['customer_type'] ?? null,
                 'status' => 'completed',
                 'payment_method' => $data['payment_method'],

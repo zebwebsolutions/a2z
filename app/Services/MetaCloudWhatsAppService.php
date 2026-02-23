@@ -14,8 +14,11 @@ class MetaCloudWhatsAppService
         $token        = (string) config('services.whatsapp.token');
         $phoneNumberId = (string) config('services.whatsapp.phone_number_id');
         $apiVersion   = (string) config('services.whatsapp.api_version', 'v21.0');
-        $templateName = (string) config('services.whatsapp.template_receipt', 'send_receipt_link');
-        $templateLang = (string) config('services.whatsapp.template_lang', 'en');
+        $receiptLanguage = $order->receipt_language === 'ar' ? 'ar' : 'en';
+        $templateName = $receiptLanguage === 'ar'
+            ? (string) config('services.whatsapp.template_receipt_ar', 'send_receipt_link_arabic')
+            : (string) config('services.whatsapp.template_receipt', 'send_receipt_link');
+        $templateLang = $receiptLanguage;
         $buttonIndex  = (int)    config('services.whatsapp.template_button_index', 0);
 
         if ($token === '' || $phoneNumberId === '' || $templateName === '') {

@@ -107,6 +107,7 @@ class CartController extends Controller
         $order = Order::create(array_merge($data, [
             'total' => $total,
             'status' => 'pending',
+            'receipt_language' => 'en',
             'user_id' => auth()->id(), // Optional: logged-in users
             'store_id' => 1, // Optional: default store
         ]));

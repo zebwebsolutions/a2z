@@ -12,6 +12,7 @@ class Order extends Model
         'customer_name',
         'customer_phone',
         'customer_phone_e164',
+        'receipt_language',
         'customer_type',
         'discount',
         'total',
