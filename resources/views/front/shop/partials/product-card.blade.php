@@ -3,7 +3,7 @@
     @php
         // Determine which image to display
         $displayImage = $product->image 
-            ?: ($product->gallery[0] ?? null);
+            ?: data_get($product->gallery, '0');
     @endphp
 
     @if($product->is_used === 1)

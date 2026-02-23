@@ -38,11 +38,17 @@
 
             {{-- MAIN IMAGE --}}
             <div class="md:col-span-4">
-                <img 
-                    id="mainImage"
-                    src="{{ asset('storage/' . $images[0]) }}"
-                    class="w-full h-100 object-contain rounded border"
-                >
+                @if(!empty($images))
+                    <img
+                        id="mainImage"
+                        src="{{ asset('storage/' . data_get($images, '0')) }}"
+                        class="w-full h-100 object-contain rounded border"
+                    >
+                @else
+                    <div class="w-full h-100 rounded border bg-gray-100 flex items-center justify-center text-gray-500">
+                        No Image
+                    </div>
+                @endif
             </div>
 
         </div>
