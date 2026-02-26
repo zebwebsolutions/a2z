@@ -13,6 +13,7 @@ use App\Http\Controllers\Front\CartController;
 use App\Http\Controllers\Front\RepairController;
 use App\Http\Controllers\Front\ContactController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Front\GoogleFeedController;
 
 // Home
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -108,6 +109,8 @@ Route::middleware(['auth', 'active', 'role:admin,salesman,technician'])
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
     });
+
+Route::get('/google-feed.xml', [GoogleFeedController::class, 'index']);
 
 require __DIR__.'/../routes/admin.php';
 require __DIR__.'/../routes/salesman.php';
