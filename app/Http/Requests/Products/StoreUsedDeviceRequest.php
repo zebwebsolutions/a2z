@@ -22,10 +22,11 @@ class StoreUsedDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'condition_grade'   => 'required|in:A,B,C,D',
+            'condition_grade'   => 'required|in:A+,A,B,C',
             'battery_health'    => 'nullable|integer|min:50|max:100',
 
             'box_available'     => 'nullable|boolean',
+            'cable_available'   => 'nullable|boolean',
             'charger_available' => 'nullable|boolean',
             'headphones_available' => 'nullable|boolean',
 
@@ -40,6 +41,7 @@ class StoreUsedDeviceRequest extends FormRequest
     {
         $this->merge([
             'box_available'     => $this->boolean('box_available'),
+            'cable_available'   => $this->boolean('cable_available'),
             'charger_available' => $this->boolean('charger_available'),
             'headphones_available' => $this->boolean('headphones_available'),
             'imei_verified'     => $this->boolean('imei_verified'),

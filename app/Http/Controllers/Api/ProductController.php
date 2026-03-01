@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\Images\ImageOptimizer;
 
@@ -83,13 +84,23 @@ class ProductController extends Controller
             'is_used' => ['nullable', 'boolean'],
 
             // Used device extras
-            'condition_grade' => ['nullable', 'string', 'max:50'],
+            'condition_grade' => ['nullable', Rule::in(['A+', 'A', 'B', 'C'])],
+            'used_device_details' => ['nullable', 'array'],
+            'used_device_details.device_condition' => ['nullable', Rule::in(['A+', 'A', 'B', 'C'])],
             'warranty_days' => ['nullable', 'integer', 'min:0'],
+            'used_device_details.warranty_days' => ['nullable', 'integer', 'min:0'],
             'battery_health' => ['nullable', 'integer', 'min:50', 'max:100'],
-            'imei' => ['nullable', 'string', 'max:255'],
+            'used_device_details.battery_health' => ['nullable', 'integer', 'min:50', 'max:100'],
+            'imei' => ['nullable', 'string', 'max:20', Rule::unique('used_device_details', 'imei')],
+            'used_device_details.imei' => ['nullable', 'string', 'max:20', Rule::unique('used_device_details', 'imei')],
             'box_available' => ['nullable', 'boolean'],
+            'used_device_details.box_available' => ['nullable', 'boolean'],
+            'cable_available' => ['nullable', 'boolean'],
+            'used_device_details.cable_available' => ['nullable', 'boolean'],
             'charger_available' => ['nullable', 'boolean'],
+            'used_device_details.charger_available' => ['nullable', 'boolean'],
             'headphones_available' => ['nullable', 'boolean'],
+            'used_device_details.headphones_available' => ['nullable', 'boolean'],
 
             // Images
             'image' => ['nullable', 'image', 'max:4096'],
@@ -142,45 +153,60 @@ class ProductController extends Controller
             }
         }
 
-        /* ---------------------------------
-         | Create product
-         |---------------------------------*/
-        $product = Product::create([
-            'store_id' => $data['store_id'],
-            'parent_category_id' => $data['parent_category_id'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
-            'brand_id' => $data['brand_id'] ?? null,
-
-            'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
-            'description' => $data['description'] ?? null,
-
-            'price' => $data['price'],
-            'cost_price' => $data['cost_price'] ?? null,
-            'stock' => $data['stock'],
-
-            'sku' => $data['sku'] ?? null,
-            'barcode' => $data['barcode'] ?? null,
-
-            'is_used' => $data['is_used'] ?? false,
-
-
-            'image' => $imagePath,
-            'gallery' => $gallery,
-            'specs' => $specs,
-        ]);
-
+        $deviceCondition = null;
         if ($request->boolean('is_used')) {
-            $product->usedDeviceDetails()->create([
-                'device_condition' => $request->condition_grade,
-                'battery_health' => $request->battery_health,
-                'imei' => $request->imei,
-                'warranty_days' => $request->warranty_days,
-                'box_available' => $request->boolean('box_available'),
-                'charger_available' => $request->boolean('charger_available'),
-                'headphones_available' => $request->boolean('headphones_available'),
-            ]);
+            $deviceCondition = $request->input('used_device_details.device_condition', $request->condition_grade);
+            if (!$deviceCondition) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Condition grade is required for used device.',
+                ], 422);
+            }
         }
+
+        $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition) {
+            $product = Product::create([
+                'store_id' => $data['store_id'],
+                'parent_category_id' => $data['parent_category_id'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'brand_id' => $data['brand_id'] ?? null,
+                'name' => $data['name'],
+                'slug' => Str::slug($data['name']),
+                'description' => $data['description'] ?? null,
+                'price' => $data['price'],
+                'cost_price' => $data['cost_price'] ?? null,
+                'stock' => $data['stock'],
+                'sku' => $data['sku'] ?? null,
+                'barcode' => $data['barcode'] ?? null,
+                'is_used' => $data['is_used'] ?? false,
+                'image' => $imagePath,
+                'gallery' => $gallery,
+                'specs' => $specs,
+            ]);
+
+            if ($request->boolean('is_used')) {
+                $product->usedDeviceDetails()->create([
+                    'device_condition' => $deviceCondition,
+                    'battery_health' => $request->input('used_device_details.battery_health', $request->battery_health),
+                    'imei' => $request->input('used_device_details.imei', $request->imei),
+                    'warranty_days' => $request->input('used_device_details.warranty_days', $request->warranty_days),
+                    'box_available' => $request->has('used_device_details.box_available')
+                        ? $request->boolean('used_device_details.box_available')
+                        : $request->boolean('box_available'),
+                    'cable_available' => $request->has('used_device_details.cable_available')
+                        ? $request->boolean('used_device_details.cable_available')
+                        : $request->boolean('cable_available'),
+                    'charger_available' => $request->has('used_device_details.charger_available')
+                        ? $request->boolean('used_device_details.charger_available')
+                        : $request->boolean('charger_available'),
+                    'headphones_available' => $request->has('used_device_details.headphones_available')
+                        ? $request->boolean('used_device_details.headphones_available')
+                        : $request->boolean('headphones_available'),
+                ]);
+            }
+
+            return $product;
+        });
 
         return response()->json([
             'success' => true,
@@ -190,6 +216,8 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product, ImageOptimizer $imageOptimizer)
     {
+        $usedDetailId = optional($product->usedDeviceDetails)->id;
+
         $data = $request->validate([
             // Required
             'store_id' => ['sometimes', 'exists:stores,id'],
@@ -219,13 +247,23 @@ class ProductController extends Controller
             'is_used' => ['nullable', 'boolean'],
 
             // Used device extras
-            'condition_grade' => ['nullable', 'string', 'max:50'],
+            'condition_grade' => ['nullable', Rule::in(['A+', 'A', 'B', 'C'])],
+            'used_device_details' => ['nullable', 'array'],
+            'used_device_details.device_condition' => ['nullable', Rule::in(['A+', 'A', 'B', 'C'])],
             'warranty_days' => ['nullable', 'integer', 'min:0'],
+            'used_device_details.warranty_days' => ['nullable', 'integer', 'min:0'],
             'battery_health' => ['nullable', 'integer', 'min:50', 'max:100'],
-            'imei' => ['nullable', 'string', 'max:255'],
+            'used_device_details.battery_health' => ['nullable', 'integer', 'min:50', 'max:100'],
+            'imei' => ['nullable', 'string', 'max:20', Rule::unique('used_device_details', 'imei')->ignore($usedDetailId)],
+            'used_device_details.imei' => ['nullable', 'string', 'max:20', Rule::unique('used_device_details', 'imei')->ignore($usedDetailId)],
             'box_available' => ['nullable', 'boolean'],
+            'used_device_details.box_available' => ['nullable', 'boolean'],
+            'cable_available' => ['nullable', 'boolean'],
+            'used_device_details.cable_available' => ['nullable', 'boolean'],
             'charger_available' => ['nullable', 'boolean'],
+            'used_device_details.charger_available' => ['nullable', 'boolean'],
             'headphones_available' => ['nullable', 'boolean'],
+            'used_device_details.headphones_available' => ['nullable', 'boolean'],
 
             // Images
             'image' => ['nullable', 'image', 'max:4096'],
@@ -279,9 +317,17 @@ class ProductController extends Controller
             $product->specs = $specs;
         }
 
-        /* ---------------------------------
-         | Update product
-         |---------------------------------*/
+        $deviceCondition = null;
+        if ($request->has('is_used') && $request->boolean('is_used')) {
+            $deviceCondition = $request->input('used_device_details.device_condition', $request->condition_grade);
+            if (!$deviceCondition) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Condition grade is required for used device.',
+                ], 422);
+            }
+        }
+
         $product->fill([
             'store_id' => $data['store_id'] ?? $product->store_id,
             'parent_category_id' => array_key_exists('parent_category_id', $data)
@@ -314,25 +360,36 @@ class ProductController extends Controller
             'is_used' => array_key_exists('is_used', $data) ? $data['is_used'] : $product->is_used,
         ]);
 
-        $product->save();
+        DB::transaction(function () use ($product, $request, $deviceCondition) {
+            $product->save();
 
-        if ($request->has('is_used')) {
-            if ($request->boolean('is_used')) {
-                $product->usedDeviceDetails()->updateOrCreate([
-                    'product_id' => $product->id,
-                ], [
-                    'device_condition' => $request->condition_grade,
-                    'battery_health' => $request->battery_health,
-                    'imei' => $request->imei,
-                    'warranty_days' => $request->warranty_days,
-                    'box_available' => $request->boolean('box_available'),
-                    'charger_available' => $request->boolean('charger_available'),
-                    'headphones_available' => $request->boolean('headphones_available'),
-                ]);
-            } else {
-                $product->usedDeviceDetails()->delete();
+            if ($request->has('is_used')) {
+                if ($request->boolean('is_used')) {
+                    $product->usedDeviceDetails()->updateOrCreate([
+                        'product_id' => $product->id,
+                    ], [
+                        'device_condition' => $deviceCondition,
+                        'battery_health' => $request->input('used_device_details.battery_health', $request->battery_health),
+                        'imei' => $request->input('used_device_details.imei', $request->imei),
+                        'warranty_days' => $request->input('used_device_details.warranty_days', $request->warranty_days),
+                        'box_available' => $request->has('used_device_details.box_available')
+                            ? $request->boolean('used_device_details.box_available')
+                            : $request->boolean('box_available'),
+                        'cable_available' => $request->has('used_device_details.cable_available')
+                            ? $request->boolean('used_device_details.cable_available')
+                            : $request->boolean('cable_available'),
+                        'charger_available' => $request->has('used_device_details.charger_available')
+                            ? $request->boolean('used_device_details.charger_available')
+                            : $request->boolean('charger_available'),
+                        'headphones_available' => $request->has('used_device_details.headphones_available')
+                            ? $request->boolean('used_device_details.headphones_available')
+                            : $request->boolean('headphones_available'),
+                    ]);
+                } else {
+                    $product->usedDeviceDetails()->delete();
+                }
             }
-        }
+        });
 
         return response()->json([
             'success' => true,

@@ -30,10 +30,10 @@
             <div>
                 <label class="block form-label">Condition</label>
                 <select name="condition_grade" class="form-select w-full">
-                    <option value="">Select condition</option>
-                    @foreach(['new','used','refurbished'] as $grade)
+                    <option value="">Select condition grade</option>
+                    @foreach(['A+','A','B','C'] as $grade)
                         <option value="{{ $grade }}"
-                            {{ old('device_condition', $product->usedDeviceDetails->device_condition ?? '') === $grade ? 'selected' : '' }}>
+                            {{ old('condition_grade', $product->usedDeviceDetails->device_condition ?? '') === $grade ? 'selected' : '' }}>
                              {{ $grade }}
                         </option>
                     @endforeach
@@ -95,9 +95,16 @@
                     </label>
 
                     <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" name="cable_available" value="1"
+                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                               {{ old('cable_available', $product->usedDeviceDetails->cable_available ?? false) ? 'checked' : '' }}>
+                        Cable
+                    </label>
+
+                    <label class="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" name="headphones_available" value="1"
                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                               {{ old('headphones_available', $product->usedDetails->headphones_available ?? false) ? 'checked' : '' }}>
+                               {{ old('headphones_available', $product->usedDeviceDetails->headphones_available ?? false) ? 'checked' : '' }}>
                         Headphones
                     </label>
 

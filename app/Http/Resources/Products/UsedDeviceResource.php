@@ -15,11 +15,12 @@ class UsedDeviceResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'condition_grade' => $this->condition_grade,
+            'condition_grade' => $this->device_condition,
             'battery_health'  => $this->battery_health,
 
             'accessories' => [
                 'box'        => $this->box_available,
+                'cable'      => $this->cable_available,
                 'charger'    => $this->charger_available,
                 'headphones' => $this->headphones_available,
             ],

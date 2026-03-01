@@ -11,6 +11,7 @@ class UsedDeviceDetail extends Model
         'device_condition',
         'battery_health',
         'box_available',
+        'cable_available',
         'charger_available',
         'headphones_available',
         'warranty_days',
@@ -20,6 +21,7 @@ class UsedDeviceDetail extends Model
 
     protected $casts = [
         'box_available' => 'boolean',
+        'cable_available' => 'boolean',
         'charger_available' => 'boolean',
         'headphones_available' => 'boolean',
         'imei_verified' => 'boolean',

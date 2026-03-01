@@ -273,7 +273,7 @@ class ShopController extends Controller
         $query = Product::query()
             ->where('is_used', 1)
             ->whereHas('usedDeviceDetails', fn ($q) =>
-                $q->where('device_condition', 'used')
+                $q->whereNotNull('device_condition')
             );
 
         // ------------------------------------
@@ -303,7 +303,7 @@ class ShopController extends Controller
             ->whereHas('product', fn ($q) =>
                 $q->where('is_used', 1)
             )
-            ->where('device_condition', 'used')
+            ->whereNotNull('device_condition')
             ->whereNotNull('battery_health')
             ->min('battery_health') ?? 0;
 
@@ -311,7 +311,7 @@ class ShopController extends Controller
             ->whereHas('product', fn ($q) =>
                 $q->where('is_used', 1)
             )
-            ->where('device_condition', 'used')
+            ->whereNotNull('device_condition')
             ->whereNotNull('battery_health')
             ->max('battery_health') ?? 100;
 

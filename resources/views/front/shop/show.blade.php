@@ -61,6 +61,11 @@
                     </li>
 
                     <li>
+                        🔗 Cable:
+                        <strong>{{ $product->usedDeviceDetails->cable_available ? 'Included' : 'Not Included' }}</strong>
+                    </li>
+
+                    <li>
                         🎧 Headphones:
                         <strong>{{ $product->usedDeviceDetails->headphones_available ? 'Included' : 'Not Included' }}</strong>
                     </li>

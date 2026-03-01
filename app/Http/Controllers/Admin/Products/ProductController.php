@@ -101,6 +101,14 @@ class ProductController extends Controller
             'brand_id' => 'nullable|exists:brands,id',
             'parent_category_id' => 'nullable|exists:categories,id',
             'is_used' => 'nullable|boolean',
+            'condition_grade' => 'nullable|in:A+,A,B,C',
+            'battery_health' => 'nullable|integer|min:50|max:100',
+            'box_available' => 'nullable|boolean',
+            'cable_available' => 'nullable|boolean',
+            'charger_available' => 'nullable|boolean',
+            'headphones_available' => 'nullable|boolean',
+            'warranty_days' => 'nullable|integer|min:0',
+            'imei' => 'nullable|string|max:255',
         ]);
 
         $keys = $request->specs_keys ?? [];
@@ -156,6 +164,7 @@ class ProductController extends Controller
                 'condition_grade',
                 'battery_health',
                 'box_available',
+                'cable_available',
                 'charger_available',
                 'headphones_available',
                 'warranty_days',
@@ -210,6 +219,14 @@ class ProductController extends Controller
             'brand_id' => 'nullable|exists:brands,id',
             'parent_category_id' => 'nullable|exists:categories,id',
             'is_used' => 'nullable|boolean',
+            'condition_grade' => 'nullable|in:A+,A,B,C',
+            'battery_health' => 'nullable|integer|min:50|max:100',
+            'box_available' => 'nullable|boolean',
+            'cable_available' => 'nullable|boolean',
+            'charger_available' => 'nullable|boolean',
+            'headphones_available' => 'nullable|boolean',
+            'warranty_days' => 'nullable|integer|min:0',
+            'imei' => 'nullable|string|max:255',
         ]);
 
         $keys = $request->specs_keys ?? [];
@@ -268,6 +285,7 @@ class ProductController extends Controller
                 'condition_grade',
                 'battery_health',
                 'box_available',
+                'cable_available',
                 'charger_available',
                 'headphones_available',
                 'warranty_days',
