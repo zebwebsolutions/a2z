@@ -209,6 +209,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             //'slug' => 'required|string|max:255|unique:products,slug,'.$id,
             'sku' => 'nullable|string|max:100|unique:products,sku,'.$id,
+            'barcode' => 'nullable|string|max:255|unique:products,barcode,'.$id,
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -243,6 +244,7 @@ class ProductController extends Controller
         $data['specs'] = $specs;
         $data['slug'] = Str::slug($data['name']);
         $data['is_active'] = $request->input('is_active', true);
+        $data['barcode_type'] = !empty($data['barcode']) ? ($product->barcode_type ?? 'code128') : null;
 
         if ($request->hasFile('image')) {
             if ($product->image) {
