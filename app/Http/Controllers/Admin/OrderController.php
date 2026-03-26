@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\Store;
+use App\Services\Products\ProductInventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -93,6 +96,41 @@ class OrderController extends Controller
     {
         $order = Order::with('items.product')->findOrFail($id);
         return view('admin.orders.show', compact('order'));
+    }
+
+    public function refund(Order $order, ProductInventoryService $productInventoryService)
+    {
+        $user = auth()->user();
+        if (
+            in_array($user->roleRelation?->name, ['salesman', 'technician'], true)
+            && $order->store_id !== $user->store_id
+        ) {
+            abort(403);
+        }
+
+        if ($order->status !== 'completed') {
+            return redirect()
+                ->route('admin.orders.show', $order)
+                ->with('error', 'Only completed orders can be refunded.');
+        }
+
+        DB::transaction(function () use ($order, $productInventoryService) {
+            $items = $order->items()->lockForUpdate()->get();
+
+            foreach ($items as $item) {
+                if ($productInventoryService->restoreUnits($item) === 0) {
+                    Product::whereKey($item->product_id)->increment('stock', $item->quantity);
+                }
+            }
+
+            $order->update([
+                'status' => 'refunded',
+            ]);
+        });
+
+        return redirect()
+            ->route('admin.orders.show', $order)
+            ->with('success', 'Order refunded successfully.');
     }
 
     /**

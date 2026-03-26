@@ -2,6 +2,25 @@
 
 @section('content')
 <div class="container mx-auto py-8">
+    @php
+        $categoryOptions = $categories->map(fn ($cat) => [
+            'id' => $cat->id,
+            'is_phone' => str_contains(strtolower($cat->slug ?: $cat->name), 'phone')
+                || str_contains(strtolower($cat->slug ?: $cat->name), 'mobile')
+                || str_contains(strtolower($cat->slug ?: $cat->name), 'smartphone')
+                || str_contains(strtolower($cat->slug ?: $cat->name), 'iphone'),
+        ])->values();
+        $subcategoryOptions = $subcategories->map(fn ($sub) => [
+            'id' => $sub->id,
+            'name' => $sub->name,
+            'parent_id' => $sub->parent_id,
+        ])->values();
+        $inventoryUnits = old(
+            'inventory_units',
+            $product->units()->where('status', 'available')->get(['id', 'imei_1', 'imei_2', 'serial_number', 'barcode'])->toArray()
+        );
+    @endphp
+
     <h1 class="text-2xl font-bold mb-6">Edit Product</h1>
 
     <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -43,14 +62,6 @@
             <label class="block font-medium">Subcategory</label>
             <select name="category_id" id="category_id" class="border p-2 w-full">
                 <option value="">Select Subcategory</option>
-
-                @foreach($subcategories as $sub)
-                    <option value="{{ $sub->id }}"
-                        data-parent="{{ $sub->parent_id }}"
-                        {{ old('category_id', $product->category_id) == $sub->id ? 'selected' : '' }}>
-                        {{ $sub->name }}
-                    </option>
-                @endforeach
             </select>
         </div>
 
@@ -84,9 +95,9 @@
                 <input type="number" step="0.01" name="cost_price" value="{{ old('cost_price', $product->cost_price) }}" class="border p-2 w-full">
             </div>
 
-            <div>
+            <div id="manualStockField">
                 <label class="block font-medium mb-1">Stock Quantity</label>
-                <input type="number" name="stock" value="{{ old('stock', $product->stock) }}" class="border p-2 w-full" required>
+                <input type="number" name="stock" id="stockInput" value="{{ old('stock', $product->stock) }}" class="border p-2 w-full">
             </div>
         </div>
 
@@ -119,6 +130,11 @@
                 />
             </div>
         @endif
+
+        @include('admin.products.partials.inventory-units', [
+            'inventoryUnits' => $inventoryUnits,
+            'categoryOptions' => $categoryOptions,
+        ])
 
         {{-- MAIN IMAGE --}}
         @if($product->image)
@@ -220,12 +236,26 @@
             document.addEventListener("DOMContentLoaded", () => {
                 const parentSelect = document.getElementById("parent_category_id");
                 const subSelect = document.getElementById("category_id");
+                const subcategories = @json($subcategoryOptions);
+                const selectedSubcategoryId = @json(old('category_id', $product->category_id));
 
                 function filterSubcategories() {
                     const parentId = parentSelect.value;
-                    Array.from(subSelect.options).forEach(opt => {
-                        if (!opt.value) return;
-                        opt.hidden = opt.dataset.parent !== parentId;
+                    const currentValue = subSelect.value || selectedSubcategoryId;
+                    const matchingSubcategories = subcategories.filter((sub) => String(sub.parent_id) === parentId);
+
+                    subSelect.innerHTML = '<option value="">Select Subcategory</option>';
+
+                    matchingSubcategories.forEach((sub) => {
+                        const option = document.createElement("option");
+                        option.value = sub.id;
+                        option.textContent = sub.name;
+
+                        if (String(currentValue) === String(sub.id)) {
+                            option.selected = true;
+                        }
+
+                        subSelect.appendChild(option);
                     });
                 }
 

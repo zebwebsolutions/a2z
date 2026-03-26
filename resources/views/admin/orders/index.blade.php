@@ -120,9 +120,9 @@
                     <td class="p-3">{{ $order->customer_type ?? '-' }}</td>
                     <td class="p-3">{{ $order->customer_phone ?? '-' }}</td>
                     <td class="p-3">
-                        {{ number_format($order->discount ?? 0, 2) }}
+                        KD {{ number_format($order->discount ?? 0, 2) }}
                     </td>
-                    <td class="p-3 font-semibold">${{ number_format($order->total, 2) }}</td>
+                    <td class="p-3 font-semibold">KD {{ number_format($order->total, 2) }}</td>
                     <td class="p-3">{{ ucfirst($order->payment_method ?? '-') }}</td>
                     <td class="p-3">
                         <form action="{{ route('admin.orders.update', $order->id) }}" method="POST">

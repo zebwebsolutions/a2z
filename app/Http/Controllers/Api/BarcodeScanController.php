@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Models\SparePart;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,27 @@ class BarcodeScanController extends Controller
         // ]);
 
         //dd($barcode);
+
+        $unit = ProductUnit::where(function ($query) use ($barcode) {
+            $query->where('barcode', $barcode)
+                ->orWhere('imei_1', $barcode)
+                ->orWhere('imei_2', $barcode)
+                ->orWhere('serial_number', $barcode);
+        })
+            ->where('status', 'available')
+            ->with('product')
+            ->first();
+
+        if ($unit && $unit->product) {
+            return response()->json([
+                'type' => 'product',
+                'id' => $unit->product->id,
+                'name' => $unit->product->name,
+                'price' => $unit->product->price,
+                'stock' => $unit->product->stock,
+                'matched_unit_id' => $unit->id,
+            ]);
+        }
 
         // Try product first
         $product = Product::where('barcode', $barcode)->first();

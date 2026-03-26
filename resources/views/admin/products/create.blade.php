@@ -2,6 +2,21 @@
 
 @section('content')
 <div class="container mx-auto py-8">
+    @php
+        $categoryOptions = $categories->map(fn ($cat) => [
+            'id' => $cat->id,
+            'is_phone' => str_contains(strtolower($cat->slug ?: $cat->name), 'phone')
+                || str_contains(strtolower($cat->slug ?: $cat->name), 'mobile')
+                || str_contains(strtolower($cat->slug ?: $cat->name), 'smartphone')
+                || str_contains(strtolower($cat->slug ?: $cat->name), 'iphone'),
+        ])->values();
+        $subcategoryOptions = $subcategories->map(fn ($sub) => [
+            'id' => $sub->id,
+            'name' => $sub->name,
+            'parent_id' => $sub->parent_id,
+        ])->values();
+    @endphp
+
     <h1 class="text-2xl font-bold mb-6">Add Product</h1>
 
     {{-- VALIDATION ERRORS --}}
@@ -44,7 +59,7 @@
                 <option value="">Select Main Category</option>
 
                 @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}">
+                    <option value="{{ $cat->id }}" {{ old('parent_category_id') == $cat->id ? 'selected' : '' }}>
                         {{ $cat->name }}
                     </option>
                 @endforeach
@@ -57,12 +72,6 @@
             <label class="block font-medium mb-1">Subcategory</label>
             <select name="category_id" id="category_id" class="border p-2 w-full">
                 <option value="">Select Subcategory</option>
-
-                @foreach($subcategories as $sub)
-                    <option value="{{ $sub->id }}" data-parent="{{ $sub->parent_id }}">
-                        {{ $sub->name }}
-                    </option>
-                @endforeach
             </select>
         </div>
 
@@ -108,9 +117,9 @@
                 <input type="number" step="0.01" name="cost_price" class="border p-2 w-full">
             </div>
 
-            <div>
+            <div id="manualStockField">
                 <label class="block font-medium mb-1">Stock Quantity</label>
-                <input type="number" name="stock" class="border p-2 w-full" required>
+                <input type="number" name="stock" id="stockInput" value="{{ old('stock', 0) }}" class="border p-2 w-full">
             </div>
 
         </div>
@@ -131,7 +140,7 @@
             $displayBarcode = old('barcode', $product->barcode ?? '');
         @endphp
         <div>
-            <label class="block text-sm font-medium text-gray-700">Barcode</label>
+            <label class="block font-semibold text-gray-700">Barcode</label>
             <input
                 type="text"
                 name="barcode"
@@ -150,10 +159,15 @@
             </div>
         @endif
 
+        @include('admin.products.partials.inventory-units', [
+            'inventoryUnits' => old('inventory_units', []),
+            'categoryOptions' => $categoryOptions,
+        ])
+
 
         {{-- Main image (existing) --}}
         <div>
-            <label class="block font-medium mb-1">Main Image</label>
+            <label class="block font-semibold text-gray-700">Main Image</label>
             @if(isset($product) && $product->image)
                 <img src="{{ asset('storage/' . $product->image) }}" class="h-32 rounded mb-2">
             @endif
@@ -162,14 +176,14 @@
 
         {{-- Gallery --}}
         <div class="mt-4">
-            <label class="block font-medium mb-1">Gallery Images</label>
+            <label class="block font-semibold text-gray-700">Gallery Images</label>
             <input type="file" name="gallery[]" id="galleryInput" accept="image/*" multiple>
 
             <div id="galleryPreview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3"></div>
 
             {{-- Existing images (edit mode) --}}
             @if(isset($product) && $product->gallery && count($product->gallery))
-                <h4 class="mt-3 font-medium">Existing Gallery</h4>
+                <h4 class="mt-3 font-semibold text-gray-700">Existing Gallery</h4>
                 <div id="existingGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
                     @foreach($product->gallery as $img)
                         <div class="relative">
@@ -201,8 +215,38 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    const parentSelect = document.getElementById("parent_category_id");
+    const subSelect = document.getElementById("category_id");
     const input = document.getElementById("galleryInput");
     const preview = document.getElementById("galleryPreview");
+    const categories = @json($categoryOptions);
+    const subcategories = @json($subcategoryOptions);
+    const selectedSubcategoryId = @json(old('category_id'));
+
+    function filterSubcategories() {
+        if (!parentSelect || !subSelect) return;
+
+        const parentId = parentSelect.value;
+        const currentValue = subSelect.value || selectedSubcategoryId;
+        const matchingSubcategories = subcategories.filter((sub) => String(sub.parent_id) === parentId);
+
+        subSelect.innerHTML = '<option value="">Select Subcategory</option>';
+
+        matchingSubcategories.forEach((sub) => {
+            const option = document.createElement("option");
+            option.value = sub.id;
+            option.textContent = sub.name;
+
+            if (String(currentValue) === String(sub.id)) {
+                option.selected = true;
+            }
+
+            subSelect.appendChild(option);
+        });
+    }
+
+    parentSelect?.addEventListener("change", filterSubcategories);
+    filterSubcategories();
 
     if (!input) return;
 

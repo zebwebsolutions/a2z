@@ -11,13 +11,30 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Brand;
 use App\Services\Products\UsedDeviceService;
+use App\Services\Products\ProductInventoryService;
 use App\Services\Images\ImageOptimizer;
-use App\Http\Requests\Products\StoreUsedDeviceRequest;
-
-
 
 class ProductController extends Controller
 {
+    private function isPhoneCategory(?int $parentCategoryId): bool
+    {
+        if (!$parentCategoryId) {
+            return false;
+        }
+
+        $category = Category::find($parentCategoryId);
+        if (!$category) {
+            return false;
+        }
+
+        $needle = strtolower(($category->slug ?: $category->name) ?? '');
+
+        return str_contains($needle, 'phone')
+            || str_contains($needle, 'mobile')
+            || str_contains($needle, 'smartphone')
+            || str_contains($needle, 'iphone');
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -83,7 +100,12 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, UsedDeviceService $usedDeviceService, ImageOptimizer $imageOptimizer)
+    public function store(
+        Request $request,
+        UsedDeviceService $usedDeviceService,
+        ProductInventoryService $productInventoryService,
+        ImageOptimizer $imageOptimizer
+    )
     {
         $data = $request->validate([
             'store_id' => 'required|exists:stores,id',
@@ -92,11 +114,17 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:100|unique:products,sku',
             'image' => 'nullable|image|max:2048',
             'gallery.*' => 'nullable|image|max:2048',
             'barcode' => 'nullable|unique:products,barcode',
+            'inventory_units' => 'nullable|array',
+            'inventory_units.*.id' => 'nullable|integer',
+            'inventory_units.*.imei_1' => 'nullable|string|max:50',
+            'inventory_units.*.imei_2' => 'nullable|string|max:50',
+            'inventory_units.*.serial_number' => 'nullable|string|max:100',
+            'inventory_units.*.barcode' => 'nullable|string|max:255',
             'is_active' => 'nullable|boolean',
             'brand_id' => 'nullable|exists:brands,id',
             'parent_category_id' => 'nullable|exists:categories,id',
@@ -110,6 +138,16 @@ class ProductController extends Controller
             'warranty_days' => 'nullable|integer|min:0',
             'imei' => 'nullable|string|max:255',
         ]);
+
+        $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
+        $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id'));
+        $productInventoryService->validateUnits($inventoryUnits, null, $isPhoneCategory);
+
+        if (!$isPhoneCategory && empty($inventoryUnits) && !array_key_exists('stock', $data)) {
+            $request->validate([
+                'stock' => 'required|integer|min:0',
+            ]);
+        }
 
         $keys = $request->specs_keys ?? [];
         $values = $request->specs_values ?? [];
@@ -125,6 +163,8 @@ class ProductController extends Controller
         $data['specs'] = $specs;
         $data['slug'] = Str::slug($data['name']);
         $data['is_active'] = $request->input('is_active', true);
+        $data['tracks_inventory_by_unit'] = !empty($inventoryUnits);
+        $data['stock'] = !empty($inventoryUnits) ? count($inventoryUnits) : ($data['stock'] ?? 0);
 
         if($request->hasFile('image')) {
             $data['image'] = $imageOptimizer->storeOptimized(
@@ -157,6 +197,9 @@ class ProductController extends Controller
         }
 
         $product =Product::create($data);
+        if (!empty($inventoryUnits)) {
+            $productInventoryService->syncUnits($product, $inventoryUnits);
+        }
 
         // USED DEVICE HANDLING
         if ($request->boolean('is_used')) {
@@ -199,7 +242,13 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id, UsedDeviceService $usedDeviceService, ImageOptimizer $imageOptimizer)
+    public function update(
+        Request $request,
+        $id,
+        UsedDeviceService $usedDeviceService,
+        ProductInventoryService $productInventoryService,
+        ImageOptimizer $imageOptimizer
+    )
     {
         $product = Product::findOrFail($id);
 
@@ -210,10 +259,16 @@ class ProductController extends Controller
             //'slug' => 'required|string|max:255|unique:products,slug,'.$id,
             'sku' => 'nullable|string|max:100|unique:products,sku,'.$id,
             'barcode' => 'nullable|string|max:255|unique:products,barcode,'.$id,
+            'inventory_units' => 'nullable|array',
+            'inventory_units.*.id' => 'nullable|integer',
+            'inventory_units.*.imei_1' => 'nullable|string|max:50',
+            'inventory_units.*.imei_2' => 'nullable|string|max:50',
+            'inventory_units.*.serial_number' => 'nullable|string|max:100',
+            'inventory_units.*.barcode' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:2048',
             'gallery.*' => 'nullable|image|max:2048',
             'is_active' => 'nullable|boolean',
@@ -230,6 +285,16 @@ class ProductController extends Controller
             'imei' => 'nullable|string|max:255',
         ]);
 
+        $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
+        $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id'));
+        $productInventoryService->validateUnits($inventoryUnits, $product, $isPhoneCategory);
+
+        if (!$isPhoneCategory && empty($inventoryUnits) && !array_key_exists('stock', $data)) {
+            $request->validate([
+                'stock' => 'required|integer|min:0',
+            ]);
+        }
+
         $keys = $request->specs_keys ?? [];
         $values = $request->specs_values ?? [];  
         $specs = [];
@@ -245,6 +310,7 @@ class ProductController extends Controller
         $data['slug'] = Str::slug($data['name']);
         $data['is_active'] = $request->input('is_active', true);
         $data['barcode_type'] = !empty($data['barcode']) ? ($product->barcode_type ?? 'code128') : null;
+        $data['stock'] = !empty($inventoryUnits) ? count($inventoryUnits) : ($data['stock'] ?? $product->stock);
 
         if ($request->hasFile('image')) {
             if ($product->image) {
@@ -278,8 +344,12 @@ class ProductController extends Controller
 
         if (!$data['category_id']) {
             $data['category_id'] = $data['parent_category_id'];
-        }   
+        }
+
+        $data['tracks_inventory_by_unit'] = !empty($inventoryUnits) || $product->tracks_inventory_by_unit;
         $product->update($data);
+
+        $productInventoryService->syncUnits($product, $inventoryUnits);
 
         // USED DEVICE HANDLING
         if ($request->boolean('is_used')) {

@@ -45,11 +45,21 @@
                             </button>
                         </form>
                     </td>
-                    <td class="p-3 text-right">
+                    <td class="p-3 text-right flex gap-2 justify-end">
                         <a href="{{ route('admin.users.edit', $user) }}"
                            class="text-blue-600">
                             Edit
                         </a>
+                        <form method="POST"
+                            action="{{ route('admin.users.destroy', $user) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                onclick="return confirm('Delete user {{ $user->name }}?')"
+                                class="text-red-600">
+                                Delete
+                            </button>
+                        </form>
                     </td>
                 </tr>
             @endforeach

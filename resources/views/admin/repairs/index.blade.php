@@ -27,7 +27,7 @@
                 <td class="p-3">{{ $r->salesman->name }}</td>
                 <td class="p-3">{{ $r->warranty ?: '-' }}</td>
                 <td class="p-3 capitalize">{{ $r->status }}</td>
-                <td class="p-3">${{ number_format($r->total_cost, 2) }}</td>
+                <td class="p-3">KD {{ number_format($r->total_cost, 2) }}</td>
                 <td class="p-3">
                     <a href="{{ route('admin.repairs.edit', $r) }}" class="text-blue-600 mr-2">Edit</a>
                     <form action="{{ route('admin.repairs.destroy', $r) }}" method="POST" class="inline">

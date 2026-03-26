@@ -99,4 +99,21 @@ class UserController extends Controller
         return back()->with('success', 'User status updated.');
     }
 
+    public function destroy(User $user)
+    {
+        // Prevent admin from deleting themselves
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+        
+        // Only admin can delete users
+        if (!auth()->user()->hasRole('admin')) {
+            return back()->with('error', 'You do not have permission to delete users.');
+        }
+
+        $user->delete();
+
+        return back()->with('success', 'User deleted successfully.');
+    }
+
 }

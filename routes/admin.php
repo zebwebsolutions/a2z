@@ -30,6 +30,7 @@ Route::middleware(['auth', 'active', 'role:admin'])
         Route::resource('sliders', SliderController::class);
         Route::resource('spare-parts', SparePartController::class);
         Route::resource('users', UserController::class);
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('contact-messages', [ContactMessageController::class, 'index'])
             ->name('contact-messages.index');
@@ -42,6 +43,9 @@ Route::middleware(['auth', 'active', 'role:admin'])
 
         Route::get('spare-parts/{sparePart}/barcode', [SparePartController::class, 'barcode'])
             ->name('spare-parts.barcode');
+
+        Route::post('orders/{order}/refund', [OrderController::class, 'refund'])
+            ->name('orders.refund');
 
         Route::patch('users/{user}/toggle', [UserController::class, 'toggle'])
             ->name('users.toggle');

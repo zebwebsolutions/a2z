@@ -14,10 +14,14 @@ Route::middleware(['auth', 'active', 'role:admin,salesman'])
     ->name('admin.')
     ->group(function () {
 
+        Route::delete('products/{product}/gallery/{index}', [ProductController::class, 'deleteGalleryImage'])
+            ->name('products.gallery.destroy');
         Route::resource('products', ProductController::class);
         Route::resource('categories', CategoryController::class);
         Route::resource('brands', BrandController::class);
         Route::resource('spare-parts', SparePartController::class);
+        Route::post('orders/{order}/refund', [OrderController::class, 'refund'])
+            ->name('orders.refund');
         Route::resource('orders', OrderController::class);
 
         Route::post('/spare-parts/scan', [SparePartScanController::class, 'scan']);

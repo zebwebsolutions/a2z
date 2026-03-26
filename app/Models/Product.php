@@ -20,6 +20,7 @@ class Product extends Model
         'price',
         'cost_price',
         'stock',
+        'tracks_inventory_by_unit',
         'image',
         'gallery',
         'barcode',
@@ -37,6 +38,7 @@ class Product extends Model
         'price' => 'float',
         'cost_price' => 'float',
         'stock' => 'integer',
+        'tracks_inventory_by_unit' => 'boolean',
     ];
 
     protected static function booted()
@@ -103,6 +105,9 @@ class Product extends Model
     }
     public function usedDeviceDetails() {
         return $this->hasOne(UsedDeviceDetail::class);
+    }
+    public function units() {
+        return $this->hasMany(ProductUnit::class);
     }
 
 }

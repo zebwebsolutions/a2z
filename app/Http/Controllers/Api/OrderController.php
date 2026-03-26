@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Http\Helpers\PhoneNumber;
+use App\Services\Products\ProductInventoryService;
 use App\Services\OrderReceiptService;
 use App\Services\MetaCloudWhatsAppService;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,7 @@ class OrderController extends Controller
 
     public function store(
         Request $request,
+        ProductInventoryService $productInventoryService,
         OrderReceiptService $orderReceiptService,
         MetaCloudWhatsAppService $metaCloudWhatsAppService
     )
@@ -118,14 +120,19 @@ class OrderController extends Controller
                     abort(400, "Insufficient stock for {$product->name}");
                 }
 
-                $product->decrement('stock', $item['qty']);
-
-                OrderItem::create([
+                $orderItem = OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item['id'],
                     'price' => $item['price'],
                     'quantity' => $item['qty'],
                 ]);
+
+                if ($product->tracks_inventory_by_unit) {
+                    $units = $productInventoryService->reserveUnits($product, $item['qty']);
+                    $orderItem->productUnits()->sync($units->pluck('id'));
+                } else {
+                    $product->decrement('stock', $item['qty']);
+                }
             }
 
             return $order;
@@ -157,7 +164,7 @@ class OrderController extends Controller
         );
     }
 
-    public function refund(Order $order)
+    public function refund(Order $order, ProductInventoryService $productInventoryService)
     {
         if (!in_array($order->status, ['completed'])) {
             return response()->json([
@@ -165,10 +172,11 @@ class OrderController extends Controller
             ], 400);
         }
 
-        DB::transaction(function () use ($order) {
+        DB::transaction(function () use ($order, $productInventoryService) {
             foreach ($order->items as $item) {
-                // restore stock
-                $item->product->increment('stock', $item->quantity);
+                if ($productInventoryService->restoreUnits($item) === 0) {
+                    $item->product->increment('stock', $item->quantity);
+                }
             }
 
             $order->update([
