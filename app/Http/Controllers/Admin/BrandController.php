@@ -35,7 +35,7 @@ class BrandController extends Controller
         }
 
         $data['slug'] = Str::slug($data['name']);
-        $data['is_active'] = $request->is_active ? 1 : 0;
+        $data['is_active'] = $request->boolean('is_active') ? 1 : 0;
 
         Brand::create($data);
 
@@ -63,7 +63,7 @@ class BrandController extends Controller
         }
 
         $data['slug'] = Str::slug($data['name']);
-        $data['is_active'] = $request->is_active ? 1 : 0;
+        $data['is_active'] = $request->boolean('is_active') ? 1 : 0;
 
         $brand->update($data);
 

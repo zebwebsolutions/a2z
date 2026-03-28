@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeStyleQ8 Admin</title>
+    <title>A2Z Admin</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -14,61 +14,102 @@
         <aside class="w-1/5 bg-blue-800 text-white flex flex-col">
             {{-- Header --}}
             <div class="p-6 text-center border-b border-blue-700">
-                <h1 class="text-2xl text-white font-bold"><a href="{{ route('admin.dashboard') }}">LifeStyleQ8</a></h1>
+                <h1 class="text-2xl text-white font-bold"><a href="{{ route('admin.dashboard') }}">A2Z</a></h1>
                 <p class="text-sm text-blue-300">Admin Panel</p>
             </div>
 
             {{-- Navigation --}}
             <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+                @if(auth()->user()->canView('dashboard'))
                 <a href="{{ route('admin.dashboard') }}" 
                    class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.dashboard') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2"></i> Dashboard
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('products'))
                 <a href="{{ route('admin.products.index') }}" 
                    class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.products.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="shopping-cart" class="w-5 h-5 mr-2"></i> Products
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('categories'))
                 <a href="{{ route('admin.categories.index') }}" 
                    class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.categories.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="folder" class="w-5 h-5 mr-2"></i> Categories
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('brands'))
                 <a href="{{ route('admin.brands.index') }}"
                     class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.brands.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="tag" class="w-5 h-5 mr-2"></i> Brands
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('stores'))
                 <a href="{{ route('admin.stores.index') }}" 
                    class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.stores.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="store" class="w-5 h-5 mr-2"></i> Stores
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('repairs'))
                 <a href="{{ route('admin.repairs.index') }}" 
                    class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.repairs.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="wrench" class="w-5 h-5 mr-2"></i> Repairs
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('spare-parts'))
+                <a href="{{ route('admin.spare-parts.index') }}"
+                class="flex items-center px-3 py-2 rounded-md transition duration-200
+                {{ request()->routeIs('admin.spare-parts.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
+                    <i data-lucide="tablet-smartphone" class="w-5 h-5 mr-2"></i> Spare Parts
+                </a>
+                @endif
+
+                @if(auth()->user()->canView('orders'))
                 <a href="{{ route('admin.orders.index') }}" 
                 class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.orders.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="package" class="w-5 h-5 mr-2"></i> Orders
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('sliders'))
                 <a href="{{ route('admin.sliders.index') }}" 
                 class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.sliders.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="image" class="w-5 h-5 mr-2"></i> Sliders
                 </a>
+                @endif
 
+                @if(auth()->user()->canView('home-sections'))
                 <a href="{{ route('admin.home-sections.index') }}" 
                 class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.home-sections.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
                     <i data-lucide="layout" class="w-5 h-5 mr-2"></i> Home Sections
                 </a>
+                @endif
+
+                @if(auth()->user()->canView('users'))
+                <a href="{{ route('admin.users.index') }}"
+                class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.users.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
+                    <i data-lucide="user" class="w-5 h-5 mr-2"></i>Users
+                </a>
+                @endif
+
+                @if(auth()->user()->canView('contact-messages'))
+                <a href="{{ route('admin.contact-messages.index') }}"
+                   class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.contact-messages.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
+                    <i data-lucide="mail" class="w-5 h-5 mr-2"></i> Contact Messages
+                </a>
+                @endif
+                
             </nav>
 
             {{-- Footer --}}
             <div class="p-4 border-t border-blue-700 text-sm text-center text-blue-300">
-                &copy; {{ date('Y') }} LifeStyleQ8
+                &copy; {{ date('Y') }} A2Z
             </div>
         </aside>
 

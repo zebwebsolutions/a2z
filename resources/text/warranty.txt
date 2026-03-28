@@ -1,7 +1,7 @@
 <h1 class="font-bold text-xl mt-6 mb-2">1. Overview</h1>
 <p class="mt-0">
-At LifeStyleQ8, we are committed to providing high-quality products and reliable customer support.
-All products purchased from LifeStyleQ8 come with a warranty as specified by the manufacturer or our store warranty conditions.
+At A2Z, we are committed to providing high-quality products and reliable customer support.
+All products purchased from A2Z come with a warranty as specified by the manufacturer or our store warranty conditions.
 </p>
 <p class="mt-0">
 This policy explains what is covered, what is not covered, and how customers can claim warranty service.
@@ -43,7 +43,7 @@ This policy explains what is covered, what is not covered, and how customers can
     <li>Software modification, rooting, or jailbreaking</li>
 </ul>
 
-<h1 class="font-bold text-xl mt-6 mb-2">5. Warranty for Repair Services (LifeStyleQ8 Repair Center)</h1>
+<h1 class="font-bold text-xl mt-6 mb-2">5. Warranty for Repair Services (A2Z Repair Center)</h1>
 
 <p>We offer:</p>
 <ul class="list-disc ml-12">
@@ -94,7 +94,7 @@ For products sold with official manufacturer warranty, customers may contact the
 
 <p>
 Shipping to our service center is the customer's responsibility.
-Return shipping will be covered by LifeStyleQ8 only if the warranty claim is approved.
+Return shipping will be covered by A2Z only if the warranty claim is approved.
 </p>
 
 <h1 class="font-bold text-xl mt-6 mb-2">9. Contact</h1>
@@ -102,5 +102,5 @@ Return shipping will be covered by LifeStyleQ8 only if the warranty claim is app
 <p class="mb-4">If you have questions regarding warranty claims, contact:</p>
 
 <p><b>📞 Phone:</b> +965 1234 5678</p>
-<p><b>✉️ Email:</b> support@LifeStyleQ8.com</p>
+<p><b>✉️ Email:</b> support@A2Z.com</p>
 <p><b>💬 WhatsApp:</b> Available for support</p>

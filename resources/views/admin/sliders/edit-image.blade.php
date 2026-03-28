@@ -21,27 +21,9 @@
         @method('PUT')
 
         <div class="mb-4">
-            <label class="block font-semibold mb-1">Heading</label>
-            <input type="text" name="heading" class="w-full border p-2"
-                   value="{{ old('heading', $image->heading) }}">
-        </div>
-
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Description</label>
-            <textarea name="description" class="w-full border p-2"
-            >{{ old('description', $image->description) }}</textarea>
-        </div>
-
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Button Text</label>
-            <input type="text" name="button_text" class="w-full border p-2"
-                   value="{{ old('button_text', $image->button_text) }}">
-        </div>
-
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Button Link</label>
-            <input type="text" name="button_link" class="w-full border p-2"
-                   value="{{ old('button_link', $image->button_link) }}">
+            <label class="block font-semibold mb-1">Slider Link</label>
+            <input type="text" name="url" class="w-full border p-2"
+                   value="{{ old('url', $image->url) }}">
         </div>
 
         <div class="mb-4">

@@ -11,25 +11,24 @@ $slider = \App\Models\Slider::with('images')
 <div class="swiper dynamic-slider">
     <div class="swiper-wrapper">
 
-        @foreach($slider->images as $slide)
-            <div class="swiper-slide relative">
-                <img src="{{ asset('storage/' . $slide->image) }}" class="w-full h-[380px] md:h-[480px] object-cover" />
-
-                @if($slide->heading || $slide->button_text)
-                    <div class="absolute left-10 top-1/3 text-white max-w-md">
-                        @if($slide->heading)
-                            <h2 class="text-3xl font-bold mb-2 drop-shadow">{{ $slide->heading }}</h2>
-                        @endif
-                        @if($slide->description)
-                            <p class="mb-4 drop-shadow">{{ $slide->description }}</p>
-                        @endif
-                        @if($slide->button_text)
-                            <a href="{{ $slide->button_link }}" 
-                               class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">
-                                {{ $slide->button_text }}
-                            </a>
-                        @endif
-                    </div>
+        @foreach($slider->images->sortBy('sort_order') as $slide)
+            <div class="swiper-slide overflow-hidden">
+                @if($slide->url)
+                <a href="{{ $slide->url }}" class="block">
+                    <img
+                        src="{{ asset('storage/'.$slide->image) }}"
+                        class="w-full object-cover scale-[1.08] md:scale-100 transform origin-center"
+                        alt="Promotion"
+                        loading="lazy"
+                    >
+                </a>
+                @else
+                    <img
+                        src="{{ asset('storage/'.$slide->image) }}"
+                        class="w-full object-cover scale-[1.08] md:scale-100 transform origin-center"
+                        alt="Promotion"
+                        loading="lazy"
+                    >
                 @endif
             </div>
         @endforeach

@@ -23,7 +23,6 @@ class SliderController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|unique:sliders,name',
-            'title' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
@@ -41,7 +40,6 @@ class SliderController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|unique:sliders,name,' . $slider->id,
-            'title' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 

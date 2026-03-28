@@ -1,14 +1,23 @@
 @extends('layouts.app')
 
-@section('title', 'LifeStyleQ8 | Your Trusted Electronics & Mobile Repair Partner')
+@section('title', 'A2Z | Your Trusted Electronics & Mobile Repair Partner')
+@section('meta_description', 'A2Z Kuwait provides new and used phones, tablets, accessories, and trusted repair services with fast support in Sharq, Kuwait.')
 
 @section('content')
+    <section class="bg-white border-b">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6 py-3">
+            <p class="text-sm text-gray-700">
+                Legal business name: <strong>A to Z Electronics &amp; Repairing</strong> (also known as A2Z Kuwait).
+            </p>
+        </div>
+    </section>
+
     {{-- Hero Section --}}
     <x-slider name="homepage_slider" />
 
     {{-- Categories Section --}}
     <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6">
             <h2 class="text-3xl font-bold text-center mb-10">Shop by Category</h2>
 
             {{-- Carousel Wrapper --}}
@@ -35,7 +44,7 @@
                     class="flex overflow-x-auto gap-6 scroll-smooth snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing py-2"
                 >
                     @foreach($categories as $category)
-                        <a href="{{ route('shop.index', ['category' => $category->slug]) }}"
+                        <a href="{{ route('category.show', ['category' => $category->slug]) }}"
                           class="group flex-shrink-0 w-64 bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden snap-start">
                             <img src="{{ asset('storage/' . $category->image) }}" 
                                 alt="{{ $category->name }}" 
@@ -64,7 +73,7 @@
     @foreach ($sections as $section)
         <section class="container mx-auto px-4 py-6">
             <h2 class="text-3xl text-center font-bold mb-10">{{ $section->title }}</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach ($section->ordered_products as $product)
                     @include('front.products.partials.product-card', ['product' => $product])
                 @endforeach
@@ -77,21 +86,12 @@
 
     {{-- Featured Products --}}
     <section class="py-16 bg-white">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6">
             <h2 class="text-3xl font-bold text-center mb-10">Featured Products</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @foreach($products as $product)
-                    <div class="bg-gray-50 rounded-xl shadow hover:shadow-lg transition overflow-hidden">
-                        <a href="{{ route('product.show', $product->slug) }}">
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-56 object-cover">
-                        </a>
-                        <div class="p-4">
-                            <h3 class="font-semibold text-lg text-gray-800 mb-1">{{ $product->name }}</h3>
-                            <p class="text-blue-600 font-bold mb-3">${{ number_format($product->price, 2) }}</p>
-                            <a href="{{ route('product.show', $product->slug) }}" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition">View Details</a>
-                        </div>
-                    </div>
+                    @include('front.products.partials.product-card', ['product' => $product])
                 @endforeach
             </div>
         </div>
@@ -99,11 +99,11 @@
 
     {{-- About / Repair Service Section --}}
     <section class="bg-gray-100 py-20">
-        <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+        <div class="container mx-auto px-3 md:px-4 lg:px-6 grid md:grid-cols-2 gap-12 items-center">
             <div>
                 <h2 class="text-3xl font-bold mb-4 text-gray-800">Mobile Repair Services</h2>
                 <p class="text-gray-600 mb-6 leading-relaxed">
-                    Whether your screen is cracked or your device needs a quick fix, LifeStyleQ8’s trained technicians handle all repairs with care and precision.
+                    Whether your screen is cracked or your device needs a quick fix, A2Z’s trained technicians handle all repairs with care and precision.
                     We offer fast turnaround and genuine parts — so your phone feels brand new again.
                 </p>
                 <a href="{{ route('repair.form') }}" class="bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition">

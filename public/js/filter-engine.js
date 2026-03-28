@@ -1,86 +1,160 @@
-// filter-engine.js
 document.addEventListener('DOMContentLoaded', function () {
 
-    const resultsSelector = '#productResults';
-    const chipsSelector = '#filterChips';
+    const resultsSelector   = '#productResults';
+    const paginationSelector = '#paginationWrapper';
+    const skeletonSelector  = '#productSkeleton';
     const debounceMs = 300;
 
-    // IMPORTANT: set baseUrl exactly like route('brand.category', ['category'=>..., 'brand'=>...])
-    // The blade will output the correct url string when injected inline.
-    const baseUrl = document.currentScript?.getAttribute('data-base-url') || window.location.pathname;
-    // But we will set the baseUrl by inlining a global variable in the blade below.
+    const baseUrl = window.LSQ8_baseUrl || window.location.pathname;
 
-    // Server defaults (you will inline these in the blade)
     const serverPriceMin = window.LSQ8_priceMin ?? 0;
     const serverPriceMax = window.LSQ8_priceMax ?? 0;
 
-    // debounce util
-    function debounce(fn, wait) {
-        let t;
-        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+    if (!resultsSelector) {
+        return;
     }
 
-    // Build URL from sidebar inputs
+    let isAjaxLoading = false;
+
+    function hasActiveFilters() {
+        const params = new URLSearchParams(window.location.search);
+
+        console.log('Current URL params:', params.toString());
+
+        // Ignore pagination
+        params.delete('page');
+
+        return params.toString().length > 0;
+    }
+
+
+    /* ----------------------------------
+    * Top Loading Bar
+    * ---------------------------------- */
+    const topLoader = document.getElementById('topLoader');
+
+    function startTopLoader() {
+        if (!topLoader) return;
+
+        topLoader.style.opacity = '1';
+        topLoader.style.width = '20%';
+
+        // Simulate progressive loading
+        setTimeout(() => {
+            topLoader.style.width = '60%';
+        }, 200);
+    }
+
+    function finishTopLoader() {
+        if (!topLoader) return;
+
+        topLoader.style.width = '100%';
+
+        setTimeout(() => {
+            topLoader.style.opacity = '0';
+            topLoader.style.width = '0%';
+        }, 300);
+    }
+
+    /* ----------------------------------
+     * Debounce
+     * ---------------------------------- */
+    function debounce(fn, wait) {
+        let t;
+        return (...args) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn(...args), wait);
+        };
+    }
+
+    /* ----------------------------------
+     * Build query URL from sidebar inputs
+     * ---------------------------------- */
     function buildUrl() {
         const params = new URLSearchParams();
 
-        // Brand (radio or single)
+        // Brand (single)
         const brand = document.querySelector("input[name='brand']:checked");
         if (brand) params.set('brand', brand.value);
 
-        // RAM
+        // RAM (single)
         const ram = document.querySelector("input[name='ram']:checked");
         if (ram) params.set('ram', ram.value);
 
-        // Storage
+        // Storage (single)
         const storage = document.querySelector("input[name='storage']:checked");
         if (storage) params.set('storage', storage.value);
 
-        // Prices (hidden inputs used by Alpine)
+        // Battery health (multiple)
+        document.querySelectorAll("input[name='battery[]']:checked")
+            .forEach(el => params.append('battery[]', el.value));
+
+        // Price (from Alpine hidden inputs)
         const minInput = document.querySelector("input[name='min']");
         const maxInput = document.querySelector("input[name='max']");
+        const rangeInputs = document.querySelectorAll(".range-hidden");
 
-        const currentMin = Number(minInput?.value ?? serverPriceMin);
-        const currentMax = Number(maxInput?.value ?? serverPriceMax);
+        const rangeMin = rangeInputs[0] ? Number(rangeInputs[0].value) : null;
+        const rangeMax = rangeInputs[1] ? Number(rangeInputs[1].value) : null;
 
-        if (currentMin !== serverPriceMin) params.set('min', currentMin);
-        if (currentMax !== serverPriceMax) params.set('max', currentMax);
+        const min = Number(minInput?.value);
+        const max = Number(maxInput?.value);
 
-        const query = params.toString();
-        return baseUrl + (query ? '?' + query : '');
+        const finalMin = Number.isFinite(min) ? min :
+            (Number.isFinite(rangeMin) ? rangeMin : serverPriceMin);
+        const finalMax = Number.isFinite(max) ? max :
+            (Number.isFinite(rangeMax) ? rangeMax : serverPriceMax);
+
+        if (!(finalMin === serverPriceMin && finalMax === serverPriceMax)) {
+            params.set('min', finalMin);
+            params.set('max', finalMax);
+        }
+
+        return baseUrl + (params.toString() ? '?' + params.toString() : '');
     }
 
-    function generateSkeletons(count) {
-        const skeletonEl = document.querySelector('#productSkeleton');
-        if (!skeletonEl) return;
+    /* ----------------------------------
+     * Skeleton Loader
+     * ---------------------------------- */
+    function showSkeletons(count = 6) {
+        const skeleton = document.querySelector(skeletonSelector);
+        if (!skeleton) return;
 
-        skeletonEl.innerHTML = ''; // clear old skeletons
+        skeleton.innerHTML = '';
+        skeleton.classList.remove('hidden');
 
         for (let i = 0; i < count; i++) {
-            skeletonEl.innerHTML += `
-                <div class="bg-gray-300 h-64 rounded animate-pulse"></div>
+            skeleton.innerHTML += `
+                <div class="bg-white rounded-xl border shadow-sm p-4 animate-pulse flex flex-col">
+                    <div class="w-full h-44 bg-gray-200 rounded mb-4"></div>
+                    <div class="space-y-2 mb-4">
+                        <div class="h-4 bg-gray-200 rounded w-full"></div>
+                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    </div>
+                    <div class="h-6 bg-gray-200 rounded w-1/2 mt-auto"></div>
+                </div>
             `;
         }
     }
 
+    function hideSkeletons() {
+        const skeleton = document.querySelector(skeletonSelector);
+        if (skeleton) skeleton.classList.add('hidden');
+    }
 
-    // AJAX loader expects JSON { products, chips }
-    async function ajaxLoad(url) {
-        const resultsEl   = document.querySelector(resultsSelector);
-        const chipsEl     = document.querySelector(chipsSelector);
-        const skeletonEl  = document.querySelector('#productSkeleton');
+    /* ----------------------------------
+     * AJAX Load
+     * ---------------------------------- */
+    async function ajaxLoad(url, pushState = true) {
+        const results    = document.querySelector(resultsSelector);
+        const pagination = document.querySelector(paginationSelector);
+        const chips = document.querySelector('#filterChips');
 
-        if (!resultsEl & !skeletonEl) return;
-
-
-        const productCards = 9;
-        generateSkeletons(productCards);
-
-        resultsEl.style.opacity = 0;
-        skeletonEl.classList.remove('hidden');
-
-        const minSkeletonTime = 1000; // 1 second minimum
-        const startTime = Date.now();
+        if (!results) return;
+        
+        startTopLoader();
+        showSkeletons();
+        results.classList.add('hidden');
 
         try {
             const res = await fetch(url, {
@@ -90,119 +164,181 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            if (!res.ok) throw new Error("Bad response");
+            if (!res.ok) throw new Error('Bad response');
 
             const data = await res.json();
 
-            // Update results
-            if (data.products !== undefined) {
-                resultsEl.innerHTML = data.products;
-            }
+            results.innerHTML = data.products ?? '';
+            if (pagination) pagination.innerHTML = data.pagination ?? '';
+            if (chips && data.chips !== undefined) chips.innerHTML = data.chips ?? '';
 
-            // Update chips
-            if (data.chips !== undefined && chipsEl) {
-                chipsEl.innerHTML = data.chips;
+            if (pushState) {
+                window.history.pushState({}, '', url);
             }
-
-            window.history.pushState({}, '', url);
 
             bindPagination();
 
-        } catch (err) {
-            console.error(err);
-            window.location.href = url;
+        } catch (e) {
+            console.error(e);
+            window.location.href = url; // fallback
             return;
         }
 
-        // -----------------------------
-        // Enforce 1-second minimum skeleton visibility
-        // -----------------------------
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, minSkeletonTime - elapsed);
-
-        setTimeout(() => {
-            skeletonEl.classList.add('hidden');
-            resultsEl.style.opacity = '1';
-
-        }, remaining);
+        hideSkeletons();
+        results.classList.remove('hidden');
+        finishTopLoader();
     }
-
 
     const debouncedLoad = debounce((url) => ajaxLoad(url), debounceMs);
 
-    // delegated handler for chip clicks (single attachment, won't duplicate)
+    /* ----------------------------------
+     * Sidebar filter binding
+     * ---------------------------------- */
+    function bindSidebarInputs() {
+        document.querySelectorAll('.autoFilter').forEach(el => {
+            el.addEventListener('change', () => {
+                debouncedLoad(buildUrl());
+            });
+        });
+    }
+
+    function bindRangeInputs() {
+        const ranges = document.querySelectorAll('.range-hidden');
+        if (ranges.length < 2) return;
+
+        const minRange = ranges[0];
+        const maxRange = ranges[1];
+        const minInput = document.querySelector("input[name='min']");
+        const maxInput = document.querySelector("input[name='max']");
+
+        const onInput = () => {
+            if (minInput) minInput.value = minRange.value;
+            if (maxInput) maxInput.value = maxRange.value;
+            debouncedLoad(buildUrl());
+        };
+
+        minRange.addEventListener('input', onInput);
+        maxRange.addEventListener('input', onInput);
+    }
+
+    /* ----------------------------------
+     * Pagination binding
+     * ---------------------------------- */
+    function bindPagination() {
+        document.querySelectorAll(`${paginationSelector} a`).forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                ajaxLoad(link.href);
+            });
+        });
+    }
+
+    /* ----------------------------------
+     * Alpine price slider event
+     * ---------------------------------- */
+    window.addEventListener('ajaxFilter', function (e) {
+
+        // 🚫 Ignore Alpine init / re-render events
+        if (isAjaxLoading) return;
+
+        const params = new URLSearchParams(e.detail);
+
+        const minInput = document.querySelector("input[name='min']");
+        const maxInput = document.querySelector("input[name='max']");
+
+        const newMin = Number(params.get('min'));
+        const newMax = Number(params.get('max'));
+
+        const currentMin = Number(minInput?.value ?? serverPriceMin);
+        const currentMax = Number(maxInput?.value ?? serverPriceMax);
+
+        // 🚫 Ignore no-op changes
+        if (newMin === currentMin && newMax === currentMax) {
+            return;
+        }
+
+        if (minInput) minInput.value = newMin;
+        if (maxInput) maxInput.value = newMax;
+
+        debouncedLoad(buildUrl());
+    });
+
+    /* ----------------------------------
+     * Browser back / forward
+     * ---------------------------------- */
+    window.addEventListener('popstate', function () {
+        ajaxLoad(window.location.href, false);
+    });
+
+    /* ----------------------------------
+    * Filter Chips (Clear / Remove)
+    * ---------------------------------- */
     document.addEventListener('click', function (e) {
-        const chip = e.target.closest('.chip[data-remove]');
+        const chip = e.target.closest('[data-remove]');
         if (!chip) return;
 
         e.preventDefault();
         const type = chip.dataset.remove;
 
-        if (type === 'brand') {
-            document.querySelectorAll("input[name='brand']").forEach(el => el.checked = false);
-        } else if (type === 'ram') {
-            document.querySelectorAll("input[name='ram']").forEach(el => el.checked = false);
-        } else if (type === 'storage') {
-            document.querySelectorAll("input[name='storage']").forEach(el => el.checked = false);
-        } else if (type === 'price') {
+        // -------- Clear ALL filters --------
+        if (type === 'all') {
+
+            // Uncheck all radios & checkboxes
+            document.querySelectorAll(
+                "input[type='checkbox'], input[type='radio']"
+            ).forEach(el => el.checked = false);
+
+            // Reset price inputs
             const minEl = document.querySelector("input[name='min']");
             const maxEl = document.querySelector("input[name='max']");
             if (minEl) minEl.value = serverPriceMin;
             if (maxEl) maxEl.value = serverPriceMax;
-            // notify Alpine slider if present
-            window.dispatchEvent(new CustomEvent('ajaxFilter', {
-                detail: `min=${serverPriceMin}&max=${serverPriceMax}`
-            }));
-        } else if (type === 'all') {
-            // redirect to base (clear all)
-            window.location.href = baseUrl;
+            const ranges = document.querySelectorAll('.range-hidden');
+            if (ranges[0]) ranges[0].value = serverPriceMin;
+            if (ranges[1]) ranges[1].value = serverPriceMax;
+
+            // Load base results via AJAX
+            debouncedLoad(baseUrl);
             return;
         }
 
-        // fetch with updated query
-        const url = buildUrl();
-        debouncedLoad(url);
-    });
+        // -------- Optional: individual chip removal (future-proof) --------
+        if (type === 'brand') {
+            document.querySelectorAll("input[name='brand']").forEach(el => el.checked = false);
+        }
+        if (type === 'ram') {
+            document.querySelectorAll("input[name='ram']").forEach(el => el.checked = false);
+        }
+        if (type === 'storage') {
+            document.querySelectorAll("input[name='storage']").forEach(el => el.checked = false);
+        }
+        if (type === 'battery') {
+            document.querySelectorAll("input[name='battery[]']").forEach(el => el.checked = false);
+        }
+        if (type === 'price') {
+            const minEl = document.querySelector("input[name='min']");
+            const maxEl = document.querySelector("input[name='max']");
+            if (minEl) minEl.value = serverPriceMin;
+            if (maxEl) maxEl.value = serverPriceMax;
 
-    // Bind sidebar inputs (these are static => safe to bind)
-    function bindSidebarInputs() {
-        document.querySelectorAll('.autoFilter').forEach(el => {
-            el.onchange = () => {
-                const url = buildUrl();
-                debouncedLoad(url);
-            };
-        });
-    }
-
-    // Bind pagination links inside #productResults
-    function bindPagination() {
-        document.querySelectorAll(resultsSelector + ' .pagination a').forEach(link => {
-            link.onclick = (e) => {
-                e.preventDefault();
-                ajaxLoad(link.href);
-            };
-        });
-    }
-
-    // Listen to Alpine slider custom event
-    window.addEventListener('ajaxFilter', function (e) {
-        // e.detail is query string like "min=100&max=500"
-        const params = new URLSearchParams(e.detail);
-        const minInput = document.querySelector("input[name='min']");
-        const maxInput = document.querySelector("input[name='max']");
-        if (minInput && params.has('min')) minInput.value = params.get('min');
-        if (maxInput && params.has('max')) maxInput.value = params.get('max');
+            const ranges = document.querySelectorAll('.range-hidden');
+            if (ranges[0]) {
+                ranges[0].value = serverPriceMin;
+                ranges[0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (ranges[1]) {
+                ranges[1].value = serverPriceMax;
+                ranges[1].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
 
         debouncedLoad(buildUrl());
     });
 
-    // handle browser back/forward
-    window.addEventListener('popstate', function () {
-        ajaxLoad(window.location.href);
-    });
-
-    // Initial bindings
+    /* ----------------------------------
+     * Init
+     * ---------------------------------- */
     bindSidebarInputs();
     bindPagination();
-
+    bindRangeInputs();
 });

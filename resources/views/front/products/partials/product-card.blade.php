@@ -1,9 +1,15 @@
-<div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
+<div id="product-{{ $product->id }}" class="scroll-mt-[120px] bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
 
     @php
         // Determine which image to display
         $displayImage = $product->image 
-            ?: ($product->gallery[0] ?? null);
+            ?: data_get($product->gallery, '0');
+    @endphp
+
+    @php
+        $returnUrl = request()->routeIs('shop.ajax')
+            ? route('shop.index') . (request()->getQueryString() ? ('?' . request()->getQueryString()) : '')
+            : url()->full();
     @endphp
 
     <a href="{{ route('product.show', $product->slug) }}">
@@ -27,10 +33,14 @@
     {{-- BOTTOM SECTION LOCKED TO BOTTOM --}}
     <div class="flex justify-between items-center p-2 mt-auto">
         <span class="text-blue-600 font-semibold">
-            ${{ number_format($product->price, 2) }}
+            KWD {{ number_format($product->price, 2) }}
         </span>
 
-        <a href="{{ route('cart.add', $product->id) }}"
+        <a href="{{ route('cart.add', [
+            'id' => $product->id,
+            'return' => $returnUrl,
+            'anchor' => 'product-' . $product->id,
+        ]) }}"
            class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700">
             Add to Cart
         </a>

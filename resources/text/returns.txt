@@ -1,8 +1,8 @@
-<h1 class="font-bold text-2xl mb-2">↩️ RETURNS & REFUNDS POLICY — LifeStyleQ8</h1>
+<h1 class="font-bold text-2xl mb-2">↩️ RETURNS & REFUNDS POLICY — A2Z</h1>
 
 <h1 class="font-bold text-xl mt-6 mb-2">1. Overview</h1>
 <p class="mt-0">
-At LifeStyleQ8, customer satisfaction is our priority. This policy explains when you can request 
+At A2Z, customer satisfaction is our priority. This policy explains when you can request 
 a return, replacement, or refund.
 </p>
 
@@ -67,7 +67,7 @@ a return, replacement, or refund.
 <p>To request a return:</p>
 
 <ul class="list-disc ml-4 mt-2 mb-2">
-    <li>Contact LifeStyleQ8 via WhatsApp or email</li>
+    <li>Contact A2Z via WhatsApp or email</li>
     <li>Provide order number & product details</li>
     <li>Share photos/videos showing the issue</li>
     <li>Our team will review and approve/reject the request</li>
@@ -80,7 +80,7 @@ a return, replacement, or refund.
 
 <ul class="list-disc ml-4">
     <li>Return shipping cost is the customer’s responsibility unless the item is defective or incorrect.</li>
-    <li>If the return is approved and the product is defective, LifeStyleQ8 will cover return shipping.</li>
+    <li>If the return is approved and the product is defective, A2Z will cover return shipping.</li>
 </ul>
 
 <h1 class="font-bold text-xl mt-6 mb-2">8. Cancellation Policy</h1>
@@ -93,5 +93,5 @@ Orders can be canceled only if they have <b>NOT</b> been shipped or prepared.
 <p class="mb-4">For returns or refund inquiries:</p>
 
 <p><b>📞 Phone:</b> +965 1234 5678</p>
-<p><b>✉️ Email:</b> support@LifeStyleQ8.com</p>
+<p><b>✉️ Email:</b> support@A2Z.com</p>
 <p><b>💬 WhatsApp:</b> Available for support</p>

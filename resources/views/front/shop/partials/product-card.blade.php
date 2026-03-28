@@ -1,10 +1,16 @@
-<div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
+<div id="product-{{ $product->id }}" class="scroll-mt-[120px] relative bg-white rounded-lg overflow-hidden shadow hover:shadow-lg transition-all duration-300 flex flex-col product-card">
 
     @php
         // Determine which image to display
         $displayImage = $product->image 
-            ?: ($product->gallery[0] ?? null);
+            ?: data_get($product->gallery, '0');
     @endphp
+
+    @if($product->is_used === 1)
+        <span class="absolute top-3 left-3 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+            USED
+        </span>
+    @endif
 
     <a href="{{ route('product.show', $product->slug) }}">
         @if($displayImage)
@@ -30,7 +36,11 @@
             ${{ number_format($product->price, 2) }}
         </span>
 
-        <a href="{{ route('cart.add', $product->id) }}"
+        <a href="{{ route('cart.add', [
+            'id' => $product->id,
+            'return' => url()->full(),
+            'anchor' => 'product-' . $product->id,
+        ]) }}"
            class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700">
             Add to Cart
         </a>

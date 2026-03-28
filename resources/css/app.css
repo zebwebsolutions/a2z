@@ -51,3 +51,46 @@
 #productSkeleton {
     transition: opacity 0.3s ease;
 }
+
+
+@media print {
+
+    /* Hide admin layout elements */
+    aside,
+    nav,
+    header,
+    footer,
+    .sidebar,
+    .topbar,
+    .print-hidden {
+        display: none !important;
+    }
+
+    /* Reset body */
+    body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+    }
+
+    /* Make barcode area full focus */
+    #barcode-print-area {
+        display: block;
+        margin: 0 auto;
+        padding: 0;
+        text-align: center;
+        box-shadow: none !important;
+    }
+
+    /* Ensure barcode renders correctly */
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Remove page margins */
+    @page {
+        margin: 0;
+    }
+}
+

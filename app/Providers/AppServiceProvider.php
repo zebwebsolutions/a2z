@@ -27,12 +27,14 @@ class AppServiceProvider extends ServiceProvider
             $view->with('menuCategories', $menuService->getMenu());
 
             $footerCategories = Category::where('is_active', true)
-                ->orderBy('name')
+                ->withCount('products')
+                ->orderByDesc('products_count')
                 ->take(6)
                 ->get();
 
             $footerBrands = Brand::where('is_active', true)
-                ->orderBy('name')
+                ->withCount('products')
+                ->orderByDesc('products_count')
                 ->take(6)
                 ->get();
 

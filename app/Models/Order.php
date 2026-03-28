@@ -11,14 +11,27 @@ class Order extends Model
         'user_id',
         'customer_name',
         'customer_phone',
-        'customer_email',
-        'customer_address',
+        'customer_phone_e164',
+        'receipt_language',
+        'customer_type',
+        'discount',
         'total',
+        'payment_method',
         'status',
     ];
 
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id');
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id', 'id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

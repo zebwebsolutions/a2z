@@ -6,9 +6,20 @@
     'availableRAM' => [],
     'availableStorage' => [],
     'subcategories' => [],
+    'batteryMin' => null,
+    'batteryMax' => null,
 ])
 
-<div class="hidden md:block w-64 p-4 bg-white rounded-lg border shadow-sm h-fit space-y-8">
+@php
+    $currentBrand = request('brand');
+
+    // If we're on /brand/{slug}
+    if (!$currentBrand && request()->routeIs('brand.show')) {
+        $currentBrand = request()->route('brand');
+    }
+@endphp
+
+<div class="w-full md:w-64 p-4 bg-white rounded-lg border shadow-sm h-fit space-y-8">
     <form id="filterForm" class="space-y-6">
 
         {{-- ===========================
@@ -37,32 +48,6 @@
                 </div>
             </div>
         @endif
-
-        {{-- ===========================
-            SUBCATEGORIES
-        ============================ --}}
-        @if($subcategories && $subcategories->count())
-            <div x-data="{ open: true }" class="border-b pb-4">
-                <button type="button" 
-                        @click="open = !open"
-                        class="w-full flex justify-between items-center font-semibold text-lg mb-2 focus:outline-none">
-                    Categories
-                    <span x-text="open ? '−' : '+'" class="text-xl leading-none"></span>
-                </button>
-
-                <ul x-show="open" x-collapse class="space-y-1 text-sm">
-                    @foreach($subcategories as $sub)
-                        <li>
-                            <a href="{{ route('category.show', $sub->slug) }}"
-                               class="block px-2 py-1 rounded hover:bg-gray-100 transition-colors">
-                                {{ $sub->name }}
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
 
         {{-- ===========================
             BEAUTIFUL PRICE SLIDER
@@ -102,6 +87,7 @@
                     x-model="min"
                     :min="realMin"
                     :max="realMax"
+                    step="0.1"
                     @input="update('min')"
                     class="range-hidden">
 
@@ -109,14 +95,15 @@
                     x-model="max"
                     :min="realMin"
                     :max="realMax"
+                    step="0.1"
                     @input="update('max')"
                     class="range-hidden">
 
             </div>
 
             <div class="flex justify-between text-sm mt-3">
-                <span>Min: <strong x-text="Math.round(min).toLocaleString()"></strong></span>
-                <span>Max: <strong x-text="Math.round(max).toLocaleString()"></strong></span>
+                <span>Min: <strong x-text="Number(min).toFixed(2)"></strong></span>
+                <span>Max: <strong x-text="Number(max).toFixed(2)"></strong></span>
             </div>
 
             <input type="hidden" name="min" :value="min">
@@ -125,6 +112,36 @@
         </div>
         @endif
 
+        {{-- BATTERY HEALTH (USED DEVICES ONLY) --}}
+        @if(!is_null($batteryMin) && !is_null($batteryMax) && $batteryMax >= 80)
+            <div class="mt-6">
+                <h3 class="text-sm font-semibold mb-2">
+                    Battery Health
+                </h3>
+
+                @php
+                    $batterySteps = [80, 85, 90, 95];
+                    $selected = (array) request('battery');
+                @endphp
+
+                <div class="space-y-2">
+                    @foreach($batterySteps as $value)
+                        @if($value <= $batteryMax)
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox"
+                                    name="battery[]"
+                                    value="{{ $value }}"
+                                    @checked(in_array($value, $selected))
+                                    onchange="this.form.submit()"
+                                    class="rounded border-gray-300 text-black focus:ring-black">
+
+                                <span>{{ $value }}%+</span>
+                            </label>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         {{-- ===========================
             RAM FILTER
@@ -180,10 +197,52 @@
             </div>
         @endif
 
+        {{-- ===========================
+            SUBCATEGORIES
+        ============================ --}}
+        @if($subcategories && $subcategories->count())
+            <div x-data="{ open: true }" class="border-b pb-4">
+                <button type="button"
+                        @click="open = !open"
+                        class="w-full flex justify-between items-center font-semibold text-lg mb-2 focus:outline-none">
+                    Categories
+                    <span x-text="open ? '−' : '+'" class="text-xl leading-none"></span>
+                </button>
+
+                <ul x-show="open" x-collapse class="space-y-1 text-sm">
+                    @foreach($subcategories as $sub)
+                        <li>
+                            @if($currentBrand)
+                                <a href="{{ route('brand.category', [
+                                    'category' => $sub->slug,
+                                    'brand' => $currentBrand
+                                ]) }}"
+                                class="block px-2 py-1 rounded hover:bg-gray-100">
+                                    {{ $sub->name }}
+                                </a>
+                            @else
+                                <a href="{{ route('category.show', $sub->slug) }}"
+                                class="block px-2 py-1 rounded hover:bg-gray-100">
+                                    {{ $sub->name }}
+                                </a>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         {{-- CLEAR FILTERS --}}
-        @if(request()->query())
+        @if($category && $category->id)
+            {{-- REAL CATEGORY --}}
             <a href="{{ route('category.show', $category->slug) }}"
-               class="block mt-6 text-center bg-gray-200 py-2 rounded hover:bg-gray-300 text-sm font-medium transition-colors">
+            class="block mt-6 text-center bg-gray-200 py-2 rounded hover:bg-gray-300 text-sm font-medium transition-colors">
+                Clear Filters
+            </a>
+        @else
+            {{-- USED / VIRTUAL PAGE --}}
+            <a href="{{ url()->current() }}"
+            class="block mt-6 text-center bg-gray-200 py-2 rounded hover:bg-gray-300 text-sm font-medium transition-colors">
                 Clear Filters
             </a>
         @endif
@@ -238,10 +297,10 @@ document.addEventListener("DOMContentLoaded", () => {
 .handle {
     position: absolute;
     top: 50%;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: white;
-    border: 3px solid #2563eb; 
+    border: 2px solid #2563eb; 
     border-radius: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -256,8 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
 .range-hidden {
     position: absolute;
     top: 0;
-    left: 0; /* Ensure strictly aligned */
-    width: 100%;
+    left: -12px; /* center thumb on track */
+    width: calc(100% + 24px);
     height: 100%; /* Cover full height of parent */
     opacity: 0;
     cursor: pointer;
@@ -276,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
 .range-hidden::-webkit-slider-thumb {
     pointer-events: auto; /* Catch the click here */
     -webkit-appearance: none;
-    width: 24px; /* Match or slightly exceed visual handle size */
+    width: 24px; /* Match visual handle size */
     height: 24px;
     cursor: pointer;
     border-radius: 50%;

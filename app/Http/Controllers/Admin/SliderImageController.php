@@ -22,10 +22,7 @@ class SliderImageController extends Controller
     {
         $data = $request->validate([
             'image' => 'required|image|max:4096',
-            'heading' => 'nullable|string',
-            'description' => 'nullable|string',
-            'button_text' => 'nullable|string',
-            'button_link' => 'nullable|string',
+            'url' => 'nullable|url'
         ]);
 
         $data['slider_id'] = $slider->id;
@@ -49,10 +46,7 @@ class SliderImageController extends Controller
     {
         $data = $request->validate([
             'image' => 'nullable|image|max:4096',
-            'heading' => 'nullable|string',
-            'description' => 'nullable|string',
-            'button_text' => 'nullable|string',
-            'button_link' => 'nullable|string',
+            'url' => 'nullable|url',
         ]);
 
         if ($request->hasFile('image')) {

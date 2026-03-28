@@ -22,4 +22,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Order::class, 'order_id', 'id');
     }
+
+    public function productUnits()
+    {
+        return $this->belongsToMany(ProductUnit::class, 'order_item_product_unit');
+    }
 }

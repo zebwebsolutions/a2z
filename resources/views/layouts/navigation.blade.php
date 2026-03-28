@@ -2,14 +2,18 @@
 <nav x-data="megaMenu()" x-init="init()" class="bg-white border-b border-gray-200 fixed top-0 inset-x-0 z-50">
 
     {{-- NAVBAR --}}
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+    <div class="container mx-auto flex items-center justify-between px-4 md:px-6 py-3">
 
         {{-- LEFT: Mobile toggle + Logo --}}
         <div class="flex items-center gap-3">
             <button @click="mobileOpen = true" class="md:hidden text-2xl">☰</button>
 
-            <a href="{{ route('home') }}" class="text-2xl font-bold text-blue-700">
-                LifeStyle<span class="text-gray-900">Q8</span>
+            <a href="{{ route('home') }}" class="flex items-center">
+                <img
+                    src="{{ asset('images/a2z-logo.png') }}"
+                    alt="A to Z Electronics & Repairing"
+                    class="h-11 md:h-12 w-auto object-contain"
+                >
             </a>
         </div>
 
@@ -24,6 +28,12 @@
                 {{ $cat->name }}
             </a>
             @endforeach
+            {{-- Used Devices Link --}}
+            <div class="hidden md:flex items-center">
+                <a href="{{ route('shop.used') }}" class="font-medium hover:text-blue-700 transition">
+                    Used Devices
+                </a>
+            </div>
         </div>
 
         {{-- RIGHT: Cart + Login --}}
@@ -53,14 +63,39 @@
         </a>
 
             @auth
-                <a href="{{ route('profile.edit') }}" class="hidden md:block font-medium">
+            <div class="relative group hidden md:block">
+                <button
+                    class="font-medium flex items-center gap-1 focus:outline-none">
                     {{ Auth::user()->name }}
-                </a>
+                </button>
+
+                {{-- Dropdown --}}
+                <div
+                    class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md
+                        opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                        transition-all duration-150 z-50">
+
+                    <a href="{{ route('profile.edit') }}"
+                    class="block px-4 py-2 text-sm hover:bg-gray-100">
+                        My Profile
+                    </a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
             @else
-                <a href="{{ route('login') }}" class="hidden md:block font-medium">
-                    Login
-                </a>
+            <a href="{{ route('login') }}" class="hidden md:block font-medium">
+                Login
+            </a>
             @endauth
+
         </div>
     </div>
 
@@ -134,11 +169,30 @@
     </div>
 
     {{-- MOBILE DRAWER --}}
-    <div x-show="mobileOpen" x-cloak>
+    <div x-cloak>
 
-        <div class="fixed inset-0 bg-black bg-opacity-40 z-40" @click="mobileOpen = false"></div>
+        <div
+            x-show="mobileOpen"
+            class="fixed inset-0 bg-black bg-opacity-40 z-40"
+            @click="mobileOpen = false"
+            x-transition:enter="transition-opacity ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+        ></div>
 
-        <aside class="fixed top-0 left-0 w-80 h-full bg-white z-50 overflow-y-auto shadow-lg">
+        <aside
+            x-show="mobileOpen"
+            class="fixed top-0 left-0 w-80 h-full bg-white z-50 overflow-y-auto shadow-lg"
+            x-transition:enter="transform transition ease-out duration-300"
+            x-transition:enter-start="-translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transform transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full"
+        >
 
             <div class="p-4 flex justify-between items-center border-b">
                 <h2 class="text-lg font-semibold">Menu</h2>
@@ -184,12 +238,16 @@
 </nav>
 
 {{-- Spacer --}}
-<div class="h-[56px]"></div>
+<div class="h-[72px]"></div>
 
 <div class=" bg-white border-t">
     <div class="container mx-auto py-4 px-6 flex flex-col md:flex-row md:items-center justify-between md:gap-6">
-        <div>
-            <a class="font-bold text-lg" href="{{ route('repair.form') }}">Repairing Service</a>
+        <div class="flex justify-center md:justify-start mb-3 md:mb-0">
+            <a href="{{ route('repair.form') }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-semibold text-sm md:text-base hover:bg-blue-100 hover:border-blue-300 transition">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+                <span>Repairing Service</span>
+            </a>
         </div>
         <form action="{{ route('search') }}" method="GET" class="w-full max-w-md mb-0">
             <div class="relative">
@@ -216,10 +274,12 @@
                 </div>
             </div>
         </form>
-        <div class="hotline-phone text-lg font-bold hidden md:block">
-            <i data-lucide="phone" class="inline-block w-5 h-5 mr-2 text-blue-600"></i>
-            <span class="text-blue-600">Hotline:</span>
-            +965 2224 2220
+        <div class="hotline-phone hidden md:flex items-start gap-2">
+            <i data-lucide="phone" class="inline-block w-6 h-6 mt-2 text-blue-600"></i>
+            <div class="leading-tight">
+                <a href="tel:+96522242220" class="block text-blue-500 font-semibold text-md lg:text-base hover:text-gray-800">+965 515 23533</a>
+                <a href="tel:+96597764165" class="block text-blue-500 font-semibold text-md lg:text-base hover:text-gray-800">+965 977 64165</a>
+            </div>
         </div>
     </div>
 </div>

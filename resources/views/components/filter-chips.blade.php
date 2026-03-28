@@ -38,7 +38,7 @@
     {{-- PRICE CHIP --}}
     @if($hasPriceFilter)
         <span class="chip" data-remove="price">
-            Price: {{ number_format($min ?? $priceMin) }} – {{ number_format($max ?? $priceMax) }}
+            Price: {{ number_format((float) ($min ?? $priceMin), 2) }} – {{ number_format((float) ($max ?? $priceMax), 2) }}
             <button type="button" class="ml-1">✕</button>
         </span>
     @endif

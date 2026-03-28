@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Http\Helpers\PhoneNumber;
+use App\Services\OrderReceiptService;
+use App\Services\MetaCloudWhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -36,6 +39,20 @@ class CartController extends Controller
         }
 
         session()->put('cart', $cart);
+
+        // Keep users in the same area after add-to-cart (especially on mobile).
+        $returnUrl = $request->query('return');
+        $anchor = ltrim((string) $request->query('anchor', ''), '#');
+
+        if ($returnUrl && (str_starts_with($returnUrl, url('/')) || str_starts_with($returnUrl, '/'))) {
+            $target = $returnUrl;
+            if ($anchor !== '') {
+                $target .= '#' . $anchor;
+            }
+
+            return redirect()->to($target)->with('success', "{$product->name} added to cart!");
+        }
+
         return redirect()->back()->with('success', "{$product->name} added to cart!");
     }
 
@@ -55,32 +72,42 @@ class CartController extends Controller
     {
         $cart = session()->get('cart', []);
         if (empty($cart)) {
-            return redirect()->route('products.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('shop.index')->with('error', 'Your cart is empty.');
         }
 
         return view('front.cart.checkout', compact('cart'));
     }
 
     // Place order
-    public function placeOrder(Request $request)
+    public function placeOrder(
+        Request $request,
+        OrderReceiptService $orderReceiptService,
+        MetaCloudWhatsAppService $metaCloudWhatsAppService
+    )
     {
         $cart = session()->get('cart', []);
         if (empty($cart)) {
-            return redirect()->route('products.index');
+            return redirect()->route('shop.index');
         }
 
         $data = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email',
-            'customer_phone' => 'nullable|string|max:20',
+            'customer_phone' => 'nullable|string|max:40',
             'customer_address' => 'nullable|string|max:255',
         ]);
+
+        $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
+
+        $data['customer_phone'] = isset($data['customer_phone']) ? trim($data['customer_phone']) : null;
+        $data['customer_phone_e164'] = $normalizedPhone;
 
         $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
 
         $order = Order::create(array_merge($data, [
             'total' => $total,
             'status' => 'pending',
+            'receipt_language' => 'en',
             'user_id' => auth()->id(), // Optional: logged-in users
             'store_id' => 1, // Optional: default store
         ]));
@@ -93,6 +120,11 @@ class CartController extends Controller
                 'price' => $item['price'],
                 'subtotal' => $item['price'] * $item['quantity'],
             ]);
+        }
+
+        $pdfPath = $orderReceiptService->generate($order);
+        if ($pdfPath) {
+            $metaCloudWhatsAppService->sendReceipt($order, $pdfPath);
         }
 
         session()->forget('cart');
