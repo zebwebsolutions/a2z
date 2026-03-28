@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->text('description')->nullable()->after('name');
-            $table->boolean('is_active')->default(true)->after('slug');
-        });
+        if (! Schema::hasColumn('categories', 'description')) {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->text('description')->nullable()->after('name');
+            });
+        }
+
+        if (! Schema::hasColumn('categories', 'is_active')) {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->boolean('is_active')->default(true)->after('slug');
+            });
+        }
     }
 
     /**
@@ -22,8 +29,18 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->dropColumn(['description', 'is_active']);
-        });
+        $columnsToDrop = [];
+
+        foreach (['description', 'is_active'] as $column) {
+            if (Schema::hasColumn('categories', $column)) {
+                $columnsToDrop[] = $column;
+            }
+        }
+
+        if ($columnsToDrop !== []) {
+            Schema::table('categories', function (Blueprint $table) use ($columnsToDrop) {
+                $table->dropColumn($columnsToDrop);
+            });
+        }
     }
 };

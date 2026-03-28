@@ -13,7 +13,7 @@ class StoreController extends Controller
         $user = $request->user();
 
         // Admin → all stores
-        if ($user->is_admin) {
+        if ($user->role === 'admin') {
             $stores = Store::select('id', 'name')->get();
         } else {
             // Staff → only their store

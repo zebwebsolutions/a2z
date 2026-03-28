@@ -10,7 +10,8 @@ use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\BrandController;
 
-Route::get('/products/barcode/{barcode}', [BarcodeScanController::class, 'scan']);
+Route::match(['get', 'post'], '/products/scan/{identifier?}', [BarcodeScanController::class, 'scan']);
+Route::match(['get', 'post'], '/products/barcode/{identifier?}', [BarcodeScanController::class, 'scan']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->post('/orders', [OrderController::class, 'store']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->get('/orders', [OrderController::class, 'index']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->get('/orders/{order}', [OrderController::class, 'show']);

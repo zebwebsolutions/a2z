@@ -9,9 +9,30 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\Images\ImageOptimizer;
+use App\Services\Products\ProductInventoryService;
+use App\Models\Category;
 
 class ProductController extends Controller
 {
+    private function isPhoneCategory(?int $parentCategoryId): bool
+    {
+        if (!$parentCategoryId) {
+            return false;
+        }
+
+        $category = Category::find($parentCategoryId);
+        if (!$category) {
+            return false;
+        }
+
+        $needle = strtolower(($category->slug ?: $category->name) ?? '');
+
+        return str_contains($needle, 'phone')
+            || str_contains($needle, 'mobile')
+            || str_contains($needle, 'smartphone')
+            || str_contains($needle, 'iphone');
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -46,12 +67,19 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         return response()->json(
-            $product->load('usedDeviceDetails')
+            $product->load([
+                'usedDeviceDetails',
+                'units' => fn ($query) => $query->where('status', 'available')->orderBy('id'),
+            ])
         );
     }
 
 
-    public function store(Request $request, ImageOptimizer $imageOptimizer)
+    public function store(
+        Request $request,
+        ImageOptimizer $imageOptimizer,
+        ProductInventoryService $productInventoryService
+    )
     {
         $user = $request->user();
 
@@ -61,7 +89,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
+            'stock' => ['nullable', 'integer', 'min:0'],
 
             // Optional relations
             'parent_category_id' => ['nullable', 'exists:categories,id'],
@@ -76,6 +104,12 @@ class ProductController extends Controller
                 'max:255',
                 Rule::unique('products', 'barcode'),
             ],
+            'inventory_units' => ['nullable', 'array'],
+            'inventory_units.*.id' => ['nullable', 'integer'],
+            'inventory_units.*.imei_1' => ['nullable', 'string', 'max:50'],
+            'inventory_units.*.imei_2' => ['nullable', 'string', 'max:50'],
+            'inventory_units.*.serial_number' => ['nullable', 'string', 'max:100'],
+            'inventory_units.*.barcode' => ['nullable', 'string', 'max:255'],
 
             // Content
             'description' => ['nullable', 'string'],
@@ -110,6 +144,16 @@ class ProductController extends Controller
             'specs_keys' => ['nullable', 'array'],
             'specs_values' => ['nullable', 'array'],
         ]);
+
+        $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
+        $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id'));
+        $productInventoryService->validateUnits($inventoryUnits, null, $isPhoneCategory);
+
+        if (!$isPhoneCategory && empty($inventoryUnits) && !array_key_exists('stock', $data)) {
+            $request->validate([
+                'stock' => ['required', 'integer', 'min:0'],
+            ]);
+        }
 
         /* ---------------------------------
          | Handle images
@@ -164,20 +208,21 @@ class ProductController extends Controller
             }
         }
 
-        $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition) {
+        $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits) {
             $product = Product::create([
                 'store_id' => $data['store_id'],
                 'parent_category_id' => $data['parent_category_id'] ?? null,
-                'category_id' => $data['category_id'] ?? null,
+                'category_id' => $data['category_id'] ?? ($data['parent_category_id'] ?? null),
                 'brand_id' => $data['brand_id'] ?? null,
                 'name' => $data['name'],
                 'slug' => Str::slug($data['name']),
                 'description' => $data['description'] ?? null,
                 'price' => $data['price'],
                 'cost_price' => $data['cost_price'] ?? null,
-                'stock' => $data['stock'],
+                'stock' => !empty($inventoryUnits) ? count($inventoryUnits) : ($data['stock'] ?? 0),
                 'sku' => $data['sku'] ?? null,
                 'barcode' => $data['barcode'] ?? null,
+                'tracks_inventory_by_unit' => !empty($inventoryUnits),
                 'is_used' => $data['is_used'] ?? false,
                 'image' => $imagePath,
                 'gallery' => $gallery,
@@ -208,13 +253,22 @@ class ProductController extends Controller
             return $product;
         });
 
+        if (!empty($inventoryUnits)) {
+            $productInventoryService->syncUnits($product, $inventoryUnits);
+        }
+
         return response()->json([
             'success' => true,
-            'product' => $product,
+            'product' => $product->fresh(['usedDeviceDetails', 'units']),
         ], 201);
     }
 
-    public function update(Request $request, Product $product, ImageOptimizer $imageOptimizer)
+    public function update(
+        Request $request,
+        Product $product,
+        ImageOptimizer $imageOptimizer,
+        ProductInventoryService $productInventoryService
+    )
     {
         $usedDetailId = optional($product->usedDeviceDetails)->id;
 
@@ -239,6 +293,12 @@ class ProductController extends Controller
                 'max:255',
                 Rule::unique('products', 'barcode')->ignore($product->id),
             ],
+            'inventory_units' => ['nullable', 'array'],
+            'inventory_units.*.id' => ['nullable', 'integer'],
+            'inventory_units.*.imei_1' => ['nullable', 'string', 'max:50'],
+            'inventory_units.*.imei_2' => ['nullable', 'string', 'max:50'],
+            'inventory_units.*.serial_number' => ['nullable', 'string', 'max:100'],
+            'inventory_units.*.barcode' => ['nullable', 'string', 'max:255'],
 
             // Content
             'description' => ['nullable', 'string'],
@@ -273,6 +333,16 @@ class ProductController extends Controller
             'specs_keys' => ['nullable', 'array'],
             'specs_values' => ['nullable', 'array'],
         ]);
+
+        $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
+        $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id', $product->parent_category_id));
+        $productInventoryService->validateUnits($inventoryUnits, $product, $isPhoneCategory);
+
+        if (!$isPhoneCategory && empty($inventoryUnits) && !array_key_exists('stock', $data)) {
+            $request->validate([
+                'stock' => ['required', 'integer', 'min:0'],
+            ]);
+        }
 
         /* ---------------------------------
          | Handle images
@@ -334,7 +404,7 @@ class ProductController extends Controller
                 ? $data['parent_category_id']
                 : $product->parent_category_id,
             'category_id' => array_key_exists('category_id', $data)
-                ? $data['category_id']
+                ? ($data['category_id'] ?? $data['parent_category_id'] ?? null)
                 : $product->category_id,
             'brand_id' => array_key_exists('brand_id', $data)
                 ? $data['brand_id']
@@ -352,16 +422,23 @@ class ProductController extends Controller
             'cost_price' => array_key_exists('cost_price', $data)
                 ? $data['cost_price']
                 : $product->cost_price,
-            'stock' => $data['stock'] ?? $product->stock,
+            'stock' => !empty($inventoryUnits)
+                ? count($inventoryUnits)
+                : ($data['stock'] ?? $product->stock),
 
             'sku' => array_key_exists('sku', $data) ? $data['sku'] : $product->sku,
             'barcode' => array_key_exists('barcode', $data) ? $data['barcode'] : $product->barcode,
 
             'is_used' => array_key_exists('is_used', $data) ? $data['is_used'] : $product->is_used,
+            'tracks_inventory_by_unit' => !empty($inventoryUnits) || $product->tracks_inventory_by_unit,
         ]);
 
-        DB::transaction(function () use ($product, $request, $deviceCondition) {
+        DB::transaction(function () use ($product, $request, $deviceCondition, $productInventoryService, $inventoryUnits) {
             $product->save();
+
+            if ($request->has('inventory_units')) {
+                $productInventoryService->syncUnits($product, $inventoryUnits);
+            }
 
             if ($request->has('is_used')) {
                 if ($request->boolean('is_used')) {
@@ -393,7 +470,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'product' => $product->fresh(),
+            'product' => $product->fresh(['usedDeviceDetails', 'units']),
         ]);
     }
 }

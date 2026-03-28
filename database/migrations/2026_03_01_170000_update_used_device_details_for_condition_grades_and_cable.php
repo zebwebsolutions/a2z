@@ -18,8 +18,12 @@ return new class extends Migration
             }
         });
 
+        $driver = DB::getDriverName();
+
         // 1) Temporarily allow both legacy and new values
-        DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('used','refurbished','A+','A','B','C') NOT NULL");
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('used','refurbished','A+','A','B','C') NOT NULL");
+        }
 
         // 2) Normalize legacy values into new grading
         DB::table('used_device_details')
@@ -31,7 +35,9 @@ return new class extends Migration
             ->update(['device_condition' => 'A']);
 
         // 3) Tighten enum to new values only
-        DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('A+','A','B','C') NOT NULL");
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('A+','A','B','C') NOT NULL");
+        }
     }
 
     /**
@@ -39,8 +45,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        $driver = DB::getDriverName();
+
         // Temporarily allow both sets for safe mapping back
-        DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('used','refurbished','A+','A','B','C') NOT NULL");
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('used','refurbished','A+','A','B','C') NOT NULL");
+        }
 
         DB::table('used_device_details')
             ->whereIn('device_condition', ['A+', 'A'])
@@ -50,7 +60,9 @@ return new class extends Migration
             ->whereIn('device_condition', ['B', 'C'])
             ->update(['device_condition' => 'used']);
 
-        DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('used','refurbished') NOT NULL");
+        if ($driver !== 'sqlite') {
+            DB::statement("ALTER TABLE used_device_details MODIFY device_condition ENUM('used','refurbished') NOT NULL");
+        }
 
         Schema::table('used_device_details', function (Blueprint $table) {
             if (Schema::hasColumn('used_device_details', 'cable_available')) {
