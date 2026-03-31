@@ -6,6 +6,96 @@
 <div class="bg-white p-6 rounded-lg shadow">
     <h1 class="text-2xl font-bold mb-6">All Orders</h1>
 
+    <x-admin.filter-box>
+
+        {{-- Search --}}
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">
+                Search
+            </label>
+            <input type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Order ID or customer"
+                class="w-full border rounded px-3 py-2 text-sm">
+        </div>
+
+        {{-- Store --}}
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">
+                Store
+            </label>
+            <select name="store_id"
+                    class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">All</option>
+                @foreach($stores as $store)
+                    <option value="{{ $store->id }}"
+                        @selected(request('store_id') == $store->id)>
+                        {{ $store->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Status --}}
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">
+                Status
+            </label>
+            <select name="status"
+                    class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">All</option>
+                <option value="pending"   @selected(request('status') === 'pending')>Pending</option>
+                <option value="processing" @selected(request('status') === 'processing')>Processing</option>
+                <option value="shipped"   @selected(request('status') === 'shipped')>Shipped</option>
+                <option value="completed" @selected(request('status') === 'completed')>Completed</option>
+                <option value="cancelled" @selected(request('status') === 'cancelled')>Cancelled</option>
+            </select>
+        </div>
+
+        {{-- Total --}}
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">
+                Total
+            </label>
+            <div class="flex gap-2">
+                <input type="number"
+                    step="0.01"
+                    name="total_min"
+                    value="{{ request('total_min') }}"
+                    placeholder="Min"
+                    class="w-full border rounded px-2 py-2 text-sm">
+
+                <input type="number"
+                    step="0.01"
+                    name="total_max"
+                    value="{{ request('total_max') }}"
+                    placeholder="Max"
+                    class="w-full border rounded px-2 py-2 text-sm">
+            </div>
+        </div>
+
+        {{-- Date range --}}
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">
+                Date
+            </label>
+            <div class="flex gap-2">
+                <input type="date"
+                    name="date_from"
+                    value="{{ request('date_from') }}"
+                    class="w-full border rounded px-2 py-2 text-sm">
+
+                <input type="date"
+                    name="date_to"
+                    value="{{ request('date_to') }}"
+                    class="w-full border rounded px-2 py-2 text-sm">
+            </div>
+        </div>
+
+    </x-admin.filter-box>
+
+
     @if($orders->count() > 0)
         <table class="w-full border-collapse">
             <thead>
@@ -34,6 +124,7 @@
                             @method('PUT')
                             <select name="status" onchange="this.form.submit()" class="border rounded p-1">
                                 <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="shipped" {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped</option>
                                 <option value="processing" {{ $order->status == 'processing' ? 'selected' : '' }}>Processing</option>
                                 <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>Completed</option>
                                 <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>

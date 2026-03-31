@@ -17,9 +17,10 @@
                     {{ $store->name }}
                 </option>
             @endforeach
-        </select>
+        </select>      
 
-
+        {{-- USED DEVICE FIELDS --}}
+        @include('admin.products.partials.used-device-fields', ['product' => $product])
 
         {{-- MAIN CATEGORY --}}
         <div>
@@ -95,6 +96,24 @@
                 placeholder="e.g., LSQ-WATCH-001"
             >
         </div>
+
+        {{-- Barcode --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Barcode</label>
+            <input type="text"
+                name="barcode"
+                value="{{ old('barcode', $product->barcode ?? '') }}"
+                class="mt-1 w-full border rounded px-3 py-2">
+        </div>
+
+        @if(!empty($product->barcode))
+            <div class="mt-3">
+                <img
+                    src="data:image/png;base64,{{ DNS1D::getBarcodePNG($product->barcode, 'C128') }}"
+                    class="h-16"
+                />
+            </div>
+        @endif
 
         {{-- MAIN IMAGE --}}
         @if($product->image)

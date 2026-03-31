@@ -35,7 +35,7 @@
                     class="flex overflow-x-auto gap-6 scroll-smooth snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing py-2"
                 >
                     @foreach($categories as $category)
-                        <a href="{{ route('shop.index', ['category' => $category->slug]) }}"
+                        <a href="{{ route('category.show', ['category' => $category->slug]) }}"
                           class="group flex-shrink-0 w-64 bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden snap-start">
                             <img src="{{ asset('storage/' . $category->image) }}" 
                                 alt="{{ $category->name }}" 
@@ -82,16 +82,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 @foreach($products as $product)
-                    <div class="bg-gray-50 rounded-xl shadow hover:shadow-lg transition overflow-hidden">
-                        <a href="{{ route('product.show', $product->slug) }}">
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-56 object-cover">
-                        </a>
-                        <div class="p-4">
-                            <h3 class="font-semibold text-lg text-gray-800 mb-1">{{ $product->name }}</h3>
-                            <p class="text-blue-600 font-bold mb-3">${{ number_format($product->price, 2) }}</p>
-                            <a href="{{ route('product.show', $product->slug) }}" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition">View Details</a>
-                        </div>
-                    </div>
+                    @include('front.products.partials.product-card', ['product' => $product])
                 @endforeach
             </div>
         </div>

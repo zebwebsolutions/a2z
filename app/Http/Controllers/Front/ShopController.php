@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Store;
 use App\Models\Brand;
+use App\Models\UsedDeviceDetail;
 
 class ShopController extends Controller
 {
@@ -181,5 +182,164 @@ class ShopController extends Controller
         }
     }
 
+    public function used(Request $request)
+    {
+        // ------------------------------------
+        // BASE QUERY (USED DEVICES ONLY)
+        // ------------------------------------
+        $query = Product::query()
+            ->where('is_used', 1)
+            ->whereHas('usedDeviceDetails', fn ($q) =>
+                $q->where('device_condition', 'used')
+            );
+
+        // ------------------------------------
+        // BASE QUERY FOR FILTER EXTRACTION
+        // (IMPORTANT: before user filters)
+        // ------------------------------------
+        $baseForFilters = clone $query;
+
+        // ------------------------------------
+        // AVAILABLE BRANDS (same pattern)
+        // ------------------------------------
+        $availableBrandIds = $baseForFilters->pluck('brand_id')->filter()->unique();
+        $availableBrands = Brand::whereIn('id', $availableBrandIds)
+            ->orderBy('name')
+            ->get();
+
+        // ------------------------------------
+        // PRICE RANGE
+        // ------------------------------------
+        $priceMin = $baseForFilters->min('price') ?? 0;
+        $priceMax = $baseForFilters->max('price') ?? 0;
+
+        // ------------------------------------
+        // BATTERY HEALTH RANGE (USED ONLY)
+        // ------------------------------------
+        $batteryMin = UsedDeviceDetail::query()
+            ->whereHas('product', fn ($q) =>
+                $q->where('is_used', 1)
+            )
+            ->where('device_condition', 'used')
+            ->whereNotNull('battery_health')
+            ->min('battery_health') ?? 0;
+
+        $batteryMax = UsedDeviceDetail::query()
+            ->whereHas('product', fn ($q) =>
+                $q->where('is_used', 1)
+            )
+            ->where('device_condition', 'used')
+            ->whereNotNull('battery_health')
+            ->max('battery_health') ?? 100;
+
+        $specsRaw = $baseForFilters->pluck('specs');
+
+        // RAM
+        $availableRAM = [];
+        foreach ($specsRaw as $spec) {
+            if (!is_array($spec)) continue;
+            if (isset($spec['RAM'])) {
+                $availableRAM[] = $spec['RAM'];
+            }
+        }
+        $availableRAM = collect($availableRAM)->unique()->values()->sort()->all();
+
+        // STORAGE
+        $availableStorage = [];
+        foreach ($specsRaw as $spec) {
+            if (!is_array($spec)) continue;
+            if (isset($spec['STORAGE'])) {
+                $availableStorage[] = $spec['STORAGE'];
+            }
+        }
+        $availableStorage = collect($availableStorage)->unique()->values()->sort()->all();
+
+        // ------------------------------------
+        // APPLY USER FILTERS (IDENTICAL BEHAVIOUR)
+        // ------------------------------------
+        if ($request->filled('brand')) {
+            $slugs = is_array($request->brand) ? $request->brand : [$request->brand];
+            $brandIds = Brand::whereIn('slug', $slugs)->pluck('id');
+
+            if ($brandIds->count()) {
+                $query->whereIn('brand_id', $brandIds);
+            }
+        }
+
+        if ($request->filled('min')) {
+            $query->where('price', '>=', (float) $request->min);
+        }
+
+        if ($request->filled('max')) {
+            $query->where('price', '<=', (float) $request->max);
+        }
+
+        if ($request->filled('battery')) {
+            $values = is_array($request->battery)
+                ? array_map('intval', $request->battery)
+                : [(int) $request->battery];
+
+            $minBattery = min($values);
+
+            $query->whereHas('usedDeviceDetails', function ($q) use ($minBattery) {
+                $q->where('battery_health', '>=', $minBattery);
+            });
+        }
+
+        if ($request->filled('ram')) {
+            $query->whereJsonContains('specs->RAM', $request->ram);
+        }
+
+        if ($request->filled('storage')) {
+            $query->whereJsonContains('specs->STORAGE', $request->storage);
+        }
+
+        // ------------------------------------
+        // FINAL PRODUCTS
+        // ------------------------------------
+        $products = $query->latest()->paginate(20)->withQueryString();
+
+        // ------------------------------------
+        // VIRTUAL CATEGORY (FOR SIDEBAR + BREADCRUMB)
+        // ------------------------------------
+        $category = (object) [
+            'id' => null,
+            'name' => 'Used Devices',
+            'slug' => 'used-devices',
+            'children' => collect(),
+        ];
+
+        // ------------------------------------
+        // AJAX RESPONSE (FILTERING)
+        // ------------------------------------
+        if ($request->ajax()) {
+            return response()->json([
+                'products' => view(
+                    'front.shop.partials.product-grid',
+                    compact('products')
+                )->render(),
+
+                'pagination' => $products->links()->render(),
+            ]);
+        }
+
+        // ------------------------------------
+        // VIEW
+        // ------------------------------------
+        return view('front.shop.used', [
+            'category' => $category,
+            'products' => $products,
+
+            // SIDEBAR DATA (EXACT SAME KEYS)
+            'availableBrands' => $availableBrands,
+            'priceMin' => $priceMin,
+            'priceMax' => $priceMax,
+            'batteryMin' => $batteryMin,
+            'batteryMax' => $batteryMax,
+            'availableRAM' => $availableRAM,
+            'availableStorage' => $availableStorage,
+            'subcategories' => collect(),
+        ]);
+    }
 
 }

@@ -2,14 +2,14 @@
 <nav x-data="megaMenu()" x-init="init()" class="bg-white border-b border-gray-200 fixed top-0 inset-x-0 z-50">
 
     {{-- NAVBAR --}}
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
+    <div class="container mx-auto flex items-center justify-between px-4 md:px-6 py-3">
 
         {{-- LEFT: Mobile toggle + Logo --}}
         <div class="flex items-center gap-3">
             <button @click="mobileOpen = true" class="md:hidden text-2xl">☰</button>
 
             <a href="{{ route('home') }}" class="text-2xl font-bold text-blue-700">
-                LifeStyle<span class="text-gray-900">Q8</span>
+                A<span class="text-gray-900">2</span>Z
             </a>
         </div>
 
@@ -24,6 +24,12 @@
                 {{ $cat->name }}
             </a>
             @endforeach
+            {{-- Used Devices Link --}}
+            <div class="hidden md:flex items-center">
+                <a href="{{ route('shop.used') }}" class="font-medium hover:text-blue-700 transition">
+                    Used Devices
+                </a>
+            </div>
         </div>
 
         {{-- RIGHT: Cart + Login --}}
@@ -53,14 +59,39 @@
         </a>
 
             @auth
-                <a href="{{ route('profile.edit') }}" class="hidden md:block font-medium">
+            <div class="relative group hidden md:block">
+                <button
+                    class="font-medium flex items-center gap-1 focus:outline-none">
                     {{ Auth::user()->name }}
-                </a>
+                </button>
+
+                {{-- Dropdown --}}
+                <div
+                    class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md
+                        opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                        transition-all duration-150 z-50">
+
+                    <a href="{{ route('profile.edit') }}"
+                    class="block px-4 py-2 text-sm hover:bg-gray-100">
+                        My Profile
+                    </a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
             @else
-                <a href="{{ route('login') }}" class="hidden md:block font-medium">
-                    Login
-                </a>
+            <a href="{{ route('login') }}" class="hidden md:block font-medium">
+                Login
+            </a>
             @endauth
+
         </div>
     </div>
 

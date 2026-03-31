@@ -16,6 +16,13 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+
+        <div id="topLoader"
+            class="fixed top-0 left-0 h-[3px] bg-black z-[9999]
+                    transition-all duration-300 ease-out"
+            style="width:0%; opacity:0;">
+        </div>
+        
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 

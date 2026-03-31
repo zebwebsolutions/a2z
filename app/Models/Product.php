@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -20,16 +21,47 @@ class Product extends Model
         'stock',
         'image',
         'gallery',
+        'barcode',
+        'barcode_type',
         'parent_category_id',
         'brand_id',
         'is_active',
+        'is_used',
         'specs',
     ];
 
     protected $casts = [
         'specs' => 'array',
         'gallery' => 'array',
+        'price' => 'float',
+        'stock' => 'integer',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($product) {
+
+            // Auto-generate barcode only if not provided
+            if (empty($product->barcode)) {
+                do {
+                    $barcode = 'PRD-' . strtoupper(Str::random(8));
+                } while (self::where('barcode', $barcode)->exists());
+
+                $product->barcode = $barcode;
+                $product->barcode_type = 'code128';
+            }
+
+            if (empty($product->sku)) {
+                $product->sku = 'PRD-' . str_pad(
+                    (string)(Product::max('id') + 1),
+                    6,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            }
+
+        });
+    }
 
      public function getSpecsAttribute($value)
     {
@@ -66,6 +98,9 @@ class Product extends Model
     }
     public function homeSections() {
         return $this->belongsToMany(HomeSection::class, 'home_section_product');
+    }
+    public function usedDeviceDetails() {
+        return $this->hasOne(UsedDeviceDetail::class);
     }
 
 }
