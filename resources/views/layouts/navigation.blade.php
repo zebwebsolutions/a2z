@@ -92,7 +92,7 @@
             </div>
             @else
             <a href="{{ route('login') }}" class="hidden md:block font-medium">
-                Login
+                Login / Register
             </a>
             @endauth
 
@@ -200,6 +200,11 @@
             </div>
 
             <div class="p-4 space-y-2">
+                @guest
+                    <a href="{{ route('login') }}" class="block rounded bg-blue-50 px-3 py-2 font-semibold text-blue-700" @click="mobileOpen = false">
+                        Login / Register
+                    </a>
+                @endguest
 
                 {{-- MOBILE CATEGORIES --}}
                 @foreach($menuCategories as $idx => $cat)
