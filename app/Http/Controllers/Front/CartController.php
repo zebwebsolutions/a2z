@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\User;
 use App\Http\Helpers\PhoneNumber;
 use App\Services\OrderReceiptService;
 use App\Services\MetaCloudWhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
@@ -108,8 +110,8 @@ class CartController extends Controller
             'total' => $total,
             'status' => 'pending',
             'receipt_language' => 'en',
-            'user_id' => auth()->id(), // Optional: logged-in users
-            'store_id' => 1, // Optional: default store
+            'user_id' => $this->checkoutUserId(),
+            'store_id' => auth()->user()?->store_id ?? 1,
         ]));
 
         foreach ($cart as $id => $item) {
@@ -130,6 +132,29 @@ class CartController extends Controller
         session()->forget('cart');
 
         return redirect()->route('cart.success', $order->id);
+    }
+
+    private function checkoutUserId(): int
+    {
+        if (auth()->id()) {
+            return auth()->id();
+        }
+
+        $userId = User::query()
+            ->where(function ($query) {
+                $query->whereNull('is_active')->orWhere('is_active', true);
+            })
+            ->whereIn('role', ['admin', 'salesman'])
+            ->orderBy('id')
+            ->value('id') ?? User::query()->orderBy('id')->value('id');
+
+        if (! $userId) {
+            throw ValidationException::withMessages([
+                'customer_name' => 'No staff user exists to assign this order. Please create an admin or salesman user first.',
+            ]);
+        }
+
+        return (int) $userId;
     }
 
     // Order success page
