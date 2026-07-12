@@ -40,6 +40,7 @@
 
         <div class="text-right mt-6">
             <h2 class="text-xl font-bold">Total: {{ $total }} KWD</h2>
+            <p class="mt-1 text-sm text-gray-600">Cash on delivery only. Flat delivery charge of 1 KWD is added at checkout.</p>
             <a href="{{ route('cart.checkout') }}" class="bg-blue-600 text-white px-4 py-2 rounded mt-4 inline-block">Proceed to Checkout</a>
         </div>
     @endif

@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
+    private const DELIVERY_CHARGE = 1.000;
+
     // Show cart page
     public function index()
     {
@@ -95,7 +97,7 @@ class CartController extends Controller
         $data = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email',
-            'customer_phone' => 'nullable|string|max:40',
+            'customer_phone' => 'required|string|max:40',
             'customer_address' => 'nullable|string|max:255',
         ]);
 
@@ -104,10 +106,12 @@ class CartController extends Controller
         $data['customer_phone'] = isset($data['customer_phone']) ? trim($data['customer_phone']) : null;
         $data['customer_phone_e164'] = $normalizedPhone;
 
-        $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
+        $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
+        $total = $subtotal + self::DELIVERY_CHARGE;
 
         $order = Order::create(array_merge($data, [
             'total' => $total,
+            'payment_method' => 'cash',
             'status' => 'pending',
             'receipt_language' => 'en',
             'user_id' => $this->checkoutUserId(),
