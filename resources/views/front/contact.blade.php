@@ -93,6 +93,8 @@
 
             <form method="POST" action="{{ route('contact.send') }}">
                 @csrf
+                <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
+                <input type="hidden" name="contact_form_started_at" value="{{ $contactFormStartedAt }}">
 
                 <div class="mb-4">
                     <label class="block font-medium mb-1" for="name">Your Name</label>
