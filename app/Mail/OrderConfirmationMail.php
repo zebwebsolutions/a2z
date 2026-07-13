@@ -21,7 +21,7 @@ class OrderConfirmationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your LifeStyleQ8 order #' . $this->order->id,
+            subject: 'Your order #' . $this->order->id . ' at A2Z Mobiles',
         );
     }
 
