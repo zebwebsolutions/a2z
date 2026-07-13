@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
+use Illuminate\Http\Request;
 
 class ContactMessageController extends Controller
 {
@@ -23,5 +24,19 @@ class ContactMessageController extends Controller
         $contactMessage->delete();
 
         return back()->with('success', 'Contact message deleted successfully.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
+        $data = $request->validate([
+            'message_ids' => ['required', 'array', 'min:1'],
+            'message_ids.*' => ['integer', 'exists:contact_messages,id'],
+        ]);
+
+        $deleted = ContactMessage::whereIn('id', $data['message_ids'])->delete();
+
+        return back()->with('success', $deleted.' contact message(s) deleted successfully.');
     }
 }

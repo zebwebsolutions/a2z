@@ -7,10 +7,26 @@
     <h1 class="text-2xl font-bold mb-6">Contact Messages</h1>
 
     @if($messages->count())
+        <form method="POST" action="{{ route('admin.contact-messages.bulk-destroy') }}" onsubmit="return confirm('Delete selected messages?');">
+            @csrf
+            @method('DELETE')
+
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <input type="checkbox" id="select-all-contact-messages" class="rounded border-gray-300">
+                    Select all visible
+                </label>
+
+                <button type="submit" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                    Delete Selected
+                </button>
+            </div>
+
         <div class="overflow-x-auto">
             <table class="w-full border-collapse">
                 <thead>
                     <tr class="bg-gray-100 border-b">
+                        <th class="p-3 text-left">Select</th>
                         <th class="p-3 text-left">#</th>
                         <th class="p-3 text-left">Name</th>
                         <th class="p-3 text-left">Email</th>
@@ -23,6 +39,9 @@
                 <tbody>
                     @foreach($messages as $message)
                         <tr class="border-b align-top hover:bg-gray-50">
+                            <td class="p-3">
+                                <input type="checkbox" name="message_ids[]" value="{{ $message->id }}" class="contact-message-checkbox rounded border-gray-300">
+                            </td>
                             <td class="p-3">{{ $message->id }}</td>
                             <td class="p-3 font-medium">{{ $message->name }}</td>
                             <td class="p-3">{{ $message->email }}</td>
@@ -45,13 +64,14 @@
                             </td>
                             <td class="p-3">{{ $message->created_at->format('d M, Y h:i A') }}</td>
                             <td class="p-3">
-                                <form method="POST" action="{{ route('admin.contact-messages.destroy', $message) }}" onsubmit="return confirm('Delete this message?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded">
-                                        Delete
-                                    </button>
-                                </form>
+                                <button
+                                    type="submit"
+                                    formaction="{{ route('admin.contact-messages.destroy', $message) }}"
+                                    class="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded"
+                                    onclick="return confirm('Delete this message?');"
+                                >
+                                    Delete
+                                </button>
                             </td>
                         </tr>
                     @endforeach
@@ -62,8 +82,22 @@
         <div class="mt-6">
             {{ $messages->links() }}
         </div>
+        </form>
     @else
         <p class="text-gray-600">No contact messages yet.</p>
     @endif
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAll = document.getElementById('select-all-contact-messages');
+        const checkboxes = Array.from(document.querySelectorAll('.contact-message-checkbox'));
+
+        selectAll?.addEventListener('change', () => {
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = selectAll.checked;
+            });
+        });
+    });
+</script>
 @endsection
