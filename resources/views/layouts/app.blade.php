@@ -67,6 +67,15 @@
         </script>
     </head>
     <body class="font-sans antialiased">
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-25WKKLJPT4"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-25WKKLJPT4');
+        </script>
 
         <div id="topLoader"
             class="fixed top-0 left-0 h-[3px] bg-black z-[9999]
