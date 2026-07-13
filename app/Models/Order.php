@@ -13,6 +13,7 @@ class Order extends Model
         'customer_email',
         'customer_phone',
         'customer_phone_e164',
+        'customer_address',
         'receipt_language',
         'customer_type',
         'discount',
