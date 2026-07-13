@@ -19,11 +19,14 @@
                 </thead>
                 <tbody class="text-sm md:text-base">
                     @foreach($order->items as $item)
+                        @php
+                            $itemSubtotal = $item->price * $item->quantity;
+                        @endphp
                         <tr class="border-b">
-                            <td class="p-3 max-w-[260px] break-words text-left">{{ $item->product->name }}</td>
+                            <td class="p-3 max-w-[260px] break-words text-left">{{ $item->product?->name ?? 'Product' }}</td>
                             <td class="p-3 text-left">{{ $item->quantity }}</td>
-                            <td class="p-3 whitespace-nowrap text-left">{{ $item->price }}</td>
-                            <td class="p-3 whitespace-nowrap text-left">{{ $item->subtotal }}</td>
+                            <td class="p-3 whitespace-nowrap text-left">{{ number_format($item->price, 3) }} KWD</td>
+                            <td class="p-3 whitespace-nowrap text-left">{{ number_format($itemSubtotal, 3) }} KWD</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -31,7 +34,7 @@
         </div>
     </div>
 
-    <h3 class="mt-6 text-lg font-bold">Total: {{ $order->total_amount }} KWD</h3>
+    <h3 class="mt-6 text-lg font-bold">Total: {{ number_format($order->total, 3) }} KWD</h3>
 
     <div class="mt-8">
         <a href="{{ route('shop.index') }}" class="bg-blue-600 text-white px-4 py-2 rounded">Continue Shopping</a>
