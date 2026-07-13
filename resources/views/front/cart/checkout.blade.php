@@ -32,7 +32,8 @@
         @csrf
 
         <input type="text" name="customer_name" value="{{ old('customer_name') }}" placeholder="Full Name" class="border p-2 w-full rounded" required>
-        <input type="email" name="customer_email" value="{{ old('customer_email') }}" placeholder="Email (optional)" class="border p-2 w-full rounded">
+        <input type="email" name="customer_email" value="{{ old('customer_email') }}" placeholder="Email" class="border p-2 w-full rounded" required>
+        @error('customer_email') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
         <input type="text" name="customer_phone" value="{{ old('customer_phone') }}" placeholder="Phone" class="border p-2 w-full rounded" required>
         @error('customer_phone') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
         <textarea name="customer_address" placeholder="Address" class="border p-2 w-full rounded">{{ old('customer_address') }}</textarea>

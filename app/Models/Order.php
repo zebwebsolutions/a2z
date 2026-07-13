@@ -10,6 +10,7 @@ class Order extends Model
         'store_id',
         'user_id',
         'customer_name',
+        'customer_email',
         'customer_phone',
         'customer_phone_e164',
         'receipt_language',
