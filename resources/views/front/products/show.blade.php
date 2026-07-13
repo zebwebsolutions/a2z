@@ -100,7 +100,7 @@
                 @else 
                 bg-gray-400 text-gray-200 cursor-not-allowed pointer-events-none
                 @endif">
-            {{ $product->stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+            {{ $product->stock > 0 ? 'Add to Cart' : ($product->is_used === 1 ? 'Sold' : 'Out of Stock') }}
             </a>
 
             @if($product->specs)

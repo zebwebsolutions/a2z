@@ -89,9 +89,18 @@
         @endif
 
         {{-- Add to Cart --}}
-        <button class="w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
-            Add to Cart
-        </button>
+        @if($product->stock > 0)
+            <a href="{{ route('cart.add', [
+                'id' => $product->id,
+                'return' => url()->full(),
+            ]) }}" class="block w-full bg-black text-center text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition">
+                Add to Cart
+            </a>
+        @else
+            <span class="block w-full bg-gray-200 text-center text-gray-700 py-3 rounded-xl font-semibold">
+                {{ $product->is_used === 1 ? 'Sold' : 'Out of Stock' }}
+            </span>
+        @endif
     </div>
 
 </div>

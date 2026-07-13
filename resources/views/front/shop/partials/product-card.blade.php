@@ -4,6 +4,7 @@
         // Determine which image to display
         $displayImage = $product->image 
             ?: data_get($product->gallery, '0');
+        $stockLabel = $product->is_used === 1 ? 'Sold' : 'Out of Stock';
     @endphp
 
     @if($product->is_used === 1)
@@ -36,14 +37,20 @@
             ${{ number_format($product->price, 2) }}
         </span>
 
-        <a href="{{ route('cart.add', [
-            'id' => $product->id,
-            'return' => url()->full(),
-            'anchor' => 'product-' . $product->id,
-        ]) }}"
-           class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700">
-            Add to Cart
-        </a>
+        @if($product->stock > 0)
+            <a href="{{ route('cart.add', [
+                'id' => $product->id,
+                'return' => url()->full(),
+                'anchor' => 'product-' . $product->id,
+            ]) }}"
+               class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700">
+                Add to Cart
+            </a>
+        @else
+            <span class="bg-gray-200 text-gray-700 text-sm px-3 py-1 rounded font-semibold">
+                {{ $stockLabel }}
+            </span>
+        @endif
     </div>
 
 </div>

@@ -29,6 +29,11 @@ class CartController extends Controller
     public function add(Request $request, $id)
     {
         $product = Product::findOrFail($id);
+
+        if ($product->stock <= 0) {
+            return redirect()->back()->with('error', "{$product->name} is currently out of stock.");
+        }
+
         $cart = session()->get('cart', []);
 
         if (isset($cart[$id])) {
