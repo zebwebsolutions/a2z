@@ -9,8 +9,11 @@
     <p>Hi {{ $order->customer_name }},</p>
 
     <p>
-        We received your LifeStyleQ8 order #{{ $order->id }}. We currently offer
-        cash on delivery only, and delivery charges are a flat 1 KWD.
+        We received your order for the following products/items at a2z mobiles and repairing kuwait. We will contact you shortly for delivery confirmation.
+    </p>
+
+    <p dir="rtl" style="text-align: right;">
+        لقد استلمنا طلبك للمنتجات/العناصر التالية لدى A2Z Mobiles and Repairing Kuwait. سنتواصل معك قريباً لتأكيد التوصيل.
     </p>
 
     <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -38,5 +41,4 @@
     <p>Delivery: <strong>{{ number_format($deliveryCharge, 3) }} KWD</strong></p>
     <p>Total: <strong>{{ number_format($order->total, 3) }} KWD</strong></p>
 
-    <p style="margin-top: 24px;">We will contact you shortly to confirm delivery.</p>
 </div>
