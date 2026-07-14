@@ -42,7 +42,7 @@
                     return;
                 }
 
-                fetch(`/admin/products/search?q=${encodeURIComponent(this.search)}`)
+                fetch(`{{ route('admin.products.search') }}?q=${encodeURIComponent(this.search)}`)
                     .then(res => res.json())
                     .then(data => {
                         this.results = (data || []).map(p => ({

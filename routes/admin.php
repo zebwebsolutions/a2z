@@ -14,7 +14,8 @@ use App\Http\Controllers\Admin\{
     SparePartController,
     SparePartSaleController,
     UserController,
-    ContactMessageController
+    ContactMessageController,
+    ProductSearchController
 };
 use App\Http\Controllers\Api\BarcodeScanController;
 use App\Http\Controllers\Admin\Products\ProductController;
@@ -31,6 +32,9 @@ Route::middleware(['auth', 'active', 'role:admin'])
         Route::resource('spare-parts', SparePartController::class);
         Route::resource('users', UserController::class);
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        Route::get('products/search', [ProductSearchController::class, 'search'])
+            ->name('products.search');
 
         Route::get('contact-messages', [ContactMessageController::class, 'index'])
             ->name('contact-messages.index');
