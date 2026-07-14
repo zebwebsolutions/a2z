@@ -34,7 +34,7 @@
     {{-- BOTTOM SECTION LOCKED TO BOTTOM --}}
     <div class="flex justify-between items-center p-2 mt-auto">
         <span class="text-blue-600 font-semibold">
-            ${{ number_format($product->price, 2) }}
+            KWD {{ number_format($product->price, 2) }}
         </span>
 
         @if($product->stock > 0)

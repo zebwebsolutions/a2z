@@ -19,7 +19,7 @@
                 @foreach ($repairs as $repair)
                     <li class="flex justify-between border-b pb-3">
                         <span>{{ $repair['name'] }}</span>
-                        <span class="font-bold text-blue-600">KD {{ $repair['price'] }}</span>
+                        <span class="font-bold text-blue-600">KWD {{ $repair['price'] }}</span>
                     </li>
                 @endforeach
             </ul>

@@ -32,7 +32,7 @@
         </h1>
 
         <p class="text-2xl font-semibold text-green-600 mb-6">
-            KD {{ number_format($product->price, 2) }}
+            KWD {{ number_format($product->price, 2) }}
         </p>
 
         {{-- Used Device Details --}}

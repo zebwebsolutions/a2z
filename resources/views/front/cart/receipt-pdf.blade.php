@@ -39,8 +39,8 @@
             <tr>
                 <th>Item</th>
                 <th class="num">Qty</th>
-                <th class="num">Price (KD)</th>
-                <th class="num">Subtotal (KD)</th>
+                <th class="num">Price (KWD)</th>
+                <th class="num">Subtotal (KWD)</th>
             </tr>
         </thead>
         <tbody>
@@ -69,15 +69,15 @@
     <div class="totals">
         <div class="totals-row">
             <span>Subtotal:</span>
-            <span>KD {{ number_format($subtotal, 2) }}</span>
+            <span>KWD {{ number_format($subtotal, 2) }}</span>
         </div>
         <div class="totals-row">
             <span>Discount:</span>
-            <span>KD {{ number_format($discount, 2) }}</span>
+            <span>KWD {{ number_format($discount, 2) }}</span>
         </div>
         <div class="totals-row bold">
             <span>Total:</span>
-            <span>KD {{ number_format($total, 2) }}</span>
+            <span>KWD {{ number_format($total, 2) }}</span>
         </div>
     </div>
 
@@ -86,4 +86,3 @@
     </div>
 </body>
 </html>
-

@@ -57,7 +57,7 @@
 
             <div class="flex justify-between mb-2">
                 <h3 class="font-semibold text-lg">Price</h3>
-                <span class="text-xs text-gray-500">PKR</span>
+                <span class="text-xs text-gray-500">KWD</span>
             </div>
 
             {{-- Added relative container height h-6 to fit handles --}}

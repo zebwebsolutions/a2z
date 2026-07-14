@@ -6,9 +6,9 @@
 @section('content')
 
 <div
-    class="container mx-auto px-3 md:px-4 lg:px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-8"
+    class="container mx-auto px-3 md:px-4 lg:px-6 py-10"
     x-data="{
-        filtersOpen: {{ request()->query() ? 'true' : 'false' }},
+        filtersOpen: false,
         isDesktop: window.matchMedia('(min-width: 768px)').matches,
         init() {
             const mq = window.matchMedia('(min-width: 768px)');
@@ -19,12 +19,12 @@
     }"
 >
 
-    {{-- Mobile Filter Toggle --}}
-    <div class="md:hidden">
+    {{-- Filter Toggle --}}
+    <div class="mb-6 md:hidden">
         <button
             type="button"
             @click="filtersOpen = !filtersOpen"
-            class="w-full inline-flex items-center justify-between px-4 py-3 rounded-lg border border-gray-300 bg-white shadow-sm"
+            class="w-full inline-flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-gray-300 bg-white shadow-sm"
         >
             <span class="inline-flex items-center gap-2 font-semibold text-gray-800">
                 <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
@@ -50,55 +50,57 @@
         x-transition:leave-end="opacity-0"
     ></div>
 
-    {{-- Sidebar (same style as category pages) --}}
-    <aside
-        x-show="isDesktop || filtersOpen"
-        x-cloak
-        class="fixed top-0 left-0 z-50 h-full w-[86vw] max-w-sm overflow-y-auto p-3 md:p-0 bg-white shadow-2xl border-r border-gray-200 rounded-r-2xl md:rounded-none md:bg-transparent md:shadow-none md:border-0 md:static md:z-auto md:h-auto md:w-auto md:max-w-none md:overflow-visible md:col-span-1"
-        x-transition:enter="transform transition ease-out duration-300"
-        x-transition:enter-start="-translate-x-full"
-        x-transition:enter-end="translate-x-0"
-        x-transition:leave="transform transition ease-in duration-200"
-        x-transition:leave-start="translate-x-0"
-        x-transition:leave-end="-translate-x-full"
-    >
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        {{-- Sidebar (same drawer style as category pages, hidden until clicked) --}}
+        <aside
+            x-show="isDesktop || filtersOpen"
+            x-cloak
+            class="fixed top-0 left-0 z-50 h-full w-[86vw] max-w-sm overflow-y-auto p-3 md:p-0 bg-white shadow-2xl border-r border-gray-200 rounded-r-2xl md:rounded-none md:bg-transparent md:shadow-none md:border-0 md:static md:z-auto md:h-auto md:w-auto md:max-w-none md:overflow-visible md:col-span-1"
+            x-transition:enter="transform transition ease-out duration-300"
+            x-transition:enter-start="-translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transform transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full"
+        >
 
-        <div class="md:hidden flex justify-end mb-2">
-            <button type="button" @click="filtersOpen = false" class="text-sm text-gray-600">Close</button>
-        </div>
-        <x-category-sidebar
-            :category="$virtualCategory"
-            :availableBrands="$availableBrands"
-            :priceMin="$priceMin"
-            :priceMax="$priceMax"
-            :availableRAM="$ramOptions"
-            :availableStorage="$storageOptions"
-            :subcategories="$categories"
-        />
-    </aside>
-
-    {{-- ⭐ Product Grid --}}
-    <div class="md:col-span-3">
-        <h2 class="text-2xl font-bold mb-6">Shop Products</h2>
-        <div id="filterChips" class="flex flex-wrap gap-2 mb-4">
-            @include('components.filter-chips', [
-                'category' => $virtualCategory,
-                'availableBrands' => $availableBrands,
-                'priceMin' => $priceMin,
-                'priceMax' => $priceMax,
-                'availableRAM' => $ramOptions,
-                'availableStorage' => $storageOptions,
-                'subcategories' => $categories,
-            ])
-        </div>
-
-        @if($products->count() > 0)
-            <div id="products-wrapper">
-                @include('front.shop.partials.products-grid')
+            <div class="md:hidden flex justify-end mb-2">
+                <button type="button" @click="filtersOpen = false" class="text-sm text-gray-600">Close</button>
             </div>
-        @else
-            <p class="text-center text-gray-600">No products found.</p>
-        @endif
+            <x-category-sidebar
+                :category="$virtualCategory"
+                :availableBrands="$availableBrands"
+                :priceMin="$priceMin"
+                :priceMax="$priceMax"
+                :availableRAM="$ramOptions"
+                :availableStorage="$storageOptions"
+                :subcategories="$categories"
+            />
+        </aside>
+
+        {{-- ⭐ Product Grid --}}
+        <div class="md:col-span-3">
+            <h2 class="text-2xl font-bold mb-6">Shop Products</h2>
+            <div id="filterChips" class="flex flex-wrap gap-2 mb-4">
+                @include('components.filter-chips', [
+                    'category' => $virtualCategory,
+                    'availableBrands' => $availableBrands,
+                    'priceMin' => $priceMin,
+                    'priceMax' => $priceMax,
+                    'availableRAM' => $ramOptions,
+                    'availableStorage' => $storageOptions,
+                    'subcategories' => $categories,
+                ])
+            </div>
+
+            @if($products->count() > 0)
+                <div id="products-wrapper">
+                    @include('front.shop.partials.products-grid')
+                </div>
+            @else
+                <p class="text-center text-gray-600">No products found.</p>
+            @endif
+        </div>
     </div>
 
 </div>
