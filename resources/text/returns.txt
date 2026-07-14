@@ -10,6 +10,10 @@ a return, replacement, or refund.
 <p>You may request a return under the following conditions:</p>
 
 <ul class="list-none ml-6 mt-3">
+    <li>✔ <b>New products within 14 days</b><br>
+        All new products can be returned within <b>14 days</b>, as per the standard Kuwait return policy, provided the product is <b>not opened</b>, unused, and in its original sealed packaging.
+    </li>
+
     <li>✔ <b>Wrong item received</b><br>
         <span class="text-gray-700">(Item does not match the order placed)</span>
     </li>
@@ -26,6 +30,10 @@ a return, replacement, or refund.
         Must be unopened and unused.
     </li>
 </ul>
+
+<p class="mt-4">
+    <b>Opened Apple and Samsung products:</b> Some products, such as Apple iPhones, may be eligible for return within 14 days even if opened, but these returns must be handled directly through the <b>Apple Store</b>. Similarly, opened Samsung products that the customer wants to return should be handled through <b>Samsung Al Babtain operating as Switch</b>.
+</p>
 
 <h1 class="font-bold text-xl mt-6 mb-2">3. Conditions for Returns</h1>
 <p>A return will <b>NOT</b> be accepted if:</p>
