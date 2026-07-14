@@ -1,7 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'A2Z | Your Trusted Electronics & Mobile Repair Partner')
-@section('meta_description', 'A2Z Kuwait provides new and used phones, tablets, accessories, and trusted repair services with fast support in Sharq, Kuwait.')
+@section('title', 'A2Z Mobiles & Repair Kuwait | Phones, Accessories, Repairs')
+@section('meta_description', 'Buy phones, tablets, smart watches, and accessories in Kuwait from A2Z. We offer mobile repair services, genuine products, fast support, and cash on delivery.')
+@section('og_title', 'A2Z Mobiles & Repair Kuwait | Phones, Accessories, Repairs')
+@section('og_description', 'Buy phones, tablets, smart watches, and accessories in Kuwait from A2Z. We offer mobile repair services, genuine products, fast support, and cash on delivery.')
 
 @section('content')
     <section class="bg-white border-b">
