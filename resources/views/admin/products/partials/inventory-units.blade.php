@@ -60,21 +60,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${phone ? `
                     <div>
                         <label class="block text-sm font-medium text-gray-700">IMEI 1</label>
-                        <input type="text" name="inventory_units[${index}][imei_1]" value="${row.imei_1 ?? ""}" class="mt-1 w-full border rounded px-3 py-2 unit-imei-1">
+                        <input type="text" name="inventory_units[${index}][imei_1]" value="${row.imei_1 ?? ""}" class="mt-1 w-full border rounded px-3 py-2 unit-imei-1 scanner-friendly-field" autocomplete="off" enterkeyhint="done" data-scanner-field="true">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">IMEI 2</label>
-                        <input type="text" name="inventory_units[${index}][imei_2]" value="${row.imei_2 ?? ""}" class="mt-1 w-full border rounded px-3 py-2">
+                        <input type="text" name="inventory_units[${index}][imei_2]" value="${row.imei_2 ?? ""}" class="mt-1 w-full border rounded px-3 py-2 scanner-friendly-field" autocomplete="off" enterkeyhint="done" data-scanner-field="true">
                     </div>
                 ` : `
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Serial Number</label>
-                        <input type="text" name="inventory_units[${index}][serial_number]" value="${row.serial_number ?? ""}" class="mt-1 w-full border rounded px-3 py-2">
+                        <input type="text" name="inventory_units[${index}][serial_number]" value="${row.serial_number ?? ""}" class="mt-1 w-full border rounded px-3 py-2 scanner-friendly-field" autocomplete="off" enterkeyhint="done" data-scanner-field="true">
                     </div>
                 `}
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Unit Barcode</label>
-                    <input type="text" name="inventory_units[${index}][barcode]" value="${row.barcode ?? ""}" class="mt-1 w-full border rounded px-3 py-2">
+                    <input type="text" name="inventory_units[${index}][barcode]" value="${row.barcode ?? ""}" class="mt-1 w-full border rounded px-3 py-2 scanner-friendly-field" autocomplete="off" enterkeyhint="done" data-scanner-field="true">
                 </div>
             </div>
         `;
@@ -133,6 +133,28 @@ document.addEventListener("DOMContentLoaded", () => {
             label.textContent = usesUnitStock ? "Stock Quantity (calculated from units)" : "Stock Quantity";
         }
     }
+
+    document.addEventListener("keydown", (event) => {
+        const field = event.target.closest("[data-scanner-field='true']");
+        if (!field) return;
+
+        if (event.key === "Enter") {
+            event.preventDefault();
+            event.stopPropagation();
+            field.value = field.value.replace(/[\r\n]+/g, "").trim();
+            syncInventoryMode();
+        }
+    }, true);
+
+    document.addEventListener("input", (event) => {
+        const field = event.target.closest("[data-scanner-field='true']");
+        if (!field) return;
+
+        const cleanedValue = field.value.replace(/[\r\n]+/g, "").trim();
+        if (field.value !== cleanedValue) {
+            field.value = cleanedValue;
+        }
+    });
 
     addUnitButton?.addEventListener("click", () => buildUnitRow());
     parentSelect?.addEventListener("change", renderUnits);

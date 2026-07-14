@@ -147,6 +147,9 @@
                 value="{{ $displayBarcode }}"
                 class="mt-1 w-full border rounded px-3 py-2"
                 placeholder="Leave blank to auto-generate"
+                autocomplete="off"
+                enterkeyhint="done"
+                data-scanner-field="true"
             >
         </div>
 

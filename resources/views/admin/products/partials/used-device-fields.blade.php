@@ -61,6 +61,9 @@
                     name="imei"
                     class="form-input w-full"
                     value="{{ old('imei', $product->usedDeviceDetails->imei ?? '') }}"
+                    autocomplete="off"
+                    enterkeyhint="done"
+                    data-scanner-field="true"
                 >
             </div>
 

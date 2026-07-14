@@ -95,6 +95,17 @@ class GoogleFeedController extends Controller
         'a30' => 60.0,
     ];
 
+    private array $merchantSpecLabels = [
+        'SCREEN SIZE' => 'Screen Size',
+        'FRONT CAMERA RESOLUTION' => 'Front Camera Resolution',
+        'RAM' => 'RAM',
+        'REAR CAMERA RESOLUTION' => 'Rear Camera Resolution',
+        'STORAGE CAPACITY' => 'Storage Capacity',
+        'SCREEN RESOLUTION' => 'Screen Resolution',
+        'WEIGHT' => 'Weight',
+        'COLOUR' => 'Colour',
+    ];
+
     public function index(): Response
     {
         $feedXml = Cache::remember('google_merchant_feed', now()->addHours(6), function () {
@@ -147,11 +158,6 @@ class GoogleFeedController extends Controller
             return;
         }
 
-        // Must have a meaningful description
-        if (!$this->hasMeaningfulDescription($product->description)) {
-            return;
-        }
-
         // Skip spare parts categories
         if ($this->isSparePartCategory($product->parentCategory?->name, $product->category?->name)) {
             return;
@@ -166,7 +172,13 @@ class GoogleFeedController extends Controller
         $brand          = $this->resolveBrand($product);
         $googleCategory = $this->resolveGoogleCategory($product);
         $productType    = $this->resolveProductType($product);
-        $description    = trim(preg_replace('/\s+/', ' ', strip_tags((string) $product->description)));
+        $description    = $this->buildMerchantDescription($product);
+
+        // Must have a meaningful description after specs are included.
+        if (!$this->hasMeaningfulDescription($description)) {
+            return;
+        }
+
         $price          = number_format(floatval($product->price), 3) . ' KWD';
         $imageUrl       = $this->resolveImageUrl($product->image);
         $productUrl     = $this->resolveProductUrl($product);
@@ -296,13 +308,67 @@ class GoogleFeedController extends Controller
         return url('/products/' . $product->id);
     }
 
+    private function buildMerchantDescription(Product $product): string
+    {
+        $description = $this->cleanText((string) $product->description);
+
+        if ($description === '') {
+            $description = $this->cleanText((string) $product->name . ' available at A2Z Mobiles Kuwait.');
+        }
+
+        $specs = $this->buildMerchantSpecsText($product->specs ?? []);
+
+        $parts = array_filter([
+            $description,
+            $specs,
+            'Available at A2Z Mobiles Kuwait.',
+        ]);
+
+        return mb_substr($this->cleanText(implode(' ', $parts)), 0, 4990);
+    }
+
+    private function buildMerchantSpecsText(array $specs): string
+    {
+        $segments = [];
+
+        foreach ($this->merchantSpecLabels as $storedKey => $label) {
+            $value = $this->findSpecValue($specs, $storedKey);
+
+            if ($value !== null) {
+                $segments[] = "{$label}: {$value}.";
+            }
+        }
+
+        return $this->cleanText(implode(' ', $segments));
+    }
+
+    private function findSpecValue(array $specs, string $storedKey): ?string
+    {
+        foreach ($specs as $key => $value) {
+            if (mb_strtoupper(trim((string) $key)) !== $storedKey) {
+                continue;
+            }
+
+            $cleanValue = $this->cleanText((string) $value);
+
+            return $cleanValue !== '' ? $cleanValue : null;
+        }
+
+        return null;
+    }
+
+    private function cleanText(string $text): string
+    {
+        return trim(preg_replace('/\s+/', ' ', strip_tags($text)) ?? '');
+    }
+
     // -------------------------------------------------------------------------
     // Validation helpers
     // -------------------------------------------------------------------------
 
     private function hasMeaningfulDescription(?string $description): bool
     {
-        $clean = trim(preg_replace('/\s+/', ' ', strip_tags((string) $description)));
+        $clean = $this->cleanText((string) $description);
 
         if ($clean === '' || mb_strlen($clean) < 20) {
             return false;

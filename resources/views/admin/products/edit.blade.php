@@ -119,7 +119,10 @@
             <input type="text"
                 name="barcode"
                 value="{{ old('barcode', $product->barcode ?? '') }}"
-                class="mt-1 w-full border rounded px-3 py-2">
+                class="mt-1 w-full border rounded px-3 py-2"
+                autocomplete="off"
+                enterkeyhint="done"
+                data-scanner-field="true">
         </div>
 
         @if(!empty($product->barcode))
