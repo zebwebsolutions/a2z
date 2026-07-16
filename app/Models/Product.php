@@ -27,6 +27,7 @@ class Product extends Model
         'barcode_type',
         'parent_category_id',
         'brand_id',
+        'colour_variant_group_id',
         'is_active',
         'is_used',
         'specs',

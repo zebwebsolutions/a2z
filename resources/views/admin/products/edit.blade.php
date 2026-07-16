@@ -200,6 +200,15 @@
 
         <button type="button" id="add-spec" class="bg-gray-200 px-3 py-1 rounded">+ Add Specification</button>
 
+        <div class="rounded-lg border border-gray-200 p-4">
+            <h3 class="text-lg font-semibold">Colour Variants</h3>
+            <p class="mt-1 text-sm text-gray-600">
+                Search and select other products that are the same model/storage but different colours.
+                Linking here will make the colour panel appear on all selected products.
+            </p>
+
+            <x-admin.product-selector :selected-products="$colourVariantProducts" name="colour_variants" />
+        </div>
 
 
 

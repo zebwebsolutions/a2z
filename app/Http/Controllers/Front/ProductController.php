@@ -159,7 +159,87 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
-        return view('front.products.show', compact('product', 'breadcrumbItems', 'relatedProducts'));
+        $colourVariants = $this->colourVariantsFor($product);
+
+        return view('front.products.show', compact('product', 'breadcrumbItems', 'relatedProducts', 'colourVariants'));
+    }
+
+    private function colourVariantsFor(Product $product)
+    {
+        if (! $product->colour_variant_group_id) {
+            return collect();
+        }
+
+        $variants = Product::query()
+            ->where('colour_variant_group_id', $product->colour_variant_group_id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(function (Product $variant) use ($product) {
+                $colour = $this->productColour($variant);
+
+                return [
+                    'id' => $variant->id,
+                    'colour' => $colour ?: $variant->name,
+                    'url' => route('product.show', $variant->slug),
+                    'is_current' => $variant->id === $product->id,
+                    'in_stock' => $variant->stock > 0,
+                    'swatch' => $this->colourSwatch($colour ?: ''),
+                ];
+            })
+            ->values();
+
+        return $variants->count() > 1 ? $variants : collect();
+    }
+
+    private function productColour(Product $product): ?string
+    {
+        $specs = $product->specs ?? [];
+
+        foreach (['COLOUR', 'COLOR'] as $key) {
+            $value = $specs[$key] ?? null;
+
+            if ($value !== null && trim((string) $value) !== '') {
+                return trim((string) $value);
+            }
+        }
+
+        return null;
+    }
+
+    private function colourSwatch(string $colour): string
+    {
+        $colour = mb_strtolower($colour);
+
+        $map = [
+            'black' => '#111827',
+            'white' => '#ffffff',
+            'silver' => '#d1d5db',
+            'gray' => '#6b7280',
+            'grey' => '#6b7280',
+            'blue' => '#2563eb',
+            'green' => '#16a34a',
+            'red' => '#dc2626',
+            'pink' => '#ec4899',
+            'purple' => '#7c3aed',
+            'yellow' => '#facc15',
+            'gold' => '#d4af37',
+            'orange' => '#f97316',
+            'brown' => '#92400e',
+            'natural' => '#c7b8a4',
+            'titanium' => '#b7b2aa',
+            'graphite' => '#3f3f46',
+            'midnight' => '#111827',
+            'starlight' => '#f4eadc',
+        ];
+
+        foreach ($map as $keyword => $hex) {
+            if (str_contains($colour, $keyword)) {
+                return $hex;
+            }
+        }
+
+        return '#e5e7eb';
     }
 
 }

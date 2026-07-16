@@ -9,6 +9,7 @@ use App\Models\Store;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Models\Brand;
 use App\Services\Products\UsedDeviceService;
 use App\Services\Products\ProductInventoryService;
@@ -137,6 +138,8 @@ class ProductController extends Controller
             'headphones_available' => 'nullable|boolean',
             'warranty_days' => 'nullable|integer|min:0',
             'imei' => 'nullable|string|max:255',
+            'colour_variants' => 'nullable|array',
+            'colour_variants.*' => 'integer|exists:products,id',
         ]);
 
         $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
@@ -201,6 +204,8 @@ class ProductController extends Controller
             $productInventoryService->syncUnits($product, $inventoryUnits);
         }
 
+        $this->syncColourVariants($product, $request->input('colour_variants', []));
+
         // USED DEVICE HANDLING
         if ($request->boolean('is_used')) {
             $usedDeviceService->create($product, $request->only([
@@ -236,7 +241,9 @@ class ProductController extends Controller
         $categories = Category::whereNull('parent_id')->orderBy('name')->get();
         $subcategories = Category::whereNotNull('parent_id')->orderBy('name')->get();
         $brands = Brand::all();
-        return view('admin.products.edit', compact('product', 'stores', 'categories', 'subcategories', 'brands'));
+        $colourVariantProducts = $this->colourVariantProductsFor($product);
+
+        return view('admin.products.edit', compact('product', 'stores', 'categories', 'subcategories', 'brands', 'colourVariantProducts'));
     }
 
     /**
@@ -283,6 +290,8 @@ class ProductController extends Controller
             'headphones_available' => 'nullable|boolean',
             'warranty_days' => 'nullable|integer|min:0',
             'imei' => 'nullable|string|max:255',
+            'colour_variants' => 'nullable|array',
+            'colour_variants.*' => 'integer|exists:products,id',
         ]);
 
         $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
@@ -350,6 +359,8 @@ class ProductController extends Controller
         $product->update($data);
 
         $productInventoryService->syncUnits($product, $inventoryUnits);
+
+        $this->syncColourVariants($product, $request->input('colour_variants', []));
 
         // USED DEVICE HANDLING
         if ($request->boolean('is_used')) {
@@ -419,5 +430,73 @@ class ProductController extends Controller
         }
         $product->delete();
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    private function colourVariantProductsFor(Product $product): array
+    {
+        if (! $product->colour_variant_group_id) {
+            return [];
+        }
+
+        return Product::query()
+            ->where('colour_variant_group_id', $product->colour_variant_group_id)
+            ->where('id', '!=', $product->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'price', 'image'])
+            ->map(fn (Product $variant) => [
+                'id' => $variant->id,
+                'name' => $variant->name,
+                'price' => $variant->price,
+                'image' => $variant->image,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    private function syncColourVariants(Product $product, array $variantIds): void
+    {
+        $variantIds = collect($variantIds)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->reject(fn ($id) => $id === (int) $product->id)
+            ->unique()
+            ->values();
+
+        DB::transaction(function () use ($product, $variantIds) {
+            $selectedProducts = Product::query()
+                ->whereIn('id', $variantIds)
+                ->get(['id', 'colour_variant_group_id']);
+
+            $existingGroupIds = $selectedProducts
+                ->pluck('colour_variant_group_id')
+                ->push($product->colour_variant_group_id)
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($product->colour_variant_group_id) {
+                Product::query()
+                    ->where('colour_variant_group_id', $product->colour_variant_group_id)
+                    ->update(['colour_variant_group_id' => null]);
+            }
+
+            foreach ($existingGroupIds as $groupId) {
+                Product::query()
+                    ->where('colour_variant_group_id', $groupId)
+                    ->update(['colour_variant_group_id' => null]);
+            }
+
+            if ($variantIds->isEmpty()) {
+                $product->forceFill(['colour_variant_group_id' => null])->save();
+                return;
+            }
+
+            $groupId = $existingGroupIds->first() ?: (string) Str::uuid();
+            $ids = $variantIds->push($product->id)->unique()->values();
+
+            Product::query()
+                ->whereIn('id', $ids)
+                ->update(['colour_variant_group_id' => $groupId]);
+        });
     }
 }

@@ -84,6 +84,33 @@
                 KWD {{ number_format($product->price, 2) }}
             </p>
 
+            @if($colourVariants->isNotEmpty())
+                <div class="mb-6">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <h3 class="text-sm font-semibold text-gray-900">Available Colours</h3>
+                        <span class="text-sm text-gray-500">{{ $product->specs['COLOUR'] ?? $product->specs['COLOR'] ?? '' }}</span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($colourVariants as $variant)
+                            <a
+                                href="{{ $variant['url'] }}"
+                                title="{{ $variant['colour'] }}{{ $variant['in_stock'] ? '' : ' - Out of stock' }}"
+                                class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition
+                                    {{ $variant['is_current'] ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300' }}
+                                    {{ $variant['in_stock'] ? '' : 'opacity-60' }}"
+                            >
+                                <span
+                                    class="h-5 w-5 rounded-full border border-gray-300 shadow-sm"
+                                    style="background-color: {{ $variant['swatch'] }}"
+                                ></span>
+                                <span>{{ $variant['colour'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <a 
             @if($product->stock > 0)
                 href="{{ route('cart.add', [
