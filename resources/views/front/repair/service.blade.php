@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="container py-10 max-w-lg mx-auto">
+<div class="container mx-auto max-w-lg px-4 sm:px-6 lg:px-8 py-10">
 
     <h2 class="text-2xl font-bold mb-6">{{ $product->name }} Repair</h2>
 

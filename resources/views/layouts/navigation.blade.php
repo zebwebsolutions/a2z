@@ -63,6 +63,10 @@
         </a>
 
             @auth
+            <a href="{{ route('profile.edit') }}" class="md:hidden inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-gray-700 hover:text-blue-700 hover:border-blue-200" aria-label="My profile">
+                <i data-lucide="user" class="w-5 h-5"></i>
+            </a>
+
             <div class="relative group hidden md:block">
                 <button
                     class="font-medium flex items-center gap-1 focus:outline-none">
@@ -74,6 +78,13 @@
                     class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md
                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
                         transition-all duration-150 z-50">
+
+                    @if(Auth::user()->canView('dashboard'))
+                        <a href="{{ route('admin.dashboard') }}"
+                        class="block px-4 py-2 text-sm hover:bg-gray-100">
+                            Dashboard
+                        </a>
+                    @endif
 
                     <a href="{{ route('profile.edit') }}"
                     class="block px-4 py-2 text-sm hover:bg-gray-100">
@@ -205,6 +216,37 @@
                         Login / Register
                     </a>
                 @endguest
+
+                @auth
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div class="flex items-center gap-2 font-semibold text-gray-800">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                            <span>{{ Auth::user()->name }}</span>
+                        </div>
+
+                        <div class="mt-3 space-y-1">
+                            @if(Auth::user()->canView('dashboard'))
+                                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 rounded px-3 py-2 text-sm text-gray-700 hover:bg-white hover:text-blue-700" @click="mobileOpen = false">
+                                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                                    Dashboard
+                                </a>
+                            @endif
+
+                            <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 rounded px-3 py-2 text-sm text-gray-700 hover:bg-white hover:text-blue-700" @click="mobileOpen = false">
+                                <i data-lucide="settings" class="w-4 h-4"></i>
+                                My Profile
+                            </a>
+
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-white">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endauth
 
                 {{-- MOBILE CATEGORIES --}}
                 @foreach($menuCategories as $idx => $cat)
