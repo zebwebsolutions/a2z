@@ -6,13 +6,7 @@
 @section('og_description', 'Buy phones, tablets, smart watches, and accessories in Kuwait from A2Z. We offer mobile repair services, genuine products, fast support, and cash on delivery.')
 
 @section('content')
-    <section class="bg-white border-b">
-        <div class="container mx-auto px-3 md:px-4 lg:px-6 py-3">
-            <p class="text-sm text-gray-700">
-                Legal business name: <strong>A to Z Electronics &amp; Repairing</strong> (also known as A2Z Kuwait).
-            </p>
-        </div>
-    </section>
+
 
     {{-- Hero Section --}}
     <x-slider name="homepage_slider" />
