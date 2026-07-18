@@ -108,14 +108,15 @@
                             @include('front.products.partials.product-card', ['product' => $product])
                         @endforeach
                     </div>
-                    <div class="mt-8">
-                        {{ $products->links() }}
-                    </div>
                 @else
                     <div class="text-gray-500 mt-6 p-4 bg-gray-50 rounded text-center">
                         No products found for this brand.
                     </div>
                 @endif
+            </div>
+
+            <div id="paginationWrapper" class="mt-8">
+                {{ $products->links() }}
             </div>
 
         </div>

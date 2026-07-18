@@ -115,7 +115,7 @@ class CategoryController extends Controller
         }
 
         // FINAL PRODUCT RESULTS
-        $products = $query->latest()->paginate(20)->withQueryString();
+        $products = $query->latest()->paginate(18)->withQueryString();
 
         // BREADCRUMB
         $breadcrumbItems = [
@@ -245,7 +245,7 @@ class CategoryController extends Controller
         // ------------------------------------
         // FINAL PRODUCTS
         // ------------------------------------
-        $products = $query->latest()->paginate(20)->withQueryString();
+        $products = $query->latest()->paginate(18)->withQueryString();
 
         // ------------------------------------
         // BREADCRUMB

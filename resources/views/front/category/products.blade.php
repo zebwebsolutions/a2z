@@ -104,13 +104,13 @@
                       @include('front.products.partials.product-card', ['product' => $product])
                   @endforeach
               </div>
-
-              <div id="paginationWrapper" class="mt-8">
-                  {{ $products->links() }}
-              </div>
             @else
               <p class="text-gray-400 mt-10">No products found matching your filters.</p>
             @endif
+          </div>
+
+          <div id="paginationWrapper" class="mt-8">
+              {{ $products->links() }}
           </div>
 
       </div>
