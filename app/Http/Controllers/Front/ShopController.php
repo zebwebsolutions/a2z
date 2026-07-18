@@ -33,7 +33,7 @@ class ShopController extends Controller
 
         // SEARCH FILTER
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->q . '%');
+            $this->applyProductKeywordSearch($query, $request->input('q'));
         }
 
         // STORE FILTER
@@ -159,6 +159,10 @@ class ShopController extends Controller
             );
         }
 
+        if ($request->filled('q')) {
+            $this->applyProductKeywordSearch($query, $request->input('q'));
+        }
+
         if ($request->filled('ram')) {
             $ramValues = is_array($request->ram) ? $request->ram : [$request->ram];
             $query->where(function ($q) use ($ramValues) {
@@ -231,11 +235,11 @@ class ShopController extends Controller
         $q = $request->input('q');
 
         $products = Product::query()
-            ->where('name', 'LIKE', "%{$q}%")
-            ->orWhere('sku', 'LIKE', "%{$q}%")
-            ->orWhere('description', 'LIKE', "%{$q}%")
-            ->orderBy('name')
-            ->paginate(24);
+            ->where('is_active', true)
+            ->when($q, fn ($query) => $this->applyProductKeywordSearch($query, $q))
+            ->when($q, fn ($query) => $this->orderProductSearchResults($query, $q), fn ($query) => $query->latest())
+            ->paginate(24)
+            ->withQueryString();
 
         return view('front.shop.search', [
             'products' => $products,
@@ -252,8 +256,10 @@ class ShopController extends Controller
                 return response()->json([]);
             }
 
-            $results = Product::where('name', 'LIKE', "%{$q}%")
-                ->orWhere('sku', 'LIKE', "%{$q}%")
+            $results = Product::query()
+                ->where('is_active', true)
+                ->where(fn ($query) => $this->applyProductKeywordSearch($query, $q))
+                ->tap(fn ($query) => $this->orderProductSearchResults($query, $q))
                 ->limit(8)
                 ->get();
 
@@ -425,4 +431,64 @@ class ShopController extends Controller
         ]);
     }
 
+    private function applyProductKeywordSearch($query, string $search)
+    {
+        $tokens = $this->searchTokens($search);
+
+        if (empty($tokens)) {
+            return $query;
+        }
+
+        foreach ($tokens as $token) {
+            $like = "%{$token}%";
+
+            $query->where(function ($q) use ($like) {
+                $q->where('name', 'LIKE', $like)
+                    ->orWhere('sku', 'LIKE', $like)
+                    ->orWhere('barcode', 'LIKE', $like)
+                    ->orWhere('description', 'LIKE', $like)
+                    ->orWhere('specs', 'LIKE', $like)
+                    ->orWhereHas('brand', fn ($brand) => $brand->where('name', 'LIKE', $like));
+            });
+        }
+
+        return $query;
+    }
+
+    private function orderProductSearchResults($query, string $search)
+    {
+        $phrase = trim($search);
+
+        if ($phrase === '') {
+            return $query->latest();
+        }
+
+        return $query
+            ->orderByRaw('CASE WHEN name LIKE ? THEN 0 WHEN name LIKE ? THEN 1 ELSE 2 END', [
+                $phrase . '%',
+                '%' . $phrase . '%',
+            ])
+            ->orderBy('name');
+    }
+
+    private function searchTokens(string $search): array
+    {
+        $normalized = preg_replace('/[^\pL\pN]+/u', ' ', strtolower($search));
+
+        $stopWords = [
+            'only',
+            'with',
+            'and',
+            'for',
+            'the',
+            'a',
+            'an',
+        ];
+
+        return collect(preg_split('/\s+/', trim($normalized)))
+            ->filter(fn ($token) => strlen($token) >= 2 && ! in_array($token, $stopWords, true))
+            ->unique()
+            ->values()
+            ->all();
+    }
 }
