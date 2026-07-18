@@ -14,8 +14,9 @@
     $currentBrand = request('brand');
 
     // If we're on /brand/{slug}
-    if (!$currentBrand && request()->routeIs('brand.show')) {
-        $currentBrand = request()->route('brand');
+    if (!$currentBrand && request()->routeIs('brand.index')) {
+        $routeBrand = request()->route('brand');
+        $currentBrand = is_object($routeBrand) ? $routeBrand->slug : $routeBrand;
     }
 @endphp
 
@@ -212,7 +213,7 @@
                 <ul x-show="open" x-collapse class="space-y-1 text-sm">
                     @foreach($subcategories as $sub)
                         <li>
-                            @if($currentBrand)
+                            @if($currentBrand && !empty($sub->slug))
                                 <a href="{{ route('brand.category', [
                                     'category' => $sub->slug,
                                     'brand' => $currentBrand

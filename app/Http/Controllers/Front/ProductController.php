@@ -144,10 +144,12 @@ class ProductController extends Controller
         if ($brand) {
             $breadcrumbItems[] = [
                 'label' => $brand->name,
-                'url' => route('brand.category', [
-                    'category' => $parent->slug ?? '',
-                    'brand' => $brand->slug
-                ])
+                'url' => $parent
+                    ? route('brand.category', [
+                        'category' => $parent->slug,
+                        'brand' => $brand->slug,
+                    ])
+                    : route('brand.index', $brand->slug),
             ];
         }
 
