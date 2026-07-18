@@ -89,6 +89,6 @@
 
     {{-- Bottom Bar --}}
     <div class="border-t border-gray-700 mt-10 pt-4 text-center text-sm text-gray-500">
-        &copy; {{ date('Y') }} A to Z Electronics & Repairing - All Rights Reserved.
+        &copy; {{ date('Y') }} A to Z Electronics & Repairing - All Rights Reserved. Website Created by <a href="https://rahmanzeb.com" style="text-decoration: underline">Rahman Zeb</a>
     </div>
 </footer>
