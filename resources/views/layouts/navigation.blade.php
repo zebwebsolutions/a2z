@@ -38,9 +38,9 @@
 
         {{-- RIGHT: Cart + Login --}}
         <div class="flex items-center gap-2">
-            <a href="{{ route('cart.index') }}" class="relative text-xl">
+            <a href="{{ route('cart.index') }}" class="relative inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-gray-700 hover:text-blue-700 hover:border-blue-200" aria-label="Cart">
 
-            <i data-lucide="shopping-cart"></i>
+            <i data-lucide="shopping-cart" class="w-5 h-5"></i>
 
             {{-- Cart Count Badge --}}
             @php

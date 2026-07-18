@@ -23,6 +23,10 @@
         <p><strong>Name:</strong> {{ $order->customer_name ?? 'Guest' }}</p>
         <p><strong>Type:</strong> {{ $order->customer_type ?? 'N/A' }}</p>
         <p><strong>Phone:</strong> {{ $order->customer_phone ?? 'N/A' }}</p>
+        <p>
+            <strong>Address:</strong>
+            <span class="whitespace-pre-line">{{ $order->customer_address ?: 'N/A' }}</span>
+        </p>
     </div>
 
     <div class="mb-6">
