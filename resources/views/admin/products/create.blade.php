@@ -217,6 +217,16 @@
             <x-admin.product-selector :selected-products="[]" name="colour_variants" />
         </div>
 
+        <div class="rounded-lg border border-gray-200 p-4">
+            <h3 class="text-lg font-semibold">Storage Variants</h3>
+            <p class="mt-1 text-sm text-gray-600">
+                Search and select other products that are the same model/colour but different storage.
+                Linking here will make the storage panel appear on all selected products.
+            </p>
+
+            <x-admin.product-selector :selected-products="[]" name="storage_variants" />
+        </div>
+
         {{-- SUBMIT --}}
         <button type="submit" class="block bg-blue-600 text-white px-4 py-2 rounded">
             Save Product

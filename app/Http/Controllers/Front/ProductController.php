@@ -161,37 +161,112 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
-        $colourVariants = $this->colourVariantsFor($product);
+        [$colourVariants, $storageVariants] = $this->variantOptionsFor($product);
 
-        return view('front.products.show', compact('product', 'breadcrumbItems', 'relatedProducts', 'colourVariants'));
+        return view('front.products.show', compact('product', 'breadcrumbItems', 'relatedProducts', 'colourVariants', 'storageVariants'));
     }
 
-    private function colourVariantsFor(Product $product)
+    private function variantOptionsFor(Product $product): array
     {
-        if (! $product->colour_variant_group_id) {
-            return collect();
-        }
+        $variants = $this->connectedVariantProducts($product);
+        $currentColour = $this->productColour($product);
+        $currentStorage = $this->productStorage($product);
 
-        $variants = Product::query()
-            ->where('colour_variant_group_id', $product->colour_variant_group_id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get()
-            ->map(function (Product $variant) use ($product) {
-                $colour = $this->productColour($variant);
+        $colourLabels = $variants
+            ->map(fn (Product $variant) => $this->productColour($variant))
+            ->filter()
+            ->unique(fn (string $colour) => $this->variantValueKey($colour))
+            ->sort(fn ($a, $b) => strnatcasecmp($a, $b))
+            ->values();
+
+        $storageLabels = $variants
+            ->map(fn (Product $variant) => $this->productStorage($variant))
+            ->filter()
+            ->unique(fn (string $storage) => $this->variantValueKey($storage))
+            ->sort(fn ($a, $b) => strnatcasecmp($a, $b))
+            ->values();
+
+        $shouldMatchStorage = $storageLabels->count() > 1 && ! empty($currentStorage);
+        $shouldMatchColour = $colourLabels->count() > 1 && ! empty($currentColour);
+
+        $colourOptions = $colourLabels
+            ->map(function (string $colour) use ($variants, $product, $currentStorage, $shouldMatchStorage) {
+                $target = $this->firstMatchingVariant($variants, fn (Product $variant) => (
+                    $this->variantValuesMatch($this->productColour($variant), $colour)
+                    && (! $shouldMatchStorage || $this->variantValuesMatch($this->productStorage($variant), $currentStorage))
+                ), $product->id);
 
                 return [
-                    'id' => $variant->id,
-                    'colour' => $colour ?: $variant->name,
-                    'url' => route('product.show', $variant->slug),
-                    'is_current' => $variant->id === $product->id,
-                    'in_stock' => $variant->stock > 0,
-                    'swatch' => $this->colourSwatch($colour ?: ''),
+                    'colour' => $colour,
+                    'url' => $target ? route('product.show', $target->slug) : null,
+                    'is_current' => $this->variantValuesMatch($this->productColour($product), $colour),
+                    'is_available' => (bool) $target,
+                    'in_stock' => $target ? $target->stock > 0 : false,
+                    'swatch' => $this->colourSwatch($colour),
                 ];
             })
             ->values();
 
-        return $variants->count() > 1 ? $variants : collect();
+        $storageOptions = $storageLabels
+            ->map(function (string $storage) use ($variants, $product, $currentColour, $shouldMatchColour) {
+                $target = $this->firstMatchingVariant($variants, fn (Product $variant) => (
+                    $this->variantValuesMatch($this->productStorage($variant), $storage)
+                    && (! $shouldMatchColour || $this->variantValuesMatch($this->productColour($variant), $currentColour))
+                ), $product->id);
+
+                return [
+                    'storage' => $storage,
+                    'url' => $target ? route('product.show', $target->slug) : null,
+                    'is_current' => $this->variantValuesMatch($this->productStorage($product), $storage),
+                    'is_available' => (bool) $target,
+                    'in_stock' => $target ? $target->stock > 0 : false,
+                ];
+            })
+            ->values();
+
+        return [
+            $colourOptions->count() > 1 ? $colourOptions : collect(),
+            $storageOptions->count() > 1 ? $storageOptions : collect(),
+        ];
+    }
+
+    private function connectedVariantProducts(Product $product)
+    {
+        $products = collect([$product]);
+        $seenProductIds = collect([$product->id]);
+        $colourGroupIds = collect([$product->colour_variant_group_id])->filter()->values();
+        $storageGroupIds = collect([$product->storage_variant_group_id])->filter()->values();
+
+        if ($colourGroupIds->isEmpty() && $storageGroupIds->isEmpty()) {
+            return $products;
+        }
+
+        do {
+            $foundProducts = Product::query()
+                ->where('is_active', true)
+                ->whereNotIn('id', $seenProductIds)
+                ->where(function ($query) use ($colourGroupIds, $storageGroupIds) {
+                    if ($colourGroupIds->isNotEmpty()) {
+                        $query->orWhereIn('colour_variant_group_id', $colourGroupIds);
+                    }
+
+                    if ($storageGroupIds->isNotEmpty()) {
+                        $query->orWhereIn('storage_variant_group_id', $storageGroupIds);
+                    }
+                })
+                ->get();
+
+            $products = $products->merge($foundProducts);
+            $seenProductIds = $products->pluck('id')->unique()->values();
+            $nextColourGroupIds = $products->pluck('colour_variant_group_id')->filter()->unique()->values();
+            $nextStorageGroupIds = $products->pluck('storage_variant_group_id')->filter()->unique()->values();
+            $hasNewGroups = $nextColourGroupIds->diff($colourGroupIds)->isNotEmpty()
+                || $nextStorageGroupIds->diff($storageGroupIds)->isNotEmpty();
+            $colourGroupIds = $nextColourGroupIds;
+            $storageGroupIds = $nextStorageGroupIds;
+        } while ($foundProducts->isNotEmpty() && $hasNewGroups);
+
+        return $products->unique('id')->values();
     }
 
     private function productColour(Product $product): ?string
@@ -207,6 +282,40 @@ class ProductController extends Controller
         }
 
         return null;
+    }
+
+    private function productStorage(Product $product): ?string
+    {
+        $specs = $product->specs ?? [];
+
+        foreach (['STORAGE CAPACITY', 'STORAGE'] as $key) {
+            $value = $specs[$key] ?? null;
+
+            if ($value !== null && trim((string) $value) !== '') {
+                return trim((string) $value);
+            }
+        }
+
+        return null;
+    }
+
+    private function firstMatchingVariant($variants, callable $matches, int $currentProductId): ?Product
+    {
+        $matchingVariants = $variants->filter($matches);
+
+        return $matchingVariants->firstWhere('id', $currentProductId)
+            ?: $matchingVariants->sortByDesc(fn (Product $variant) => $variant->stock > 0)->first();
+    }
+
+    private function variantValuesMatch(?string $first, ?string $second): bool
+    {
+        return $this->variantValueKey($first) !== ''
+            && $this->variantValueKey($first) === $this->variantValueKey($second);
+    }
+
+    private function variantValueKey(?string $value): string
+    {
+        return preg_replace('/[^\pL\pN]+/u', '', mb_strtolower(trim((string) $value))) ?? '';
     }
 
     private function colourSwatch(string $colour): string

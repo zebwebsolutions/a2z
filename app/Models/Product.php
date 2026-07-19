@@ -28,6 +28,7 @@ class Product extends Model
         'parent_category_id',
         'brand_id',
         'colour_variant_group_id',
+        'storage_variant_group_id',
         'is_active',
         'is_used',
         'specs',

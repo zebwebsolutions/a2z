@@ -93,19 +93,84 @@
 
                     <div class="flex flex-wrap gap-3">
                         @foreach($colourVariants as $variant)
-                            <a
-                                href="{{ $variant['url'] }}"
-                                title="{{ $variant['colour'] }}{{ $variant['in_stock'] ? '' : ' - Out of stock' }}"
-                                class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition
-                                    {{ $variant['is_current'] ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300' }}
-                                    {{ $variant['in_stock'] ? '' : 'opacity-60' }}"
-                            >
+                            @php
+                                $colourClasses = $variant['is_current']
+                                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300';
+
+                                if (! $variant['is_available']) {
+                                    $colourClasses = 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50';
+                                } elseif (! $variant['in_stock']) {
+                                    $colourClasses .= ' opacity-60';
+                                }
+                            @endphp
+
+                            @if($variant['is_available'])
+                                <a
+                                    href="{{ $variant['url'] }}"
+                                    title="{{ $variant['colour'] }}{{ $variant['in_stock'] ? '' : ' - Out of stock' }}"
+                                    class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition {{ $colourClasses }}"
+                                >
+                                    <span
+                                        class="h-5 w-5 rounded-full border border-gray-300 shadow-sm"
+                                        style="background-color: {{ $variant['swatch'] }}"
+                                    ></span>
+                                    <span>{{ $variant['colour'] }}</span>
+                                </a>
+                            @else
+                                <span
+                                    title="{{ $variant['colour'] }} is not available with the selected storage"
+                                    class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition {{ $colourClasses }}"
+                                >
                                 <span
                                     class="h-5 w-5 rounded-full border border-gray-300 shadow-sm"
                                     style="background-color: {{ $variant['swatch'] }}"
                                 ></span>
                                 <span>{{ $variant['colour'] }}</span>
-                            </a>
+                                </span>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            @if($storageVariants->isNotEmpty())
+                <div class="mb-6">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <h3 class="text-sm font-semibold text-gray-900">Available Storage</h3>
+                        <span class="text-sm text-gray-500">{{ $product->specs['STORAGE CAPACITY'] ?? $product->specs['STORAGE'] ?? '' }}</span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($storageVariants as $variant)
+                            @php
+                                $storageClasses = $variant['is_current']
+                                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300';
+
+                                if (! $variant['is_available']) {
+                                    $storageClasses = 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50';
+                                } elseif (! $variant['in_stock']) {
+                                    $storageClasses .= ' opacity-60';
+                                }
+                            @endphp
+
+                            @if($variant['is_available'])
+                                <a
+                                    href="{{ $variant['url'] }}"
+                                    title="{{ $variant['storage'] }}{{ $variant['in_stock'] ? '' : ' - Out of stock' }}"
+                                    class="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition {{ $storageClasses }}"
+                                >
+                                    {{ $variant['storage'] }}
+                                </a>
+                            @else
+                                <span
+                                    title="{{ $variant['storage'] }} is not available with the selected colour"
+                                    class="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition {{ $storageClasses }}"
+                                >
+                                    {{ $variant['storage'] }}
+                                </span>
+                            @endif
                         @endforeach
                     </div>
                 </div>
