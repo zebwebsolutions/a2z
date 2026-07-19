@@ -17,7 +17,9 @@
         @if($displayImage)
             <img src="{{ asset('storage/' . $displayImage) }}"
                  class="w-full h-64 object-contain mb-3"
-                 alt="{{ $product->name }}">
+                 alt="{{ $product->name }}"
+                 loading="lazy"
+                 decoding="async">
         @else
             <div class="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-500">
                 No Image

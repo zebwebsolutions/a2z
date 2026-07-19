@@ -5,10 +5,18 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
 
 class MenuService
 {
     public function getMenu()
+    {
+        return Cache::remember('main_menu_categories', now()->addHour(), function () {
+            return $this->buildMenu();
+        });
+    }
+
+    private function buildMenu()
     {
         // Fetch only top-level categories visible in the menu
         $categories = Category::whereNull('parent_id')

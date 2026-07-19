@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Support\Facades\View;
 use App\Services\MenuService;
 use App\Models\Brand;
+use Illuminate\Support\Facades\Cache;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,17 +27,21 @@ class AppServiceProvider extends ServiceProvider
         View::composer('*', function ($view) use ($menuService) {
             $view->with('menuCategories', $menuService->getMenu());
 
-            $footerCategories = Category::where('is_active', true)
-                ->withCount('products')
-                ->orderByDesc('products_count')
-                ->take(6)
-                ->get();
+            $footerCategories = Cache::remember('footer_categories', now()->addHour(), function () {
+                return Category::where('is_active', true)
+                    ->withCount('products')
+                    ->orderByDesc('products_count')
+                    ->take(6)
+                    ->get();
+            });
 
-            $footerBrands = Brand::where('is_active', true)
-                ->withCount('products')
-                ->orderByDesc('products_count')
-                ->take(6)
-                ->get();
+            $footerBrands = Cache::remember('footer_brands', now()->addHour(), function () {
+                return Brand::where('is_active', true)
+                    ->withCount('products')
+                    ->orderByDesc('products_count')
+                    ->take(6)
+                    ->get();
+            });
 
             $view->with('footerCategories', $footerCategories);
             $view->with('footerBrands', $footerBrands);
