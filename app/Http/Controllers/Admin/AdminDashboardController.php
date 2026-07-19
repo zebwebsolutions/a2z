@@ -63,7 +63,8 @@ class AdminDashboardController extends Controller
         // 5️⃣ Product revenue by store
         $productRevenueByStore = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->leftJoin('stores', 'stores.id', '=', 'orders.store_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->leftJoin('stores', 'stores.id', '=', 'products.store_id')
             ->where('orders.status', '!=', 'refunded')
             ->select(
                 DB::raw("COALESCE(stores.name, 'Unassigned') as name"),
