@@ -37,8 +37,13 @@
         </div>
 
         <div class="bg-white p-4 shadow rounded">
-            <h2 class="text-lg font-semibold mb-4">Revenue by Store</h2>
-            <canvas id="revenueByStoreChart"></canvas>
+            <h2 class="text-lg font-semibold mb-4">Repair Revenue by Store</h2>
+            <canvas id="repairRevenueByStoreChart"></canvas>
+        </div>
+
+        <div class="bg-white p-4 shadow rounded">
+            <h2 class="text-lg font-semibold mb-4">Product Revenue by Store</h2>
+            <canvas id="productRevenueByStoreChart"></canvas>
         </div>
 
         <div class="bg-white p-4 shadow rounded">
@@ -71,13 +76,23 @@ const topSalesmenData = {
     }]
 };
 
-const revenueByStoreData = {
-    labels: {!! json_encode($revenueByStore->pluck('name')) !!},
+const repairRevenueByStoreData = {
+    labels: {!! json_encode($repairRevenueByStore->pluck('name')) !!},
     datasets: [{
-        label: 'Total Revenue (KWD)',
-        data: {!! json_encode($revenueByStore->pluck('total_revenue')) !!},
+        label: 'Repair Revenue (KWD)',
+        data: {!! json_encode($repairRevenueByStore->pluck('total_revenue')) !!},
         borderWidth: 1,
         backgroundColor: 'rgba(75, 192, 192, 0.7)',
+    }]
+};
+
+const productRevenueByStoreData = {
+    labels: {!! json_encode($productRevenueByStore->pluck('name')) !!},
+    datasets: [{
+        label: 'Product Revenue (KWD)',
+        data: {!! json_encode($productRevenueByStore->pluck('total_revenue')) !!},
+        borderWidth: 1,
+        backgroundColor: 'rgba(54, 162, 235, 0.7)',
     }]
 };
 
@@ -96,7 +111,8 @@ const repairTrendsData = {
 // Render charts
 new Chart(document.getElementById('topProductsChart'), { type: 'bar', data: topProductsData });
 new Chart(document.getElementById('topSalesmenChart'), { type: 'bar', data: topSalesmenData });
-new Chart(document.getElementById('revenueByStoreChart'), { type: 'pie', data: revenueByStoreData });
+new Chart(document.getElementById('repairRevenueByStoreChart'), { type: 'pie', data: repairRevenueByStoreData });
+new Chart(document.getElementById('productRevenueByStoreChart'), { type: 'pie', data: productRevenueByStoreData });
 new Chart(document.getElementById('repairTrendChart'), { type: 'line', data: repairTrendsData });
 </script>
 @endsection

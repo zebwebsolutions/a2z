@@ -52,15 +52,28 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // 4️⃣ Revenue by store
-        $revenueByStore = DB::table('repairs')
+        // 4️⃣ Repair revenue by store
+        $repairRevenueByStore = DB::table('repairs')
             ->join('stores', 'stores.id', '=', 'repairs.store_id')
             ->select('stores.name', DB::raw('SUM(total_cost) as total_revenue'))
             ->groupBy('stores.name')
             ->orderByDesc('total_revenue')
             ->get();
 
-        // 5️⃣ Repairs in the last 7 days
+        // 5️⃣ Product revenue by store
+        $productRevenueByStore = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->leftJoin('stores', 'stores.id', '=', 'orders.store_id')
+            ->where('orders.status', '!=', 'refunded')
+            ->select(
+                DB::raw("COALESCE(stores.name, 'Unassigned') as name"),
+                DB::raw('SUM(order_items.price * order_items.quantity) as total_revenue')
+            )
+            ->groupBy('stores.name')
+            ->orderByDesc('total_revenue')
+            ->get();
+
+        // 6️⃣ Repairs in the last 7 days
         $repairTrends = Repair::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as total')
@@ -71,7 +84,12 @@ class AdminDashboardController extends Controller
             ->get();
 
         return view('admin.dashboard', compact(
-            'stats', 'topProducts', 'topSalesmen', 'revenueByStore', 'repairTrends'
+            'stats',
+            'topProducts',
+            'topSalesmen',
+            'repairRevenueByStore',
+            'productRevenueByStore',
+            'repairTrends'
         ));
     }
 }
