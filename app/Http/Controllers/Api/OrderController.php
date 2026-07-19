@@ -107,6 +107,7 @@ class OrderController extends Controller
                 'customer_type' => $data['customer_type'] ?? null,
                 'status' => 'completed',
                 'payment_method' => $data['payment_method'],
+                'order_source' => 'in_store',
                 'total' => $data['total'],
                 'discount' => $data['discount'] ?? 0,
             ]);

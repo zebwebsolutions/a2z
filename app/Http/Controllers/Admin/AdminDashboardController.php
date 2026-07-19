@@ -74,7 +74,35 @@ class AdminDashboardController extends Controller
             ->orderByDesc('total_revenue')
             ->get();
 
-        // 6️⃣ Repairs in the last 7 days
+        // 6️⃣ Online store order totals
+        $onlineOrdersBase = Order::query()
+            ->where('status', '!=', 'refunded')
+            ->where(function ($query) {
+                $query->where('order_source', 'online')
+                    ->orWhere(function ($legacy) {
+                        $legacy->whereNull('order_source')
+                            ->whereNotNull('customer_email');
+                    });
+            });
+
+        $onlineOrderStats = [
+            'orders' => (clone $onlineOrdersBase)->count(),
+            'revenue' => (float) (clone $onlineOrdersBase)->sum('total'),
+        ];
+
+        // 7️⃣ Online orders in the last 7 days
+        $onlineOrderTrends = (clone $onlineOrdersBase)
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as total_orders'),
+                DB::raw('SUM(total) as total_revenue')
+            )
+            ->where('created_at', '>=', now()->subDays(7))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // 8️⃣ Repairs in the last 7 days
         $repairTrends = Repair::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as total')
@@ -90,6 +118,8 @@ class AdminDashboardController extends Controller
             'topSalesmen',
             'repairRevenueByStore',
             'productRevenueByStore',
+            'onlineOrderStats',
+            'onlineOrderTrends',
             'repairTrends'
         ));
     }

@@ -120,6 +120,7 @@ class CartController extends Controller
         $order = Order::create(array_merge($data, [
             'total' => $total,
             'payment_method' => 'cash',
+            'order_source' => 'online',
             'status' => 'pending',
             'receipt_language' => 'en',
             'user_id' => $this->checkoutUserId(),
