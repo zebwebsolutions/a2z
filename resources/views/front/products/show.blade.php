@@ -100,26 +100,43 @@
 
                                 if (! $variant['is_available']) {
                                     $colourClasses = 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50';
+                                } elseif (! $variant['is_exact_match']) {
+                                    $colourClasses = 'border-amber-300 bg-amber-50 text-amber-800 hover:border-amber-400';
                                 } elseif (! $variant['in_stock']) {
                                     $colourClasses .= ' opacity-60';
+                                }
+
+                                $colourTitle = $variant['colour'];
+
+                                if (! $variant['is_available']) {
+                                    $colourTitle .= ' is not available with the selected storage';
+                                } elseif (! $variant['is_exact_match'] && ! empty($variant['fallback_label'])) {
+                                    $colourTitle .= ' is available as ' . $variant['fallback_label'];
+                                } elseif (! $variant['in_stock']) {
+                                    $colourTitle .= ' - Out of stock';
                                 }
                             @endphp
 
                             @if($variant['is_available'])
                                 <a
                                     href="{{ $variant['url'] }}"
-                                    title="{{ $variant['colour'] }}{{ $variant['in_stock'] ? '' : ' - Out of stock' }}"
+                                    title="{{ $colourTitle }}"
                                     class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition {{ $colourClasses }}"
                                 >
                                     <span
                                         class="h-5 w-5 rounded-full border border-gray-300 shadow-sm"
                                         style="background-color: {{ $variant['swatch'] }}"
                                     ></span>
-                                    <span>{{ $variant['colour'] }}</span>
+                                    <span>
+                                        {{ $variant['colour'] }}
+                                        @if(! $variant['is_exact_match'] && ! empty($variant['fallback_label']))
+                                            <span class="ml-1 text-xs">({{ $variant['fallback_label'] }})</span>
+                                        @endif
+                                    </span>
                                 </a>
                             @else
                                 <span
-                                    title="{{ $variant['colour'] }} is not available with the selected storage"
+                                    title="{{ $colourTitle }}"
                                     class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition {{ $colourClasses }}"
                                 >
                                 <span
@@ -150,22 +167,37 @@
 
                                 if (! $variant['is_available']) {
                                     $storageClasses = 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50';
+                                } elseif (! $variant['is_exact_match']) {
+                                    $storageClasses = 'border-amber-300 bg-amber-50 text-amber-800 hover:border-amber-400';
                                 } elseif (! $variant['in_stock']) {
                                     $storageClasses .= ' opacity-60';
+                                }
+
+                                $storageTitle = $variant['storage'];
+
+                                if (! $variant['is_available']) {
+                                    $storageTitle .= ' is not available with the selected colour';
+                                } elseif (! $variant['is_exact_match'] && ! empty($variant['fallback_label'])) {
+                                    $storageTitle .= ' is available in ' . $variant['fallback_label'];
+                                } elseif (! $variant['in_stock']) {
+                                    $storageTitle .= ' - Out of stock';
                                 }
                             @endphp
 
                             @if($variant['is_available'])
                                 <a
                                     href="{{ $variant['url'] }}"
-                                    title="{{ $variant['storage'] }}{{ $variant['in_stock'] ? '' : ' - Out of stock' }}"
+                                    title="{{ $storageTitle }}"
                                     class="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition {{ $storageClasses }}"
                                 >
                                     {{ $variant['storage'] }}
+                                    @if(! $variant['is_exact_match'] && ! empty($variant['fallback_label']))
+                                        <span class="ml-1 text-xs">({{ $variant['fallback_label'] }})</span>
+                                    @endif
                                 </a>
                             @else
                                 <span
-                                    title="{{ $variant['storage'] }} is not available with the selected colour"
+                                    title="{{ $storageTitle }}"
                                     class="inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition {{ $storageClasses }}"
                                 >
                                     {{ $variant['storage'] }}

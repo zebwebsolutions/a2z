@@ -191,17 +191,24 @@ class ProductController extends Controller
 
         $colourOptions = $colourLabels
             ->map(function (string $colour) use ($variants, $product, $currentStorage, $shouldMatchStorage) {
-                $target = $this->firstMatchingVariant($variants, fn (Product $variant) => (
+                $exactTarget = $this->firstMatchingVariant($variants, fn (Product $variant) => (
                     $this->variantValuesMatch($this->productColour($variant), $colour)
                     && (! $shouldMatchStorage || $this->variantValuesMatch($this->productStorage($variant), $currentStorage))
                 ), $product->id);
+                $fallbackTarget = $this->firstMatchingVariant($variants, fn (Product $variant) => (
+                    $this->variantValuesMatch($this->productColour($variant), $colour)
+                ), $product->id);
+                $target = $exactTarget ?: $fallbackTarget;
+                $targetStorage = $target ? $this->productStorage($target) : null;
 
                 return [
                     'colour' => $colour,
                     'url' => $target ? route('product.show', $target->slug) : null,
                     'is_current' => $this->variantValuesMatch($this->productColour($product), $colour),
                     'is_available' => (bool) $target,
+                    'is_exact_match' => (bool) $exactTarget,
                     'in_stock' => $target ? $target->stock > 0 : false,
+                    'fallback_label' => $targetStorage,
                     'swatch' => $this->colourSwatch($colour),
                 ];
             })
@@ -209,17 +216,24 @@ class ProductController extends Controller
 
         $storageOptions = $storageLabels
             ->map(function (string $storage) use ($variants, $product, $currentColour, $shouldMatchColour) {
-                $target = $this->firstMatchingVariant($variants, fn (Product $variant) => (
+                $exactTarget = $this->firstMatchingVariant($variants, fn (Product $variant) => (
                     $this->variantValuesMatch($this->productStorage($variant), $storage)
                     && (! $shouldMatchColour || $this->variantValuesMatch($this->productColour($variant), $currentColour))
                 ), $product->id);
+                $fallbackTarget = $this->firstMatchingVariant($variants, fn (Product $variant) => (
+                    $this->variantValuesMatch($this->productStorage($variant), $storage)
+                ), $product->id);
+                $target = $exactTarget ?: $fallbackTarget;
+                $targetColour = $target ? $this->productColour($target) : null;
 
                 return [
                     'storage' => $storage,
                     'url' => $target ? route('product.show', $target->slug) : null,
                     'is_current' => $this->variantValuesMatch($this->productStorage($product), $storage),
                     'is_available' => (bool) $target,
+                    'is_exact_match' => (bool) $exactTarget,
                     'in_stock' => $target ? $target->stock > 0 : false,
+                    'fallback_label' => $targetColour,
                 ];
             })
             ->values();
