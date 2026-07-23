@@ -51,7 +51,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($order->items as $item)
+                @foreach($order->items as $item)
                     <tr class="border-b">
                         <td class="p-3">{{ optional($item->product)->name ?? 'Deleted Product' }}</td>
                         <td class="p-3">{{ $item->quantity }}</td>
@@ -76,11 +76,38 @@
                             @endif
                         </td>
                     </tr>
-                @empty
+                @endforeach
+                @foreach($order->sparePartItems as $item)
+                    <tr class="border-b">
+                        <td class="p-3">{{ optional($item->sparePart)->name ?? 'Deleted Spare Part' }}</td>
+                        <td class="p-3">{{ $item->quantity }}</td>
+                        <td class="p-3">KD {{ number_format($item->price, 2) }}</td>
+                        <td class="p-3">KD {{ number_format($item->price * $item->quantity, 2) }}</td>
+                        <td class="p-3">
+                            @if($order->status === 'completed')
+                                <form action="{{ route('admin.orders.refund', $order) }}" method="POST" onsubmit="return confirm('Refund this order and restore the item stock?');">
+                                    @csrf
+                                    <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded">
+                                        Refund
+                                    </button>
+                                </form>
+                            @elseif($order->status === 'refunded')
+                                <span class="inline-flex rounded bg-gray-100 px-2 py-1 text-sm text-gray-600">
+                                    Refunded
+                                </span>
+                            @else
+                                <span class="inline-flex rounded bg-yellow-100 px-2 py-1 text-sm text-yellow-700">
+                                    Unavailable
+                                </span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+                @if($order->items->isEmpty() && $order->sparePartItems->isEmpty())
                     <tr>
                         <td colspan="5" class="p-4 text-center text-gray-600">No items found for this order.</td>
                     </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
     </div>

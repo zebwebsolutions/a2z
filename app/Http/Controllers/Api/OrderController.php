@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\SparePart;
 use App\Http\Helpers\PhoneNumber;
 use App\Services\Products\ProductInventoryService;
 use App\Services\OrderReceiptService;
@@ -21,7 +22,7 @@ class OrderController extends Controller
         $user = $request->user();
 
         $query = Order::query()
-            ->with('items')
+            ->with(['items', 'sparePartItems'])
             ->where('store_id', $user->store_id);
 
         if ($search = $request->query('search')) {
@@ -77,6 +78,7 @@ class OrderController extends Controller
 
             // order items
             'items' => 'required|array|min:1',
+            'items.*.type' => 'required|in:product,spare_part',
             'items.*.id' => 'required|integer',
             'items.*.price' => 'required|numeric',
             'items.*.qty' => 'required|integer|min:1',
@@ -84,6 +86,7 @@ class OrderController extends Controller
             // OPTIONAL customer fields
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:255',
+            'customer_address' => 'nullable|string|max:2000',
             'customer_type' => 'nullable|in:vip,good,normal,bad',
             'receipt_language' => 'nullable|in:en,ar',
         ]);
@@ -95,13 +98,20 @@ class OrderController extends Controller
 
         $normalizedPhone = PhoneNumber::normalizeKuwait($data['customer_phone'] ?? null);
 
-        $order = DB::transaction(function () use ($data, $user, $normalizedPhone, $receiptLanguage) {
+        $order = DB::transaction(function () use (
+            $data,
+            $user,
+            $normalizedPhone,
+            $receiptLanguage,
+            $productInventoryService
+        ) {
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'store_id' => $user->store_id ?? null,
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => isset($data['customer_phone']) ? trim($data['customer_phone']) : null,
+                'customer_address' => isset($data['customer_address']) ? trim($data['customer_address']) : null,
                 'customer_phone_e164' => $normalizedPhone,
                 'receipt_language' => $receiptLanguage,
                 'customer_type' => $data['customer_type'] ?? null,
@@ -113,6 +123,26 @@ class OrderController extends Controller
             ]);
 
             foreach ($data['items'] as $item) {
+                if ($item['type'] === 'spare_part') {
+                    $sparePart = SparePart::whereKey($item['id'])
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    if ($sparePart->stock_quantity < $item['qty']) {
+                        abort(400, "Insufficient stock for {$sparePart->name}");
+                    }
+
+                    $order->sparePartItems()->create([
+                        'spare_part_id' => $sparePart->id,
+                        'price' => $item['price'],
+                        'quantity' => $item['qty'],
+                    ]);
+
+                    $sparePart->decrement('stock_quantity', $item['qty']);
+
+                    continue;
+                }
+
                 $product = Product::where('id', $item['id'])
                     ->lockForUpdate()
                     ->firstOrFail();
@@ -160,6 +190,7 @@ class OrderController extends Controller
         return response()->json(
             $order->load([
                 'items.product:id,name',
+                'sparePartItems.sparePart:id,name',
                 'user:id,name',
             ])
         );
@@ -178,6 +209,10 @@ class OrderController extends Controller
                 if ($productInventoryService->restoreUnits($item) === 0) {
                     $item->product->increment('stock', $item->quantity);
                 }
+            }
+
+            foreach ($order->sparePartItems as $item) {
+                $item->sparePart()->lockForUpdate()->first()?->increment('stock_quantity', $item->quantity);
             }
 
             $order->update([

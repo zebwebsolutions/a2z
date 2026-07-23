@@ -31,6 +31,7 @@
         <div class="meta-row"><strong>Date:</strong> {{ optional($order->created_at)->format('d M Y, h:i A') }}</div>
         <div class="meta-row"><strong>Customer:</strong> {{ $order->customer_name ?: 'Guest' }}</div>
         <div class="meta-row"><strong>Phone:</strong> {{ $order->customer_phone_e164 ?: ($order->customer_phone ?: '-') }}</div>
+        <div class="meta-row"><strong>Address:</strong> {{ $order->customer_address ?: '-' }}</div>
         <div class="meta-row"><strong>Payment:</strong> {{ ucfirst($order->payment_method ?? 'cash') }}</div>
     </div>
 
@@ -55,6 +56,17 @@
                     <td class="num">{{ number_format((float) $subtotal, 2) }}</td>
                 </tr>
             @endforeach
+            @foreach($order->sparePartItems as $item)
+                @php
+                    $subtotal = $item->price * $item->quantity;
+                @endphp
+                <tr>
+                    <td>{{ $item->sparePart->name ?? ('Spare part #' . $item->spare_part_id) }}</td>
+                    <td class="num">{{ $item->quantity }}</td>
+                    <td class="num">{{ number_format((float) $item->price, 2) }}</td>
+                    <td class="num">{{ number_format((float) $subtotal, 2) }}</td>
+                </tr>
+            @endforeach
         </tbody>
     </table>
 
@@ -63,6 +75,8 @@
         $total = (float) ($order->total ?? 0);
         $subtotal = $order->items->sum(function ($item) {
             return (float) ($item->subtotal ?? ($item->price * $item->quantity));
+        }) + $order->sparePartItems->sum(function ($item) {
+            return (float) ($item->price * $item->quantity);
         });
     @endphp
 

@@ -47,6 +47,10 @@ class OrderController extends Controller
                     $p->where('name', 'like', "%{$search}%");
                 });
 
+                $q->orWhereHas('sparePartItems.sparePart', function ($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%");
+                });
+
             });
         }
 
@@ -94,7 +98,7 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-        $order = Order::with('items.product')->findOrFail($id);
+        $order = Order::with(['items.product', 'sparePartItems.sparePart'])->findOrFail($id);
         return view('admin.orders.show', compact('order'));
     }
 
@@ -121,6 +125,15 @@ class OrderController extends Controller
                 if ($productInventoryService->restoreUnits($item) === 0) {
                     Product::whereKey($item->product_id)->increment('stock', $item->quantity);
                 }
+            }
+
+            $sparePartItems = $order->sparePartItems()
+                ->with('sparePart')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($sparePartItems as $item) {
+                $item->sparePart?->increment('stock_quantity', $item->quantity);
             }
 
             $order->update([

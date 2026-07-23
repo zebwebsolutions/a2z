@@ -15,7 +15,7 @@ class OrderReceiptService
     public function generate(Order $order): ?string
     {
         try {
-            $order->loadMissing('items.product', 'store', 'user');
+            $order->loadMissing('items.product', 'sparePartItems.sparePart', 'store', 'user');
 
             if (!app()->bound('dompdf.wrapper')) {
                 Log::warning('Receipt PDF skipped: dompdf.wrapper is not available.');
