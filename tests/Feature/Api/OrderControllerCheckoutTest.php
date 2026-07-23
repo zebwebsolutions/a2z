@@ -80,6 +80,45 @@ class OrderControllerCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_older_mobile_payload_without_item_type_defaults_to_product(): void
+    {
+        [$user, $store, $category] = $this->createApiContext();
+
+        $product = Product::create([
+            'store_id' => $store->id,
+            'category_id' => $category->id,
+            'name' => 'Legacy Mobile Product',
+            'slug' => 'legacy-mobile-product-' . Str::lower(Str::random(6)),
+            'price' => 20,
+            'stock' => 1,
+        ]);
+
+        $this->withoutReceiptDelivery();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/orders', [
+            'payment_method' => 'cash',
+            'total' => 20,
+            'items' => [
+                [
+                    'id' => $product->id,
+                    'price' => 20,
+                    'qty' => 1,
+                ],
+            ],
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $response->json('order_id'),
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+    }
+
     public function test_mobile_can_checkout_a_mixed_product_and_spare_part_cart(): void
     {
         [$user, $store, $category] = $this->createApiContext();

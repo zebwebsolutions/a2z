@@ -78,7 +78,7 @@ class OrderController extends Controller
 
             // order items
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:product,spare_part',
+            'items.*.type' => 'nullable|in:product,spare_part',
             'items.*.id' => 'required|integer',
             'items.*.price' => 'required|numeric',
             'items.*.qty' => 'required|integer|min:1',
@@ -123,7 +123,7 @@ class OrderController extends Controller
             ]);
 
             foreach ($data['items'] as $item) {
-                if ($item['type'] === 'spare_part') {
+                if (($item['type'] ?? 'product') === 'spare_part') {
                     $sparePart = SparePart::whereKey($item['id'])
                         ->lockForUpdate()
                         ->firstOrFail();
