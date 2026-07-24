@@ -13,6 +13,12 @@
         We currently offer cash on delivery only. Delivery charges are a flat 1 KWD.
     </div>
 
+    @error('cart')
+        <div class="mb-6 max-w-lg rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {{ $message }}
+        </div>
+    @enderror
+
     <div class="mb-6 max-w-lg rounded border bg-white p-4 text-sm">
         <div class="flex justify-between">
             <span>Items subtotal</span>

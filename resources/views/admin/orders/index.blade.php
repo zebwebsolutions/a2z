@@ -6,6 +6,18 @@
 <div class="bg-white p-6 rounded-lg shadow">
     <h1 class="text-2xl font-bold mb-6">All Orders</h1>
 
+    @if(session('success'))
+        <div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-700">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <x-admin.filter-box>
 
         {{-- Search --}}
@@ -128,12 +140,20 @@
                         <form action="{{ route('admin.orders.update', $order->id) }}" method="POST">
                             @csrf
                             @method('PUT')
-                            <select name="status" onchange="this.form.submit()" class="border rounded p-1">
+                            <select
+                                name="status"
+                                onchange="this.form.submit()"
+                                class="border rounded p-1"
+                                @disabled(in_array($order->status, ['cancelled', 'refunded'], true))
+                            >
                                 <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="shipped" {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped</option>
                                 <option value="processing" {{ $order->status == 'processing' ? 'selected' : '' }}>Processing</option>
                                 <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>Completed</option>
                                 <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                @if($order->status === 'refunded')
+                                    <option value="refunded" selected>Refunded</option>
+                                @endif
                             </select>
                         </form>
                     </td>

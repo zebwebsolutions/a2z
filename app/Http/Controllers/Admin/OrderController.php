@@ -10,6 +10,7 @@ use App\Models\Store;
 use App\Services\Products\ProductInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -119,24 +120,10 @@ class OrderController extends Controller
         }
 
         DB::transaction(function () use ($order, $productInventoryService) {
-            $items = $order->items()->lockForUpdate()->get();
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $this->restoreOrderStock($lockedOrder, $productInventoryService);
 
-            foreach ($items as $item) {
-                if ($productInventoryService->restoreUnits($item) === 0) {
-                    Product::whereKey($item->product_id)->increment('stock', $item->quantity);
-                }
-            }
-
-            $sparePartItems = $order->sparePartItems()
-                ->with('sparePart')
-                ->lockForUpdate()
-                ->get();
-
-            foreach ($sparePartItems as $item) {
-                $item->sparePart?->increment('stock_quantity', $item->quantity);
-            }
-
-            $order->update([
+            $lockedOrder->update([
                 'status' => 'refunded',
             ]);
         });
@@ -149,14 +136,37 @@ class OrderController extends Controller
     /**
      * Update order status.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, ProductInventoryService $productInventoryService)
     {
         $order = Order::findOrFail($id);
-        $request->validate([
-            'status' => 'required|string|max:50',
+        $data = $request->validate([
+            'status' => ['required', Rule::in([
+                'pending',
+                'processing',
+                'shipped',
+                'completed',
+                'cancelled',
+            ])],
         ]);
 
-        $order->update(['status' => $request->status]);
+        if (
+            in_array($order->status, ['cancelled', 'refunded'], true)
+            && $data['status'] !== $order->status
+        ) {
+            return redirect()
+                ->route('admin.orders.index')
+                ->with('error', 'Cancelled or refunded orders cannot be reopened.');
+        }
+
+        DB::transaction(function () use ($order, $data, $productInventoryService) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($data['status'] === 'cancelled' && $lockedOrder->status !== 'cancelled') {
+                $this->restoreOrderStock($lockedOrder, $productInventoryService);
+            }
+
+            $lockedOrder->update(['status' => $data['status']]);
+        });
 
         return redirect()->route('admin.orders.index')->with('success', 'Order status updated successfully.');
     }
@@ -164,11 +174,43 @@ class OrderController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy($id, ProductInventoryService $productInventoryService)
     {
-        $order = Order::findOrFail($id);
-        $order->delete();
+        DB::transaction(function () use ($id, $productInventoryService) {
+            $order = Order::whereKey($id)->lockForUpdate()->firstOrFail();
+
+            if (!in_array($order->status, ['cancelled', 'refunded'], true)) {
+                $this->restoreOrderStock($order, $productInventoryService);
+            }
+
+            $order->delete();
+        });
 
         return redirect()->route('admin.orders.index')->with('success', 'Order deleted successfully.');
+    }
+
+    private function restoreOrderStock(
+        Order $order,
+        ProductInventoryService $productInventoryService
+    ): void {
+        $items = $order->items()->lockForUpdate()->get();
+
+        foreach ($items as $item) {
+            if ($productInventoryService->restoreUnits($item) === 0) {
+                Product::whereKey($item->product_id)
+                    ->lockForUpdate()
+                    ->first()
+                    ?->increment('stock', $item->quantity);
+            }
+        }
+
+        $sparePartItems = $order->sparePartItems()->lockForUpdate()->get();
+
+        foreach ($sparePartItems as $item) {
+            $item->sparePart()
+                ->lockForUpdate()
+                ->first()
+                ?->increment('stock_quantity', $item->quantity);
+        }
     }
 }

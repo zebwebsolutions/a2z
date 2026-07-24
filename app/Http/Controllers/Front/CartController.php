@@ -11,7 +11,9 @@ use App\Models\User;
 use App\Http\Helpers\PhoneNumber;
 use App\Services\OrderReceiptService;
 use App\Services\MetaCloudWhatsAppService;
+use App\Services\Products\ProductInventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
@@ -94,7 +96,8 @@ class CartController extends Controller
     public function placeOrder(
         Request $request,
         OrderReceiptService $orderReceiptService,
-        MetaCloudWhatsAppService $metaCloudWhatsAppService
+        MetaCloudWhatsAppService $metaCloudWhatsAppService,
+        ProductInventoryService $productInventoryService
     )
     {
         $cart = session()->get('cart', []);
@@ -114,28 +117,81 @@ class CartController extends Controller
         $data['customer_phone'] = isset($data['customer_phone']) ? trim($data['customer_phone']) : null;
         $data['customer_phone_e164'] = $normalizedPhone;
 
-        $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
-        $total = $subtotal + self::DELIVERY_CHARGE;
+        $checkoutUserId = $this->checkoutUserId();
+        $storeId = auth()->user()?->store_id
+            ?? User::whereKey($checkoutUserId)->value('store_id')
+            ?? 1;
 
-        $order = Order::create(array_merge($data, [
-            'total' => $total,
-            'payment_method' => 'cash',
-            'order_source' => 'online',
-            'status' => 'pending',
-            'receipt_language' => 'en',
-            'user_id' => $this->checkoutUserId(),
-            'store_id' => auth()->user()?->store_id ?? 1,
-        ]));
+        $order = DB::transaction(function () use (
+            $cart,
+            $data,
+            $normalizedPhone,
+            $checkoutUserId,
+            $storeId,
+            $productInventoryService
+        ) {
+            $resolvedItems = [];
+            $subtotal = 0.0;
 
-        foreach ($cart as $id => $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $id,
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'subtotal' => $item['price'] * $item['quantity'],
-            ]);
-        }
+            foreach ($cart as $id => $cartItem) {
+                $quantity = (int) ($cartItem['quantity'] ?? 0);
+                if ($quantity < 1) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'A cart item has an invalid quantity.',
+                    ]);
+                }
+
+                $product = Product::whereKey($id)->lockForUpdate()->first();
+                if (!$product) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'A product in your cart is no longer available.',
+                    ]);
+                }
+
+                if ($product->stock < $quantity) {
+                    throw ValidationException::withMessages([
+                        'cart' => "Only {$product->stock} unit(s) of {$product->name} are available.",
+                    ]);
+                }
+
+                $price = (float) $product->price;
+                $subtotal += $price * $quantity;
+                $resolvedItems[] = compact('product', 'quantity', 'price');
+            }
+
+            $order = Order::create(array_merge($data, [
+                'customer_phone_e164' => $normalizedPhone,
+                'total' => $subtotal + self::DELIVERY_CHARGE,
+                'payment_method' => 'cash',
+                'order_source' => 'online',
+                'status' => 'pending',
+                'receipt_language' => 'en',
+                'user_id' => $checkoutUserId,
+                'store_id' => $storeId,
+            ]));
+
+            foreach ($resolvedItems as $item) {
+                /** @var Product $product */
+                $product = $item['product'];
+                $quantity = $item['quantity'];
+
+                $orderItem = OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'price' => $item['price'],
+                ]);
+
+                if ($product->tracks_inventory_by_unit) {
+                    $units = $productInventoryService->reserveUnits($product, $quantity);
+                    $orderItem->productUnits()->sync($units->pluck('id'));
+                } else {
+                    $product->decrement('stock', $quantity);
+                }
+            }
+
+            return $order;
+        });
 
         $order->load('items.product');
 
