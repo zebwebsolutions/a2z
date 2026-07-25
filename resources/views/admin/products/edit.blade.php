@@ -139,15 +139,34 @@
             'categoryOptions' => $categoryOptions,
         ])
 
-        {{-- MAIN IMAGE --}}
+        {{-- MAIN PRODUCT IMAGE --}}
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-800">Main Product Image</h3>
+            <p class="mt-1 text-sm text-gray-600">
+                This is the primary image shown in product listings and on the product page.
+            </p>
+
         @if($product->image)
-            <div class="flex items-center gap-4">
+            <div class="mt-3 flex items-center gap-4">
                 <img src="{{ asset('storage/' . $product->image) }}" class="w-24 h-24 object-cover rounded shadow">
                 <p class="text-sm text-gray-600">Current main image</p>
             </div>
         @endif
 
-        <input type="file" name="image" class="border p-2 w-full" accept="image/*">
+            <label for="mainProductImage" class="mt-3 block font-medium text-gray-700">
+                {{ $product->image ? 'Replace Main Product Image' : 'Upload Main Product Image' }}
+            </label>
+            <input
+                type="file"
+                name="image"
+                id="mainProductImage"
+                class="mt-1 border p-2 w-full"
+                accept="image/*"
+            >
+            @error('image')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
 
 
 

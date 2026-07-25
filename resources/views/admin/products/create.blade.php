@@ -168,19 +168,44 @@
         ])
 
 
-        {{-- Main image (existing) --}}
-        <div>
-            <label class="block font-semibold text-gray-700">Main Image</label>
+        {{-- MAIN PRODUCT IMAGE --}}
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-800">Main Product Image</h3>
+            <p class="mt-1 text-sm text-gray-600">
+                This is the primary image shown in product listings and on the product page.
+            </p>
             @if(isset($product) && $product->image)
                 <img src="{{ asset('storage/' . $product->image) }}" class="h-32 rounded mb-2">
             @endif
-            <input type="file" name="image" accept="image/*">
+            <label for="mainProductImage" class="mt-3 block font-medium text-gray-700">
+                Upload Main Product Image
+            </label>
+            <input
+                type="file"
+                name="image"
+                id="mainProductImage"
+                class="mt-1 border p-2 w-full"
+                accept="image/*"
+            >
+            @error('image')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
 
-        {{-- Gallery --}}
-        <div class="mt-4">
-            <label class="block font-semibold text-gray-700">Gallery Images</label>
-            <input type="file" name="gallery[]" id="galleryInput" accept="image/*" multiple>
+        {{-- PRODUCT GALLERY --}}
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-800">Product Gallery</h3>
+            <label for="galleryInput" class="mt-3 block font-medium text-gray-700">
+                Upload Gallery Images
+            </label>
+            <input
+                type="file"
+                name="gallery[]"
+                id="galleryInput"
+                class="mt-1 border p-2 w-full"
+                accept="image/*"
+                multiple
+            >
 
             <div id="galleryPreview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3"></div>
 
