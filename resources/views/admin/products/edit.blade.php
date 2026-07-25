@@ -27,16 +27,28 @@
         @csrf
         @method('PUT')
 
+        <section class="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-blue-200 bg-blue-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">1</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Product Details</h2>
+                    <p class="text-sm text-gray-600">Basic information, pricing, categories, barcode, and inventory.</p>
+                </div>
+            </div>
+            <div class="space-y-5 p-5">
 
         {{-- STORE --}}
-        <select name="store_id" class="border p-2 w-full" required>
-            <option value="">Select Store</option>
-            @foreach($stores as $store)
-                <option value="{{ $store->id }}" {{ $product->store_id == $store->id ? 'selected' : '' }}>
-                    {{ $store->name }}
-                </option>
-            @endforeach
-        </select>      
+        <div>
+            <label class="block font-medium mb-1">Store</label>
+            <select name="store_id" class="border p-2 w-full" required>
+                <option value="">Select Store</option>
+                @foreach($stores as $store)
+                    <option value="{{ $store->id }}" {{ $product->store_id == $store->id ? 'selected' : '' }}>
+                        {{ $store->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
         {{-- USED DEVICE FIELDS --}}
         @include('admin.products.partials.used-device-fields', ['product' => $product])
@@ -139,8 +151,21 @@
             'categoryOptions' => $categoryOptions,
         ])
 
+            </div>
+        </section>
+
+        <section class="overflow-hidden rounded-xl border border-purple-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-purple-200 bg-purple-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm font-bold text-white">2</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Product Images</h2>
+                    <p class="text-sm text-gray-600">Review the current images and upload replacements or additions.</p>
+                </div>
+            </div>
+            <div class="grid gap-6 p-5 xl:grid-cols-2">
+
         {{-- MAIN PRODUCT IMAGE --}}
-        <div class="mt-6">
+        <div class="rounded-lg border border-purple-100 bg-purple-50 p-4">
             <h3 class="text-lg font-semibold text-gray-800">Main Product Image</h3>
             <p class="mt-1 text-sm text-gray-600">
                 This is the primary image shown in product listings and on the product page.
@@ -171,7 +196,8 @@
 
 
         {{-- GALLERY --}}
-        <h3 class="text-lg font-semibold mt-6">Product Gallery</h3>
+        <div class="rounded-lg border border-purple-100 bg-purple-50 p-4">
+        <h3 class="text-lg font-semibold">Product Gallery</h3>
 
         {{-- EXISTING GALLERY IMAGES --}}
         @if($product->gallery && is_array($product->gallery))
@@ -200,49 +226,74 @@
             <div id="galleryPreview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3"></div>
         </div>
 
+        </div>
+            </div>
+        </section>
 
 
         {{-- SPECIFICATIONS --}}
-        <h3 class="text-lg font-semibold mt-2">Specifications</h3>
+        <section class="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-emerald-200 bg-emerald-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">3</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Specifications</h2>
+                    <p class="text-sm text-gray-600">Maintain searchable technical details such as RAM, storage, size, or color.</p>
+                </div>
+            </div>
+            <div class="space-y-4 p-5">
+                <div id="specs-wrapper">
+                    @if($product->specs)
+                        @foreach($product->specs as $key => $value)
+                            <div class="spec-row mb-2 flex flex-col gap-2 sm:flex-row">
+                                <input type="text" name="specs_keys[]" value="{{ $key }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec name">
+                                <input type="text" name="specs_values[]" value="{{ $value }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec value">
+                                <button type="button" class="remove-spec rounded bg-red-500 px-3 py-2 text-white">Remove</button>
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
 
-        <div id="specs-wrapper">
-            @if($product->specs)
-                @foreach($product->specs as $key => $value)
-                    <div class="flex gap-2 mb-2 spec-row">
-                        <input type="text" name="specs_keys[]" value="{{ $key }}" class="border p-2 w-1/2" placeholder="Spec name">
-                        <input type="text" name="specs_values[]" value="{{ $value }}" class="border p-2 w-1/2" placeholder="Spec value">
-                        <button type="button" class="remove-spec bg-red-500 text-white px-2 rounded">X</button>
-                    </div>
-                @endforeach
-            @endif
-        </div>
+                <button type="button" id="add-spec" class="rounded bg-emerald-100 px-3 py-2 font-medium text-emerald-800 hover:bg-emerald-200">
+                    + Add Specification
+                </button>
+            </div>
+        </section>
 
-        <button type="button" id="add-spec" class="bg-gray-200 px-3 py-1 rounded">+ Add Specification</button>
+        <section class="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-white">4</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Product Variations</h2>
+                    <p class="text-sm text-gray-600">Connect this product to its color and storage alternatives.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 p-5 xl:grid-cols-2">
+                <div class="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                    <h3 class="text-lg font-semibold">Colour Variants</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Search and select other products that are the same model/storage but different colours.
+                        Linking here will make the colour panel appear on all selected products.
+                    </p>
 
-        <div class="rounded-lg border border-gray-200 p-4">
-            <h3 class="text-lg font-semibold">Colour Variants</h3>
-            <p class="mt-1 text-sm text-gray-600">
-                Search and select other products that are the same model/storage but different colours.
-                Linking here will make the colour panel appear on all selected products.
-            </p>
+                    <x-admin.product-selector :selected-products="$colourVariantProducts" name="colour_variants" />
+                </div>
 
-            <x-admin.product-selector :selected-products="$colourVariantProducts" name="colour_variants" />
-        </div>
+                <div class="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                    <h3 class="text-lg font-semibold">Storage Variants</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Search and select other products that are the same model/colour but different storage.
+                        Linking here will make the storage panel appear on all selected products.
+                    </p>
 
-        <div class="rounded-lg border border-gray-200 p-4">
-            <h3 class="text-lg font-semibold">Storage Variants</h3>
-            <p class="mt-1 text-sm text-gray-600">
-                Search and select other products that are the same model/colour but different storage.
-                Linking here will make the storage panel appear on all selected products.
-            </p>
-
-            <x-admin.product-selector :selected-products="$storageVariantProducts" name="storage_variants" />
-        </div>
+                    <x-admin.product-selector :selected-products="$storageVariantProducts" name="storage_variants" />
+                </div>
+            </div>
+        </section>
 
 
 
         {{-- SUBMIT --}}
-        <button type="submit" class="block bg-blue-600 text-white px-4 py-2 rounded">
+        <button type="submit" class="block rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-blue-700">
             Update Product
         </button>
 
@@ -260,10 +311,10 @@
 
             document.getElementById('add-spec').addEventListener('click', () => {
                 document.getElementById('specs-wrapper').insertAdjacentHTML('beforeend', `
-                    <div class="flex gap-2 mb-2 spec-row">
-                        <input type="text" name="specs_keys[]" class="border p-2 w-1/2" placeholder="Spec name">
-                        <input type="text" name="specs_values[]" class="border p-2 w-1/2" placeholder="Spec value">
-                        <button type="button" class="remove-spec bg-red-500 text-white px-2 rounded">X</button>
+                    <div class="spec-row mb-2 flex flex-col gap-2 sm:flex-row">
+                        <input type="text" name="specs_keys[]" class="w-full border p-2 sm:w-1/2" placeholder="Spec name">
+                        <input type="text" name="specs_values[]" class="w-full border p-2 sm:w-1/2" placeholder="Spec value">
+                        <button type="button" class="remove-spec rounded bg-red-500 px-3 py-2 text-white">Remove</button>
                     </div>
                 `);
                 attachRemoveEvents();

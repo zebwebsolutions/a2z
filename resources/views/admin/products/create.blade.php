@@ -34,6 +34,16 @@
     <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
         @csrf
 
+        <section class="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-blue-200 bg-blue-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">1</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Product Details</h2>
+                    <p class="text-sm text-gray-600">Basic information, pricing, categories, barcode, and inventory.</p>
+                </div>
+            </div>
+            <div class="space-y-5 p-5">
+
         {{-- STORE --}}
         <div>
             <label class="block font-medium mb-1">Store</label>
@@ -167,9 +177,21 @@
             'categoryOptions' => $categoryOptions,
         ])
 
+            </div>
+        </section>
+
+        <section class="overflow-hidden rounded-xl border border-purple-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-purple-200 bg-purple-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm font-bold text-white">2</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Product Images</h2>
+                    <p class="text-sm text-gray-600">Choose the main product image and optional gallery images.</p>
+                </div>
+            </div>
+            <div class="grid gap-6 p-5 xl:grid-cols-2">
 
         {{-- MAIN PRODUCT IMAGE --}}
-        <div class="mt-6">
+        <div class="rounded-lg border border-purple-100 bg-purple-50 p-4">
             <h3 class="text-lg font-semibold text-gray-800">Main Product Image</h3>
             <p class="mt-1 text-sm text-gray-600">
                 This is the primary image shown in product listings and on the product page.
@@ -193,7 +215,7 @@
         </div>
 
         {{-- PRODUCT GALLERY --}}
-        <div class="mt-6">
+        <div class="rounded-lg border border-purple-100 bg-purple-50 p-4">
             <h3 class="text-lg font-semibold text-gray-800">Product Gallery</h3>
             <label for="galleryInput" class="mt-3 block font-medium text-gray-700">
                 Upload Gallery Images
@@ -223,37 +245,62 @@
             @endif
         </div>
 
+            </div>
+        </section>
 
         {{-- SPECIFICATIONS --}}
-        <h3 class="text-lg font-semibold mt-6">Specifications</h3>
-        <div id="specs-wrapper">
-            {{-- Will be filled dynamically --}}
-        </div>
+        <section class="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-emerald-200 bg-emerald-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">3</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Specifications</h2>
+                    <p class="text-sm text-gray-600">Add searchable technical details such as RAM, storage, size, or color.</p>
+                </div>
+            </div>
+            <div class="space-y-4 p-5">
+                <div id="specs-wrapper">
+                    {{-- Will be filled dynamically --}}
+                </div>
 
-        <button type="button" id="add-spec" class="bg-gray-200 px-3 py-1 rounded">+ Add Specification</button>
+                <button type="button" id="add-spec" class="rounded bg-emerald-100 px-3 py-2 font-medium text-emerald-800 hover:bg-emerald-200">
+                    + Add Specification
+                </button>
+            </div>
+        </section>
 
-        <div class="rounded-lg border border-gray-200 p-4">
-            <h3 class="text-lg font-semibold">Colour Variants</h3>
-            <p class="mt-1 text-sm text-gray-600">
-                Search and select other products that are the same model/storage but different colours.
-                Linking here will make the colour panel appear on all selected products.
-            </p>
+        <section class="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+            <div class="flex items-center gap-3 border-b border-amber-200 bg-amber-50 px-5 py-4">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-white">4</span>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Product Variations</h2>
+                    <p class="text-sm text-gray-600">Connect this product to its color and storage alternatives.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 p-5 xl:grid-cols-2">
+                <div class="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                    <h3 class="text-lg font-semibold">Colour Variants</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Search and select other products that are the same model/storage but different colours.
+                        Linking here will make the colour panel appear on all selected products.
+                    </p>
 
-            <x-admin.product-selector :selected-products="[]" name="colour_variants" />
-        </div>
+                    <x-admin.product-selector :selected-products="[]" name="colour_variants" />
+                </div>
 
-        <div class="rounded-lg border border-gray-200 p-4">
-            <h3 class="text-lg font-semibold">Storage Variants</h3>
-            <p class="mt-1 text-sm text-gray-600">
-                Search and select other products that are the same model/colour but different storage.
-                Linking here will make the storage panel appear on all selected products.
-            </p>
+                <div class="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                    <h3 class="text-lg font-semibold">Storage Variants</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Search and select other products that are the same model/colour but different storage.
+                        Linking here will make the storage panel appear on all selected products.
+                    </p>
 
-            <x-admin.product-selector :selected-products="[]" name="storage_variants" />
-        </div>
+                    <x-admin.product-selector :selected-products="[]" name="storage_variants" />
+                </div>
+            </div>
+        </section>
 
         {{-- SUBMIT --}}
-        <button type="submit" class="block bg-blue-600 text-white px-4 py-2 rounded">
+        <button type="submit" class="block rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-blue-700">
             Save Product
         </button>
 
@@ -346,10 +393,10 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById('add-spec').addEventListener('click', function () {
     const wrapper = document.getElementById('specs-wrapper');
     const html = `
-        <div class="flex gap-2 mb-2 spec-row">
-            <input type="text" name="specs_keys[]" class="border p-2 w-1/2" placeholder="Spec name">
-            <input type="text" name="specs_values[]" class="border p-2 w-1/2" placeholder="Spec value">
-            <button type="button" class="remove-spec bg-red-500 text-white px-2 rounded">X</button>
+        <div class="spec-row mb-2 flex flex-col gap-2 sm:flex-row">
+            <input type="text" name="specs_keys[]" class="w-full border p-2 sm:w-1/2" placeholder="Spec name">
+            <input type="text" name="specs_values[]" class="w-full border p-2 sm:w-1/2" placeholder="Spec value">
+            <button type="button" class="remove-spec rounded bg-red-500 px-3 py-2 text-white">Remove</button>
         </div>
     `;
     wrapper.insertAdjacentHTML('beforeend', html);
