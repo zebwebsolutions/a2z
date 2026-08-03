@@ -27,6 +27,9 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+            @if($errors->has('image') || $errors->has('gallery') || $errors->has('gallery.*'))
+                <p class="mt-2 text-sm">Please select the image files again. Browsers do not retain file inputs after submission.</p>
+            @endif
         </div>
     @endif
 
@@ -50,7 +53,9 @@
             <select name="store_id" class="border p-2 w-full" required>
                 <option value="">Select Store</option>
                 @foreach($stores as $store)
-                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                    <option value="{{ $store->id }}" {{ (string) old('store_id') === (string) $store->id ? 'selected' : '' }}>
+                        {{ $store->name }}
+                    </option>
                 @endforeach
             </select>
         </div>
@@ -92,7 +97,7 @@
             <select name="brand_id" class="border p-2 w-full">
                 <option value="">Select Brand</option>
                 @foreach($brands as $brand)
-                    <option value="{{ $brand->id }}">
+                    <option value="{{ $brand->id }}" {{ (string) old('brand_id') === (string) $brand->id ? 'selected' : '' }}>
                         {{ $brand->name }}
                     </option>
                 @endforeach
@@ -103,14 +108,14 @@
         {{-- PRODUCT NAME --}}
         <div>
             <label class="block font-medium mb-1">Product Name</label>
-            <input type="text" name="name" class="border p-2 w-full" required>
+            <input type="text" name="name" value="{{ old('name') }}" class="border p-2 w-full" required>
         </div>
 
 
         {{-- DESCRIPTION --}}
         <div>
             <label class="block font-medium mb-1">Description</label>
-            <textarea name="description" class="border p-2 w-full" rows="8"></textarea>
+            <textarea name="description" class="border p-2 w-full" rows="8">{{ old('description') }}</textarea>
         </div>
 
 
@@ -119,12 +124,12 @@
 
             <div>
                 <label class="block font-medium mb-1">Price (KD)</label>
-                <input type="number" step="0.01" name="price" class="border p-2 w-full" required>
+                <input type="number" step="0.01" name="price" value="{{ old('price') }}" class="border p-2 w-full" required>
             </div>
 
             <div>
                 <label class="block font-medium mb-1">Cost Price (KD)</label>
-                <input type="number" step="0.01" name="cost_price" class="border p-2 w-full">
+                <input type="number" step="0.01" name="cost_price" value="{{ old('cost_price') }}" class="border p-2 w-full">
             </div>
 
             <div id="manualStockField">
@@ -258,8 +263,20 @@
                 </div>
             </div>
             <div class="space-y-4 p-5">
+                @php
+                    $oldSpecKeys = array_values((array) old('specs_keys', []));
+                    $oldSpecValues = array_values((array) old('specs_values', []));
+                    $oldSpecRowCount = max(count($oldSpecKeys), count($oldSpecValues));
+                @endphp
+                <input type="hidden" name="specs_present" value="1">
                 <div id="specs-wrapper">
-                    {{-- Will be filled dynamically --}}
+                    @for($index = 0; $index < $oldSpecRowCount; $index++)
+                        <div class="spec-row mb-2 flex flex-col gap-2 sm:flex-row">
+                            <input type="text" name="specs_keys[]" value="{{ $oldSpecKeys[$index] ?? '' }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec name">
+                            <input type="text" name="specs_values[]" value="{{ $oldSpecValues[$index] ?? '' }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec value">
+                            <button type="button" class="remove-spec rounded bg-red-500 px-3 py-2 text-white">Remove</button>
+                        </div>
+                    @endfor
                 </div>
 
                 <button type="button" id="add-spec" class="rounded bg-emerald-100 px-3 py-2 font-medium text-emerald-800 hover:bg-emerald-200">
@@ -284,7 +301,7 @@
                         Linking here will make the colour panel appear on all selected products.
                     </p>
 
-                    <x-admin.product-selector :selected-products="[]" name="colour_variants" />
+                    <x-admin.product-selector :selected-products="$colourVariantProducts" name="colour_variants" />
                 </div>
 
                 <div class="rounded-lg border border-amber-100 bg-amber-50 p-4">
@@ -294,7 +311,7 @@
                         Linking here will make the storage panel appear on all selected products.
                     </p>
 
-                    <x-admin.product-selector :selected-products="[]" name="storage_variants" />
+                    <x-admin.product-selector :selected-products="$storageVariantProducts" name="storage_variants" />
                 </div>
             </div>
         </section>

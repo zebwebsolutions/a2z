@@ -95,7 +95,17 @@ class ProductController extends Controller
         $categories = Category::whereNull('parent_id')->orderBy('name')->get();
         $subcategories = Category::whereNotNull('parent_id')->orderBy('name')->get();
         $brands = Brand::all();
-        return view('admin.products.create', compact('stores', 'categories', 'subcategories', 'brands'));
+        $colourVariantProducts = $this->variantProductsForForm('colour_variants');
+        $storageVariantProducts = $this->variantProductsForForm('storage_variants');
+
+        return view('admin.products.create', compact(
+            'stores',
+            'categories',
+            'subcategories',
+            'brands',
+            'colourVariantProducts',
+            'storageVariantProducts'
+        ));
     }
 
     /**
@@ -126,6 +136,10 @@ class ProductController extends Controller
             'inventory_units.*.imei_2' => 'nullable|string|max:50',
             'inventory_units.*.serial_number' => 'nullable|string|max:100',
             'inventory_units.*.barcode' => 'nullable|string|max:255',
+            'specs_keys' => 'nullable|array',
+            'specs_keys.*' => 'nullable|string|max:100',
+            'specs_values' => 'nullable|array',
+            'specs_values.*' => 'nullable|string|max:1000',
             'is_active' => 'nullable|boolean',
             'brand_id' => 'nullable|exists:brands,id',
             'parent_category_id' => 'nullable|exists:categories,id',
@@ -158,12 +172,16 @@ class ProductController extends Controller
         $values = $request->specs_values ?? [];
         $specs = [];
 
-        foreach($keys as $i => $key) {
-            if(!empty($key) && isset($values[$i]) && !empty($values[$i])) {
-                $formattedKey = strtoupper($key);
-                $specs[$formattedKey] = $values[$i];
+        foreach ($keys as $i => $key) {
+            $key = trim((string) $key);
+            $value = trim((string) ($values[$i] ?? ''));
+
+            if ($key !== '' && $value !== '') {
+                $specs[strtoupper($key)] = $value;
             }
         }
+
+        unset($data['specs_keys'], $data['specs_values']);
 
         $data['specs'] = $specs;
         $data['slug'] = Str::slug($data['name']);
@@ -244,8 +262,14 @@ class ProductController extends Controller
         $categories = Category::whereNull('parent_id')->orderBy('name')->get();
         $subcategories = Category::whereNotNull('parent_id')->orderBy('name')->get();
         $brands = Brand::all();
-        $colourVariantProducts = $this->colourVariantProductsFor($product);
-        $storageVariantProducts = $this->storageVariantProductsFor($product);
+        $colourVariantProducts = $this->variantProductsForForm(
+            'colour_variants',
+            $this->colourVariantProductsFor($product)
+        );
+        $storageVariantProducts = $this->variantProductsForForm(
+            'storage_variants',
+            $this->storageVariantProductsFor($product)
+        );
 
         return view('admin.products.edit', compact('product', 'stores', 'categories', 'subcategories', 'brands', 'colourVariantProducts', 'storageVariantProducts'));
     }
@@ -276,6 +300,10 @@ class ProductController extends Controller
             'inventory_units.*.imei_2' => 'nullable|string|max:50',
             'inventory_units.*.serial_number' => 'nullable|string|max:100',
             'inventory_units.*.barcode' => 'nullable|string|max:255',
+            'specs_keys' => 'nullable|array',
+            'specs_keys.*' => 'nullable|string|max:100',
+            'specs_values' => 'nullable|array',
+            'specs_values.*' => 'nullable|string|max:1000',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -314,12 +342,16 @@ class ProductController extends Controller
         $values = $request->specs_values ?? [];  
         $specs = [];
 
-        foreach($keys as $i => $key) {
-            if(!empty($key) && isset($values[$i]) && !empty($values[$i])) {
-                $formattedKey = strtoupper($key);
-                $specs[$formattedKey] = $values[$i];
+        foreach ($keys as $i => $key) {
+            $key = trim((string) $key);
+            $value = trim((string) ($values[$i] ?? ''));
+
+            if ($key !== '' && $value !== '') {
+                $specs[strtoupper($key)] = $value;
             }
         }
+
+        unset($data['specs_keys'], $data['specs_values']);
 
         $data['specs'] = $specs;
         $data['slug'] = Str::slug($data['name']);
@@ -460,6 +492,42 @@ class ProductController extends Controller
             ->where('id', '!=', $product->id)
             ->orderBy('name')
             ->get(['id', 'name', 'price', 'image'])
+            ->map(fn (Product $variant) => [
+                'id' => $variant->id,
+                'name' => $variant->name,
+                'price' => $variant->price,
+                'image' => $variant->image,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    private function variantProductsForForm(string $inputName, array $fallback = []): array
+    {
+        $oldInput = session()->getOldInput();
+
+        if (!array_key_exists($inputName . '_present', $oldInput)) {
+            return $fallback;
+        }
+
+        $ids = collect($oldInput[$inputName] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $products = Product::query()
+            ->whereIn('id', $ids)
+            ->get(['id', 'name', 'price', 'image'])
+            ->keyBy('id');
+
+        return $ids
+            ->map(fn (int $id) => $products->get($id))
+            ->filter()
             ->map(fn (Product $variant) => [
                 'id' => $variant->id,
                 'name' => $variant->name,

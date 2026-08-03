@@ -23,6 +23,19 @@
 
     <h1 class="text-2xl font-bold mb-6">Edit Product</h1>
 
+    @if ($errors->any())
+        <div class="mb-4 rounded border border-red-400 bg-red-100 p-4 text-red-700">
+            <ul class="list-disc pl-6">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            @if($errors->has('image') || $errors->has('gallery') || $errors->has('gallery.*'))
+                <p class="mt-2 text-sm">Please select the image files again. Browsers do not retain file inputs after submission.</p>
+            @endif
+        </div>
+    @endif
+
     <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
         @csrf
         @method('PUT')
@@ -43,7 +56,7 @@
             <select name="store_id" class="border p-2 w-full" required>
                 <option value="">Select Store</option>
                 @foreach($stores as $store)
-                    <option value="{{ $store->id }}" {{ $product->store_id == $store->id ? 'selected' : '' }}>
+                    <option value="{{ $store->id }}" {{ (string) old('store_id', $product->store_id) === (string) $store->id ? 'selected' : '' }}>
                         {{ $store->name }}
                     </option>
                 @endforeach
@@ -83,7 +96,7 @@
         <select name="brand_id" class="border p-2 w-full">
             <option value="">Select Brand</option>
             @foreach($brands as $brand)
-                <option value="{{ $brand->id }}" {{ $product->brand_id == $brand->id ? 'selected' : '' }}>
+                <option value="{{ $brand->id }}" {{ (string) old('brand_id', $product->brand_id) === (string) $brand->id ? 'selected' : '' }}>
                     {{ $brand->name }}
                 </option>
             @endforeach
@@ -241,16 +254,25 @@
                 </div>
             </div>
             <div class="space-y-4 p-5">
+                @php
+                    $hasOldSpecs = old('specs_present') !== null;
+                    $specKeys = $hasOldSpecs
+                        ? array_values((array) old('specs_keys', []))
+                        : array_keys($product->specs ?? []);
+                    $specValues = $hasOldSpecs
+                        ? array_values((array) old('specs_values', []))
+                        : array_values($product->specs ?? []);
+                    $specRowCount = max(count($specKeys), count($specValues));
+                @endphp
+                <input type="hidden" name="specs_present" value="1">
                 <div id="specs-wrapper">
-                    @if($product->specs)
-                        @foreach($product->specs as $key => $value)
-                            <div class="spec-row mb-2 flex flex-col gap-2 sm:flex-row">
-                                <input type="text" name="specs_keys[]" value="{{ $key }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec name">
-                                <input type="text" name="specs_values[]" value="{{ $value }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec value">
-                                <button type="button" class="remove-spec rounded bg-red-500 px-3 py-2 text-white">Remove</button>
-                            </div>
-                        @endforeach
-                    @endif
+                    @for($index = 0; $index < $specRowCount; $index++)
+                        <div class="spec-row mb-2 flex flex-col gap-2 sm:flex-row">
+                            <input type="text" name="specs_keys[]" value="{{ $specKeys[$index] ?? '' }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec name">
+                            <input type="text" name="specs_values[]" value="{{ $specValues[$index] ?? '' }}" class="w-full border p-2 sm:w-1/2" placeholder="Spec value">
+                            <button type="button" class="remove-spec rounded bg-red-500 px-3 py-2 text-white">Remove</button>
+                        </div>
+                    @endfor
                 </div>
 
                 <button type="button" id="add-spec" class="rounded bg-emerald-100 px-3 py-2 font-medium text-emerald-800 hover:bg-emerald-200">

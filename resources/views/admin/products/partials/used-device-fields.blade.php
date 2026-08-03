@@ -1,6 +1,10 @@
+@php
+    $isUsedValue = (bool) old('is_used', $product->is_used ?? false);
+@endphp
+
 <div
     x-data="{
-        isUsed: @json(old('is_used', $product->is_used ?? false))
+        isUsed: @json($isUsedValue)
     }"
     class=""
 >
@@ -16,7 +20,7 @@
             value="1"
             x-model="isUsed"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            {{old('is_used', $product->is_used ?? '') === 1 ? 'checked' : ''}}
+            @checked($isUsedValue)
         >
         <label for="is_used" class="text-sm font-medium text-gray-700">
             Mark as Used Device
@@ -84,6 +88,7 @@
                 <div class="flex flex-wrap gap-6">
 
                     <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="box_available" value="0">
                         <input type="checkbox" name="box_available" value="1"
                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                {{ old('box_available', $product->usedDeviceDetails->box_available ?? false) ? 'checked' : '' }}>
@@ -91,6 +96,7 @@
                     </label>
 
                     <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="charger_available" value="0">
                         <input type="checkbox" name="charger_available" value="1"
                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                {{ old('charger_available', $product->usedDeviceDetails->charger_available ?? false) ? 'checked' : '' }}>
@@ -98,6 +104,7 @@
                     </label>
 
                     <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="cable_available" value="0">
                         <input type="checkbox" name="cable_available" value="1"
                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                {{ old('cable_available', $product->usedDeviceDetails->cable_available ?? false) ? 'checked' : '' }}>
@@ -105,6 +112,7 @@
                     </label>
 
                     <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="headphones_available" value="0">
                         <input type="checkbox" name="headphones_available" value="1"
                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                {{ old('headphones_available', $product->usedDeviceDetails->headphones_available ?? false) ? 'checked' : '' }}>

@@ -101,6 +101,7 @@
      x-init="init()"
      class="mt-6 relative"
      x-cloak>
+    <input type="hidden" name="{{ $name }}_present" value="1">
 
     {{-- Search Bar --}}
     <input type="text"
