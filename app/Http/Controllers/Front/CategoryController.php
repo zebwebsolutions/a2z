@@ -13,6 +13,10 @@ class CategoryController extends Controller
     public function show($slug)
     {
         $category = Category::where('slug', $slug)->firstOrFail();
+        $breadcrumbItems = [
+            ['label' => 'Home', 'url' => route('home')],
+            ['label' => $category->name, 'url' => route('category.show', $category->slug)],
+        ];
 
         $subcategories = $category->children()->orderBy('name')->get();
         $categoryBrands = $category->brands ?? collect();
@@ -41,6 +45,7 @@ class CategoryController extends Controller
                 return view('front.category.subcategory-grid', [
                     'category' => $category,
                     'subcategories' => $subcategories,
+                    'breadcrumbItems' => $breadcrumbItems,
                 ]);
             }
 
@@ -104,12 +109,6 @@ class CategoryController extends Controller
 
         // FINAL PRODUCT RESULTS
         $products = $query->latest()->paginate(18)->withQueryString();
-
-        // BREADCRUMB
-        $breadcrumbItems = [
-            ['label' => 'Home', 'url' => route('home')],
-            ['label' => $category->name, 'url' => '#'],
-        ];
 
         // AJAX RESPONSE
         if (request()->ajax()) {
@@ -229,7 +228,10 @@ class CategoryController extends Controller
         $breadcrumbItems = [
             ['label' => 'Home', 'url' => route('home')],
             ['label' => $category->name, 'url' => route('category.show', $category->slug)],
-            ['label' => $brand->name, 'url' => '#'],
+            ['label' => $brand->name, 'url' => route('brand.category', [
+                'category' => $category->slug,
+                'brand' => $brand->slug,
+            ])],
         ];
 
         // ------------------------------------

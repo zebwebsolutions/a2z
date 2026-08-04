@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\Category;
+use App\Support\StructuredData;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -153,6 +154,11 @@ class ProductController extends Controller
             ];
         }
 
+        $breadcrumbItems[] = [
+            'label' => $product->name,
+            'url' => route('product.show', $product->slug),
+        ];
+
         abort_unless($product->is_active, 404);
 
         $relatedProducts = Product::where('category_id', $product->category_id)
@@ -162,8 +168,16 @@ class ProductController extends Controller
             ->get();
 
         [$colourVariants, $storageVariants] = $this->variantOptionsFor($product);
+        $productStructuredData = StructuredData::product($product);
 
-        return view('front.products.show', compact('product', 'breadcrumbItems', 'relatedProducts', 'colourVariants', 'storageVariants'));
+        return view('front.products.show', compact(
+            'product',
+            'breadcrumbItems',
+            'relatedProducts',
+            'colourVariants',
+            'storageVariants',
+            'productStructuredData'
+        ));
     }
 
     private function variantOptionsFor(Product $product): array

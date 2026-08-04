@@ -91,7 +91,7 @@ class BrandController extends Controller
         // ------------------------------------
         $breadcrumbItems = [
             ['label' => 'Home', 'url' => route('home')],
-            ['label' => $brand->name, 'url' => '#'],
+            ['label' => $brand->name, 'url' => route('brand.index', $brand->slug)],
         ];
 
         // ------------------------------------

@@ -6,35 +6,22 @@
         <link rel="shortcut icon" href="{{ asset('favicon.png') }}" type="image/x-icon">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @php
+            $sectionText = fn (string $section) => html_entity_decode(
+                trim($__env->yieldContent($section)),
+                ENT_QUOTES | ENT_HTML5,
+                'UTF-8'
+            );
             $defaultTitle = 'A to Z Electronics & Repairing | New & Used Phones, Tablets, Accessories & Repairs';
-            $pageTitle = trim($__env->yieldContent('title')) ?: $defaultTitle;
+            $pageTitle = $sectionText('title') ?: $defaultTitle;
             $defaultDescription = 'A2Z Kuwait offers new and used phones, tablets, accessories, and expert repair services for phones, tablets, and smart watches in Sharq, Kuwait.';
-            $pageDescription = trim($__env->yieldContent('meta_description')) ?: $defaultDescription;
-            $metaRobots = trim($__env->yieldContent('meta_robots')) ?: 'index,follow';
-            $canonicalUrl = trim($__env->yieldContent('canonical')) ?: url()->current();
-            $ogTitle = trim($__env->yieldContent('og_title')) ?: $pageTitle;
-            $ogDescription = trim($__env->yieldContent('og_description')) ?: $pageDescription;
-            $ogImage = trim($__env->yieldContent('og_image')) ?: asset('favicon.png');
-            $organizationSchema = [
-                '@context' => 'https://schema.org',
-                '@type' => 'Organization',
-                'name' => 'A to Z Electronics & Repairing',
-                'alternateName' => 'A2Z Kuwait',
-                'url' => url('/'),
-                'logo' => asset('images/a2z-logo.png'),
-                'contactPoint' => [[
-                    '@type' => 'ContactPoint',
-                    'telephone' => '+96597764165',
-                    'contactType' => 'customer service',
-                    'areaServed' => 'KW',
-                ]],
-                'address' => [
-                    '@type' => 'PostalAddress',
-                    'streetAddress' => 'Khalid Bin Waleed Street, Kazmi 10 Building, Shop 2',
-                    'addressLocality' => 'Sharq',
-                    'addressCountry' => 'KW',
-                ],
-            ];
+            $pageDescription = $sectionText('meta_description') ?: $defaultDescription;
+            $metaRobots = $sectionText('meta_robots') ?: 'index,follow';
+            $canonicalUrl = $sectionText('canonical') ?: url()->current();
+            $ogTitle = $sectionText('og_title') ?: $pageTitle;
+            $ogDescription = $sectionText('og_description') ?: $pageDescription;
+            $ogImage = $sectionText('og_image') ?: asset('favicon.png');
+            $ogType = $sectionText('og_type') ?: 'website';
+            $siteStructuredData = \App\Support\StructuredData::site(request()->routeIs('home'));
         @endphp
 
         <title>{{ $pageTitle }}</title>
@@ -43,7 +30,7 @@
         <link rel="canonical" href="{{ $canonicalUrl }}">
         <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ url('/sitemap.xml') }}">
 
-        <meta property="og:type" content="website">
+        <meta property="og:type" content="{{ $ogType }}">
         <meta property="og:site_name" content="A to Z Electronics & Repairing">
         <meta property="og:title" content="{{ $ogTitle }}">
         <meta property="og:description" content="{{ $ogDescription }}">
@@ -62,9 +49,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <script type="application/ld+json">
-            @json($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
-        </script>
+        <x-structured-data :data="$siteStructuredData" />
     </head>
     <body class="font-sans antialiased">
         <!-- Google tag (gtag.js) -->

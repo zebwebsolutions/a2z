@@ -1,8 +1,23 @@
 @extends('layouts.app')
 
 @section('title', $product->name . ' | A2Z')
+@section('meta_description', \Illuminate\Support\Str::limit(
+    trim(strip_tags($product->description ?: '')) ?: 'Shop ' . $product->name . ' at A2Z Kuwait. View its price, availability, and specifications.',
+    160
+))
+@section('canonical', route('product.show', $product->slug))
+@section('og_type', 'product')
+@section('og_title', $product->name . ' | A2Z Kuwait')
+@section('og_description', \Illuminate\Support\Str::limit(
+    trim(strip_tags($product->description ?: '')) ?: 'View ' . $product->name . ', pricing, availability, and specifications at A2Z Kuwait.',
+    200
+))
+@if($product->image)
+    @section('og_image', asset('storage/' . $product->image))
+@endif
 
 @section('content')
+<x-structured-data :data="$productStructuredData" />
 <div id="product-detail" class="scroll-mt-[120px] container mx-auto px-4 py-8">
     <x-breadcrumb :items="$breadcrumbItems" />
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
