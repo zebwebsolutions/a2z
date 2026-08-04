@@ -71,7 +71,12 @@ document.addEventListener('DOMContentLoaded', function () {
      * Build query URL from sidebar inputs
      * ---------------------------------- */
     function buildUrl() {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams(window.location.search);
+
+        // Keep page context such as search/category/store, but rebuild the
+        // sidebar-controlled values from the current inputs.
+        ['page', 'brand', 'ram', 'storage', 'battery', 'battery[]', 'min', 'max', 'min_price', 'max_price']
+            .forEach(key => params.delete(key));
 
         // Brand (single)
         const brand = document.querySelector("input[name='brand']:checked");
@@ -85,9 +90,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const storage = document.querySelector("input[name='storage']:checked");
         if (storage) params.set('storage', storage.value);
 
-        // Battery health (multiple)
-        document.querySelectorAll("input[name='battery[]']:checked")
-            .forEach(el => params.append('battery[]', el.value));
+        // Battery health (single threshold)
+        const battery = document.querySelector("input[name='battery']:checked");
+        if (battery) params.set('battery', battery.value);
 
         // Price (from Alpine hidden inputs)
         const minInput = document.querySelector("input[name='min']");
@@ -313,7 +318,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll("input[name='storage']").forEach(el => el.checked = false);
         }
         if (type === 'battery') {
-            document.querySelectorAll("input[name='battery[]']").forEach(el => el.checked = false);
+            document.querySelectorAll("input[name='battery'], input[name='battery[]']")
+                .forEach(el => el.checked = false);
         }
         if (type === 'price') {
             const minEl = document.querySelector("input[name='min']");

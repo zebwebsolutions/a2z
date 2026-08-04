@@ -57,24 +57,10 @@ class BrandController extends Controller
         $specsRaw = $baseForFilters->pluck('specs');
 
         // RAM
-        $availableRAM = [];
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) continue;
-            if (isset($spec['RAM'])) {
-                $availableRAM[] = $spec['RAM'];
-            }
-        }
-        $availableRAM = collect($availableRAM)->unique()->values()->sort()->all();
+        $availableRAM = Product::specificationOptions($specsRaw, Product::RAM_SPEC_JSON_KEYS)->all();
 
         // STORAGE
-        $availableStorage = [];
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) continue;
-            if (isset($spec['STORAGE'])) {
-                $availableStorage[] = $spec['STORAGE'];
-            }
-        }
-        $availableStorage = collect($availableStorage)->unique()->values()->sort()->all();
+        $availableStorage = Product::specificationOptions($specsRaw, Product::STORAGE_SPEC_KEYS)->all();
 
         // ------------------------------------
         // APPLY USER FILTERS
@@ -88,11 +74,11 @@ class BrandController extends Controller
         }
 
         if ($request->filled('ram')) {
-            $query->whereJsonContains('specs->RAM', $request->ram);
+            $query->whereRamSpecification($request->input('ram'));
         }
 
         if ($request->filled('storage')) {
-            $query->whereJsonContains('specs->STORAGE', $request->storage);
+            $query->whereStorageSpecification($request->input('storage'));
         }
 
         // ------------------------------------

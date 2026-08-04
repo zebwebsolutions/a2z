@@ -9,122 +9,27 @@ use App\Models\Category;
 use App\Models\Store;
 use App\Models\Brand;
 use App\Models\UsedDeviceDetail;
+use Illuminate\Database\Eloquent\Builder;
 
 class ShopController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query()->where('is_active', true);
-        $baseForFilters = Product::query()->where('is_active', true);
+        $query = $this->shopContextQuery($request);
+        $this->applyShopListingFilters($query, $request);
 
-        // CATEGORY FILTER
-        if ($request->filled('category')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
-        }
-
-        // BRAND FILTER
-        if ($request->filled('brand')) {
-            $query->whereHas('brand', function ($q) use ($request) {
-                $q->where('slug', $request->brand);
-            });
-        }
-
-        // SEARCH FILTER
-        if ($request->filled('q')) {
-            $this->applyProductKeywordSearch($query, $request->input('q'));
-        }
-
-        // STORE FILTER
-        if ($request->filled('store')) {
-            $query->where('store_id', $request->store);
-        }
-
-        // PRICE FILTERS
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
-
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
-
-        if ($request->filled('min')) {
-            $query->where('price', '>=', $request->min);
-        }
-
-        if ($request->filled('max')) {
-            $query->where('price', '<=', $request->max);
-        }
-
-        // APPLY SPEC FILTERS
-        if ($request->filled('ram')) {
-            $ramValues = is_array($request->ram) ? $request->ram : [$request->ram];
-            $query->where(function ($q) use ($ramValues) {
-                foreach ($ramValues as $ram) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.RAM')) = ?", [$ram])
-                      ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Ram')) = ?", [$ram]);
-                }
-            });
-        }
-
-        if ($request->filled('storage')) {
-            $storageValues = is_array($request->storage) ? $request->storage : [$request->storage];
-            $query->where(function ($q) use ($storageValues) {
-                foreach ($storageValues as $storage) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.STORAGE')) = ?", [$storage])
-                      ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Storage')) = ?", [$storage]);
-                }
-            });
-        }
-
-        if ($request->filled('processor')) {
-            $processorValues = is_array($request->processor) ? $request->processor : [$request->processor];
-            $query->where(function ($q) use ($processorValues) {
-                foreach ($processorValues as $processor) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Processor')) = ?", [$processor]);
-                }
-            });
-        }
-
-        if ($request->filled('screen_size')) {
-            $query->where('specs->Screen Size', $request->screen_size);
-        }
-
-
-        // BUILD FILTER OPTIONS FROM STORED SPECS JSON
-        $specsRaw = (clone $baseForFilters)->whereNotNull('specs')->pluck('specs');
-
-        $ramOptions = collect();
-        $storageOptions = collect();
-
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) {
-                continue;
-            }
-
-            $ram = $spec['RAM'] ?? $spec['Ram'] ?? $spec['ram'] ?? null;
-            $storage = $spec['STORAGE'] ?? $spec['Storage'] ?? $spec['storage'] ?? null;
-
-            if (!empty($ram)) {
-                $ramOptions->push($ram);
-            }
-            if (!empty($storage)) {
-                $storageOptions->push($storage);
-            }
-        }
-
-        $ramOptions = $ramOptions->unique()->sort()->values();
-        $storageOptions = $storageOptions->unique()->sort()->values();
+        $baseForFilters = $this->shopContextQuery($request);
+        $baseForBrands = $this->shopContextQuery($request, includeBrand: false);
+        $filterData = $this->shopFilterData($baseForFilters, $baseForBrands);
 
         $products = $query->paginate(12)->withQueryString();
         $products->withPath(route('shop.index'));
 
-        $availableBrandIds = (clone $baseForFilters)->pluck('brand_id')->filter()->unique();
-        $availableBrands = Brand::whereIn('id', $availableBrandIds)->orderBy('name')->get();
-        $priceMin = (clone $baseForFilters)->min('price') ?? 0;
-        $priceMax = (clone $baseForFilters)->max('price') ?? 0;
+        $availableBrands = $filterData['availableBrands'];
+        $priceMin = $filterData['priceMin'];
+        $priceMax = $filterData['priceMax'];
+        $ramOptions = $filterData['ramOptions'];
+        $storageOptions = $filterData['storageOptions'];
         $virtualCategory = (object) ['id' => null, 'slug' => null];
 
         $categories = Category::with('brands')
@@ -149,72 +54,20 @@ class ShopController extends Controller
 
     public function ajaxProducts(Request $request)
     {
-        // Copy SAME FILTER LOGIC from index()
-        $query = Product::query()->where('is_active', true);
-        $baseForFilters = Product::query()->where('is_active', true);
+        $query = $this->shopContextQuery($request);
+        $this->applyShopListingFilters($query, $request);
 
-        if ($request->filled('category')) {
-            $query->whereHas('category', fn($q) =>
-                $q->where('slug', $request->category)
-            );
-        }
-
-        if ($request->filled('q')) {
-            $this->applyProductKeywordSearch($query, $request->input('q'));
-        }
-
-        if ($request->filled('ram')) {
-            $ramValues = is_array($request->ram) ? $request->ram : [$request->ram];
-            $query->where(function ($q) use ($ramValues) {
-                foreach ($ramValues as $ram) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Ram')) = ?", [$ram]);
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.RAM')) = ?", [$ram]);
-                }
-            });
-        }
-
-        if ($request->filled('storage')) {
-            $storageValues = is_array($request->storage) ? $request->storage : [$request->storage];
-            $query->where(function ($q) use ($storageValues) {
-                foreach ($storageValues as $storage) {
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Storage')) = ?", [$storage]);
-                    $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.STORAGE')) = ?", [$storage]);
-                }
-            });
-        }
-
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', (int) $request->max_price);
-        }
-
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', (int) $request->min_price);
-        }
-
-        if ($request->filled('max')) {
-            $query->where('price', '<=', (float) $request->max);
-        }
-
-        if ($request->filled('min')) {
-            $query->where('price', '>=', (float) $request->min);
-        }
-
-        if ($request->filled('brand')) {
-            $query->whereHas('brand', fn ($q) => $q->where('slug', $request->brand));
-        }
-
-        if ($request->filled('store')) {
-            $query->where('store_id', $request->store);
-        }
+        $baseForFilters = $this->shopContextQuery($request);
+        $baseForBrands = $this->shopContextQuery($request, includeBrand: false);
+        $filterData = $this->shopFilterData($baseForFilters, $baseForBrands);
 
         // Fetch products
         $products = $query->paginate(12)->withQueryString();
         $products->withPath(route('shop.index'));
 
-        $availableBrandIds = (clone $baseForFilters)->pluck('brand_id')->filter()->unique();
-        $availableBrands = Brand::whereIn('id', $availableBrandIds)->orderBy('name')->get();
-        $priceMin = (clone $baseForFilters)->min('price') ?? 0;
-        $priceMax = (clone $baseForFilters)->max('price') ?? 0;
+        $availableBrands = $filterData['availableBrands'];
+        $priceMin = $filterData['priceMin'];
+        $priceMax = $filterData['priceMax'];
         $virtualCategory = (object) ['id' => null, 'slug' => null];
 
         // Return only the product grid HTML (partial)
@@ -226,6 +79,8 @@ class ShopController extends Controller
                 'availableBrands' => $availableBrands,
                 'priceMin' => $priceMin,
                 'priceMax' => $priceMax,
+                'availableRAM' => $filterData['ramOptions'],
+                'availableStorage' => $filterData['storageOptions'],
             ])->render(),
         ]);
     }
@@ -277,6 +132,7 @@ class ShopController extends Controller
         // BASE QUERY (USED DEVICES ONLY)
         // ------------------------------------
         $query = Product::query()
+            ->where('is_active', true)
             ->where('is_used', 1)
             ->whereHas('usedDeviceDetails', fn ($q) =>
                 $q->whereNotNull('device_condition')
@@ -307,7 +163,7 @@ class ShopController extends Controller
         // ------------------------------------
         $batteryMin = UsedDeviceDetail::query()
             ->whereHas('product', fn ($q) =>
-                $q->where('is_used', 1)
+                $q->where('is_active', true)->where('is_used', 1)
             )
             ->whereNotNull('device_condition')
             ->whereNotNull('battery_health')
@@ -315,7 +171,7 @@ class ShopController extends Controller
 
         $batteryMax = UsedDeviceDetail::query()
             ->whereHas('product', fn ($q) =>
-                $q->where('is_used', 1)
+                $q->where('is_active', true)->where('is_used', 1)
             )
             ->whereNotNull('device_condition')
             ->whereNotNull('battery_health')
@@ -324,24 +180,10 @@ class ShopController extends Controller
         $specsRaw = $baseForFilters->pluck('specs');
 
         // RAM
-        $availableRAM = [];
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) continue;
-            if (isset($spec['RAM'])) {
-                $availableRAM[] = $spec['RAM'];
-            }
-        }
-        $availableRAM = collect($availableRAM)->unique()->values()->sort()->all();
+        $availableRAM = Product::specificationOptions($specsRaw, Product::RAM_SPEC_JSON_KEYS)->all();
 
         // STORAGE
-        $availableStorage = [];
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) continue;
-            if (isset($spec['STORAGE'])) {
-                $availableStorage[] = $spec['STORAGE'];
-            }
-        }
-        $availableStorage = collect($availableStorage)->unique()->values()->sort()->all();
+        $availableStorage = Product::specificationOptions($specsRaw, Product::STORAGE_SPEC_KEYS)->all();
 
         // ------------------------------------
         // APPLY USER FILTERS (IDENTICAL BEHAVIOUR)
@@ -376,11 +218,11 @@ class ShopController extends Controller
         }
 
         if ($request->filled('ram')) {
-            $query->whereJsonContains('specs->RAM', $request->ram);
+            $query->whereRamSpecification($request->input('ram'));
         }
 
         if ($request->filled('storage')) {
-            $query->whereJsonContains('specs->STORAGE', $request->storage);
+            $query->whereStorageSpecification($request->input('storage'));
         }
 
         // ------------------------------------
@@ -409,6 +251,15 @@ class ShopController extends Controller
                 )->render(),
 
                 'pagination' => $products->links()->render(),
+                'chips' => view('components.filter-chips', [
+                    'category' => $category,
+                    'availableBrands' => $availableBrands,
+                    'priceMin' => $priceMin,
+                    'priceMax' => $priceMax,
+                    'availableRAM' => $availableRAM,
+                    'availableStorage' => $availableStorage,
+                    'subcategories' => collect(),
+                ])->render(),
             ]);
         }
 
@@ -429,6 +280,84 @@ class ShopController extends Controller
             'availableStorage' => $availableStorage,
             'subcategories' => collect(),
         ]);
+    }
+
+    private function shopContextQuery(Request $request, bool $includeBrand = true): Builder
+    {
+        $query = Product::query()->where('is_active', true);
+
+        if ($request->filled('category')) {
+            $query->whereHas('category', fn ($categoryQuery) =>
+                $categoryQuery->where('slug', $request->input('category'))
+            );
+        }
+
+        if ($includeBrand && $request->filled('brand')) {
+            $query->whereHas('brand', fn ($brandQuery) =>
+                $brandQuery->where('slug', $request->input('brand'))
+            );
+        }
+
+        if ($request->filled('q')) {
+            $this->applyProductKeywordSearch($query, $request->input('q'));
+        }
+
+        if ($request->filled('store')) {
+            $query->where('store_id', $request->input('store'));
+        }
+
+        return $query;
+    }
+
+    private function applyShopListingFilters(Builder $query, Request $request): Builder
+    {
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', (float) $request->input('min_price'));
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', (float) $request->input('max_price'));
+        }
+
+        if ($request->filled('min')) {
+            $query->where('price', '>=', (float) $request->input('min'));
+        }
+
+        if ($request->filled('max')) {
+            $query->where('price', '<=', (float) $request->input('max'));
+        }
+
+        if ($request->filled('ram')) {
+            $query->whereRamSpecification($request->input('ram'));
+        }
+
+        if ($request->filled('storage')) {
+            $query->whereStorageSpecification($request->input('storage'));
+        }
+
+        if ($request->filled('processor')) {
+            $query->whereProcessorSpecification($request->input('processor'));
+        }
+
+        if ($request->filled('screen_size')) {
+            $query->whereScreenSizeSpecification($request->input('screen_size'));
+        }
+
+        return $query;
+    }
+
+    private function shopFilterData(Builder $baseForFilters, Builder $baseForBrands): array
+    {
+        $specs = (clone $baseForFilters)->whereNotNull('specs')->pluck('specs');
+        $availableBrandIds = (clone $baseForBrands)->pluck('brand_id')->filter()->unique();
+
+        return [
+            'availableBrands' => Brand::whereIn('id', $availableBrandIds)->orderBy('name')->get(),
+            'priceMin' => (clone $baseForFilters)->min('price') ?? 0,
+            'priceMax' => (clone $baseForFilters)->max('price') ?? 0,
+            'ramOptions' => Product::specificationOptions($specs, Product::RAM_SPEC_JSON_KEYS),
+            'storageOptions' => Product::specificationOptions($specs, Product::STORAGE_SPEC_KEYS),
+        ];
     }
 
     private function applyProductKeywordSearch($query, string $search)

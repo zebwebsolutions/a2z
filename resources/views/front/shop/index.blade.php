@@ -93,13 +93,9 @@
                 ])
             </div>
 
-            @if($products->count() > 0)
-                <div id="products-wrapper">
-                    @include('front.shop.partials.products-grid')
-                </div>
-            @else
-                <p class="text-center text-gray-600">No products found.</p>
-            @endif
+            <div id="products-wrapper">
+                @include('front.shop.partials.products-grid')
+            </div>
         </div>
     </div>
 
@@ -187,10 +183,37 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('change', () => applyFilters());
     form.addEventListener('input', () => applyFilters());
 
+    function buildFilterParams(paramsOverride = null) {
+        const params = new URLSearchParams(window.location.search);
+        const controlledKeys = [
+            'page', 'brand', 'ram', 'storage', 'battery', 'battery[]',
+            'min', 'max', 'min_price', 'max_price'
+        ];
+
+        controlledKeys.forEach(key => params.delete(key));
+
+        new FormData(form).forEach((value, key) => {
+            params.set(key.replace(/\[\]$/, ''), value);
+        });
+
+        if (paramsOverride !== null) {
+            new URLSearchParams(paramsOverride).forEach((value, key) => {
+                params.set(key.replace(/\[\]$/, ''), value);
+            });
+        }
+
+        if (Number(params.get('min')) === serverPriceMin && Number(params.get('max')) === serverPriceMax) {
+            params.delete('min');
+            params.delete('max');
+        }
+
+        return params.toString();
+    }
+
     async function applyFilters(paramsOverride = null) {
         clearTimeout(timeout);
         timeout = setTimeout(async () => {
-            const params = paramsOverride ?? new URLSearchParams(new FormData(form)).toString();
+            const params = buildFilterParams(paramsOverride);
             const url = "{{ route('shop.ajax') }}?" + params;
 
             // set ARIA busy
@@ -293,6 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (type === 'storage') {
             form.querySelectorAll("input[name='storage']").forEach(el => el.checked = false);
+        }
+        if (type === 'battery') {
+            form.querySelectorAll("input[name='battery'], input[name='battery[]']").forEach(el => el.checked = false);
         }
         if (type === 'price') {
             const minInput = form.querySelector("input[name='min']");

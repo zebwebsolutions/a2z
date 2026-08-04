@@ -20,7 +20,9 @@ class CategoryController extends Controller
         // ------------------------------------
         // BUILD BASE QUERY FOR CATEGORY
         // ------------------------------------
-        $query = Product::query()->where('is_used', false);
+        $query = Product::query()
+            ->where('is_active', true)
+            ->where('is_used', false);
 
         if (in_array($category->slug, ['phones', 'tablets', 'laptops', 'smart-watches'])) {
 
@@ -65,24 +67,10 @@ class CategoryController extends Controller
         $specsRaw = $baseForFilters->pluck('specs');
 
         // RAM
-        $availableRAM = [];
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) continue;
-            if (isset($spec['RAM'])) {
-                $availableRAM[] = $spec['RAM'];
-            }
-        }
-        $availableRAM = collect($availableRAM)->unique()->values()->sort()->all();
+        $availableRAM = Product::specificationOptions($specsRaw, Product::RAM_SPEC_JSON_KEYS)->all();
 
         // STORAGE
-        $availableStorage = [];
-        foreach ($specsRaw as $spec) {
-            if (!is_array($spec)) continue;
-            if (isset($spec['STORAGE'])) {
-                $availableStorage[] = $spec['STORAGE'];
-            }
-        }
-        $availableStorage = collect($availableStorage)->unique()->values()->sort()->all();
+        $availableStorage = Product::specificationOptions($specsRaw, Product::STORAGE_SPEC_KEYS)->all();
 
         // ------------------------------------
         // APPLY USER FILTERS
@@ -107,11 +95,11 @@ class CategoryController extends Controller
         }
 
         if (request()->filled('ram')) {
-            $query->whereJsonContains('specs->RAM', request('ram'));
+            $query->whereRamSpecification(request('ram'));
         }
 
         if (request()->filled('storage')) {
-            $query->whereJsonContains('specs->STORAGE', request('storage'));
+            $query->whereStorageSpecification(request('storage'));
         }
 
         // FINAL PRODUCT RESULTS
@@ -205,21 +193,9 @@ class CategoryController extends Controller
         // ------------------------------------
         $specsRaw = $base->pluck('specs')->filter();
 
-        $availableRAM = collect($specsRaw)
-            ->map(fn ($s) => is_array($s) ? ($s['RAM'] ?? null) : data_get($s, 'RAM'))
-            ->filter()
-            ->unique()
-            ->values()
-            ->sort()
-            ->all();
+        $availableRAM = Product::specificationOptions($specsRaw, Product::RAM_SPEC_JSON_KEYS)->all();
 
-        $availableStorage = collect($specsRaw)
-            ->map(fn ($s) => is_array($s) ? ($s['STORAGE'] ?? null) : data_get($s, 'STORAGE'))
-            ->filter()
-            ->unique()
-            ->values()
-            ->sort()
-            ->all();
+        $availableStorage = Product::specificationOptions($specsRaw, Product::STORAGE_SPEC_KEYS)->all();
 
         // ------------------------------------
         // APPLY USER FILTERS
@@ -235,11 +211,11 @@ class CategoryController extends Controller
         }
 
         if ($request->filled('ram')) {
-            $query->whereJsonContains('specs->RAM', $request->input('ram'));
+            $query->whereRamSpecification($request->input('ram'));
         }
 
         if ($request->filled('storage')) {
-            $query->whereJsonContains('specs->STORAGE', $request->input('storage'));
+            $query->whereStorageSpecification($request->input('storage'));
         }
 
         // ------------------------------------

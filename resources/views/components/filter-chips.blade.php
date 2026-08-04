@@ -2,6 +2,10 @@
         $activeBrands = (array) request()->brand;
         $activeRam = request()->ram;
         $activeStorage = request()->storage;
+        $activeBattery = request()->battery;
+        if (is_array($activeBattery) && count($activeBattery)) {
+            $activeBattery = min(array_map('intval', $activeBattery));
+        }
         $min = request()->min;
         $max = request()->max;
         $hasPriceFilter = $min && $min != $priceMin || $max && $max != $priceMax;
@@ -31,6 +35,14 @@
     @if($activeStorage)
         <span class="chip" data-remove="storage" data-value="{{ $activeStorage }}">
             Storage: {{ $activeStorage }}
+            <button type="button" class="ml-1">✕</button>
+        </span>
+    @endif
+
+    {{-- BATTERY HEALTH CHIP --}}
+    @if($activeBattery)
+        <span class="chip" data-remove="battery" data-value="{{ $activeBattery }}">
+            Battery: {{ (int) $activeBattery }}%+
             <button type="button" class="ml-1">✕</button>
         </span>
     @endif

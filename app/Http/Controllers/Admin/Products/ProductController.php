@@ -177,7 +177,7 @@ class ProductController extends Controller
             $value = trim((string) ($values[$i] ?? ''));
 
             if ($key !== '' && $value !== '') {
-                $specs[strtoupper($key)] = $value;
+                $specs[Product::normalizeSpecificationKey($key)] = $value;
             }
         }
 
@@ -347,7 +347,7 @@ class ProductController extends Controller
             $value = trim((string) ($values[$i] ?? ''));
 
             if ($key !== '' && $value !== '') {
-                $specs[strtoupper($key)] = $value;
+                $specs[Product::normalizeSpecificationKey($key)] = $value;
             }
         }
 

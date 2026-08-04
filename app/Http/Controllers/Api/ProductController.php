@@ -192,7 +192,7 @@ class ProductController extends Controller
         ) {
             foreach ($data['specs_keys'] as $i => $key) {
                 if ($key && $data['specs_values'][$i]) {
-                    $specs[strtoupper(trim($key))] = $data['specs_values'][$i];
+                    $specs[Product::normalizeSpecificationKey($key)] = $data['specs_values'][$i];
                 }
             }
         }
@@ -381,7 +381,7 @@ class ProductController extends Controller
             $specs = [];
             foreach ($data['specs_keys'] as $i => $key) {
                 if ($key && $data['specs_values'][$i]) {
-                    $specs[strtoupper(trim($key))] = $data['specs_values'][$i];
+                    $specs[Product::normalizeSpecificationKey($key)] = $data['specs_values'][$i];
                 }
             }
             $product->specs = $specs;

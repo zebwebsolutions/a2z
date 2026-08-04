@@ -2,13 +2,58 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class Product extends Model
 {
     use HasFactory;
+
+    public const STORAGE_SPEC_KEYS = [
+        'STORAGE',
+        'STORAGE CAPACITY',
+    ];
+
+    public const STORAGE_SPEC_JSON_KEYS = [
+        'STORAGE',
+        'Storage',
+        'storage',
+        'STORAGE CAPACITY',
+        'Storage Capacity',
+        'storage capacity',
+    ];
+
+    public const RAM_SPEC_JSON_KEYS = [
+        'RAM',
+        'Ram',
+        'ram',
+    ];
+
+    public const PROCESSOR_SPEC_JSON_KEYS = [
+        'PROCESSOR',
+        'Processor',
+        'processor',
+    ];
+
+    public const SCREEN_SIZE_SPEC_KEYS = [
+        'SCREENSIZE',
+        'SCREEN SIZE',
+        'SCREEN_SIZE',
+    ];
+
+    public const SCREEN_SIZE_SPEC_JSON_KEYS = [
+        'SCREENSIZE',
+        'ScreenSize',
+        'screensize',
+        'SCREEN SIZE',
+        'Screen Size',
+        'screen size',
+        'SCREEN_SIZE',
+        'screen_size',
+    ];
 
     protected $fillable = [
         'store_id',
@@ -69,22 +114,195 @@ class Product extends Model
         });
     }
 
-     public function getSpecsAttribute($value)
+    public function getSpecsAttribute($value)
     {
         $spec = is_string($value) ? json_decode($value, true) : $value;
 
-        if (!is_array($spec)) {
+        if (! is_array($spec)) {
             return [];
         }
 
         $normalized = [];
 
         foreach ($spec as $key => $val) {
-            $cleanKey = strtoupper(trim($key));    // Normalize key (RAM, STORAGE, PROCESSOR)
-            $normalized[$cleanKey] = $val;
+            $cleanKey = self::normalizeSpecificationKey((string) $key);
+            $normalized[$cleanKey] = is_scalar($val)
+                ? self::normalizeSpecificationValue((string) $val, $cleanKey)
+                : $val;
         }
 
         return $normalized;
+    }
+
+    public function setSpecsAttribute($value): void
+    {
+        $specs = is_string($value) ? json_decode($value, true) : $value;
+
+        if (! is_array($specs)) {
+            $this->attributes['specs'] = json_encode([]);
+
+            return;
+        }
+
+        $normalized = [];
+
+        foreach ($specs as $key => $specValue) {
+            $cleanKey = self::normalizeSpecificationKey((string) $key);
+            $normalized[$cleanKey] = is_scalar($specValue)
+                ? self::normalizeSpecificationValue((string) $specValue, $cleanKey)
+                : $specValue;
+        }
+
+        $this->attributes['specs'] = json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    public static function storageSpecificationValue(mixed $specs): ?string
+    {
+        return self::specificationValue($specs, self::STORAGE_SPEC_KEYS);
+    }
+
+    public static function normalizeSpecificationKey(string $key): string
+    {
+        $key = strtoupper(trim(preg_replace('/\s+/', ' ', $key)));
+
+        if (in_array($key, self::STORAGE_SPEC_KEYS, true)) {
+            return 'STORAGE';
+        }
+
+        if (in_array($key, self::SCREEN_SIZE_SPEC_KEYS, true)) {
+            return 'SCREENSIZE';
+        }
+
+        return $key;
+    }
+
+    public static function normalizeSpecificationValue(string $value, ?string $key = null): string
+    {
+        $value = trim((string) preg_replace('/\s+/u', ' ', $value));
+        $key = $key ? self::normalizeSpecificationKey($key) : null;
+
+        if (in_array($key, ['RAM', 'STORAGE'], true)
+            && preg_match('/^(\d+(?:\.\d+)?)\s*(MB|GB|TB)$/i', $value, $matches)) {
+            return $matches[1].' '.strtoupper($matches[2]);
+        }
+
+        if ($key === 'SCREENSIZE'
+            && preg_match('/^(\d+(?:\.\d+)?)\s*(?:INCH(?:ES)?|")?$/i', $value, $matches)) {
+            return $matches[1].' Inches';
+        }
+
+        return $value;
+    }
+
+    public static function specificationValue(mixed $specs, string|array $keys): ?string
+    {
+        if (! is_array($specs)) {
+            return null;
+        }
+
+        $normalizedKeys = collect(is_array($keys) ? $keys : [$keys])
+            ->map(fn ($key) => self::normalizeSpecificationKey((string) $key))
+            ->unique();
+
+        foreach ($specs as $key => $value) {
+            $normalizedKey = self::normalizeSpecificationKey((string) $key);
+
+            if (! $normalizedKeys->contains($normalizedKey) || ! is_scalar($value)) {
+                continue;
+            }
+
+            $value = self::normalizeSpecificationValue((string) $value, $normalizedKey);
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    public static function specificationOptions(iterable $specifications, string|array $keys): Collection
+    {
+        return collect($specifications)
+            ->map(fn ($specs) => self::specificationValue($specs, $keys))
+            ->filter()
+            ->unique(fn ($value) => self::specificationComparisonValue((string) $value))
+            ->sort(fn ($left, $right) => strnatcasecmp((string) $left, (string) $right))
+            ->values();
+    }
+
+    public static function specificationComparisonValue(string $value, bool $stripScreenUnit = false): string
+    {
+        $value = Str::lower(trim($value));
+
+        if ($stripScreenUnit) {
+            $value = (string) preg_replace('/(?:inches?|\")$/i', '', $value);
+        }
+
+        return (string) preg_replace('/\s+/u', '', $value);
+    }
+
+    public function scopeWhereSpecification(
+        Builder $query,
+        string|array $jsonKeys,
+        string|array $values,
+        bool $stripScreenUnit = false
+    ): Builder {
+        $values = collect(is_array($values) ? $values : [$values])
+            ->map(fn ($value) => self::specificationComparisonValue((string) $value, $stripScreenUnit))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($values->isEmpty()) {
+            return $query;
+        }
+
+        $keys = collect(is_array($jsonKeys) ? $jsonKeys : [$jsonKeys])
+            ->map(fn ($key) => (string) $key)
+            ->filter()
+            ->unique()
+            ->values();
+        $driver = $query->getModel()->getConnection()->getDriverName();
+        $jsonValue = match ($driver) {
+            'sqlite' => 'CAST(json_extract(specs, ?) AS TEXT)',
+            default => 'JSON_UNQUOTE(JSON_EXTRACT(specs, ?))',
+        };
+        $normalizedJsonValue = "LOWER(REPLACE(TRIM({$jsonValue}), ' ', ''))";
+
+        if ($stripScreenUnit) {
+            $normalizedJsonValue = "REPLACE(REPLACE(REPLACE({$normalizedJsonValue}, 'inches', ''), 'inch', ''), '\"', '')";
+        }
+
+        return $query->where(function (Builder $query) use ($keys, $normalizedJsonValue, $values) {
+            foreach ($keys as $key) {
+                $path = '$."'.str_replace('"', '\\"', $key).'"';
+
+                foreach ($values as $value) {
+                    $query->orWhereRaw("{$normalizedJsonValue} = ?", [$path, $value]);
+                }
+            }
+        });
+    }
+
+    public function scopeWhereStorageSpecification(Builder $query, string|array $values): Builder
+    {
+        return $query->whereSpecification(self::STORAGE_SPEC_JSON_KEYS, $values);
+    }
+
+    public function scopeWhereRamSpecification(Builder $query, string|array $values): Builder
+    {
+        return $query->whereSpecification(self::RAM_SPEC_JSON_KEYS, $values);
+    }
+
+    public function scopeWhereProcessorSpecification(Builder $query, string|array $values): Builder
+    {
+        return $query->whereSpecification(self::PROCESSOR_SPEC_JSON_KEYS, $values);
+    }
+
+    public function scopeWhereScreenSizeSpecification(Builder $query, string|array $values): Builder
+    {
+        return $query->whereSpecification(self::SCREEN_SIZE_SPEC_JSON_KEYS, $values, true);
     }
 
     public function store()  { 

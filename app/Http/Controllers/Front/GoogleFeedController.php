@@ -100,6 +100,7 @@ class GoogleFeedController extends Controller
         'FRONT CAMERA RESOLUTION' => 'Front Camera Resolution',
         'RAM' => 'RAM',
         'REAR CAMERA RESOLUTION' => 'Rear Camera Resolution',
+        'STORAGE' => 'Storage Capacity',
         'STORAGE CAPACITY' => 'Storage Capacity',
         'SCREEN RESOLUTION' => 'Screen Resolution',
         'WEIGHT' => 'Weight',

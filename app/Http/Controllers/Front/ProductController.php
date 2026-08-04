@@ -37,19 +37,11 @@ class ProductController extends Controller
         }
 
         if ($request->filled('ram')) {
-            $query->where(function ($q) use ($request) {
-                $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.RAM')) = ?", [$request->ram])
-                    ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Ram')) = ?", [$request->ram])
-                    ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.ram')) = ?", [$request->ram]);
-            });
+            $query->whereRamSpecification($request->input('ram'));
         }
 
         if ($request->filled('storage')) {
-            $query->where(function ($q) use ($request) {
-                $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.STORAGE')) = ?", [$request->storage])
-                    ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.Storage')) = ?", [$request->storage])
-                    ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(specs, '$.storage')) = ?", [$request->storage]);
-            });
+            $query->whereStorageSpecification($request->input('storage'));
         }
 
         if ($request->filled('color')) {
@@ -85,7 +77,7 @@ class ProductController extends Controller
                 }
 
                 $ram = $specs['RAM'] ?? $specs['Ram'] ?? $specs['ram'] ?? null;
-                $storage = $specs['STORAGE'] ?? $specs['Storage'] ?? $specs['storage'] ?? null;
+                $storage = Product::storageSpecificationValue($specs);
                 $color = $specs['COLOR'] ?? $specs['Color'] ?? $specs['color'] ?? null;
 
                 if (!empty($ram)) {
@@ -99,8 +91,16 @@ class ProductController extends Controller
                 }
             });
 
-        $ramOptions = $ramOptions->unique()->sort()->values();
-        $storageOptions = $storageOptions->unique()->sort()->values();
+        $ramOptions = $ramOptions
+            ->map(fn ($value) => Product::normalizeSpecificationValue((string) $value, 'RAM'))
+            ->unique(fn ($value) => Product::specificationComparisonValue((string) $value))
+            ->sort(fn ($left, $right) => strnatcasecmp((string) $left, (string) $right))
+            ->values();
+        $storageOptions = $storageOptions
+            ->map(fn ($value) => Product::normalizeSpecificationValue((string) $value, 'STORAGE'))
+            ->unique(fn ($value) => Product::specificationComparisonValue((string) $value))
+            ->sort(fn ($left, $right) => strnatcasecmp((string) $left, (string) $right))
+            ->values();
         $colorOptions = $colorOptions->unique()->sort()->values();
 
         return view('front.products.index', compact(

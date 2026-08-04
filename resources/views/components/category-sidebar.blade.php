@@ -122,19 +122,20 @@
 
                 @php
                     $batterySteps = [80, 85, 90, 95];
-                    $selected = (array) request('battery');
+                    $selectedBattery = is_array(request('battery'))
+                        ? min(array_map('intval', request('battery')))
+                        : (int) request('battery');
                 @endphp
 
                 <div class="space-y-2">
                     @foreach($batterySteps as $value)
                         @if($value <= $batteryMax)
                             <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox"
-                                    name="battery[]"
+                                <input type="radio"
+                                    name="battery"
                                     value="{{ $value }}"
-                                    @checked(in_array($value, $selected))
-                                    onchange="this.form.submit()"
-                                    class="rounded border-gray-300 text-black focus:ring-black">
+                                    @checked($selectedBattery === $value)
+                                    class="autoFilter accent-blue-600">
 
                                 <span>{{ $value }}%+</span>
                             </label>
@@ -252,45 +253,6 @@
 </div>
 
 
-
-{{-- ============================================
-    AUTO-FILTER LOGIC FOR RADIO + CHECKBOX
-============================================ --}}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-    document.querySelectorAll(".autoFilter").forEach(el => {
-        el.addEventListener("change", () => {
-
-            let params = new URLSearchParams(window.location.search);
-
-            // RAM
-            if (el.name === "ram") {
-                params.delete('ram');
-                params.set('ram', el.value);
-            }
-
-            // STORAGE
-            if (el.name === "storage") {
-                params.delete('storage');
-                params.set("storage", el.value);
-            }
-
-            // BRAND (checkboxes)
-            if (el.classList.contains("brandRadio")) {
-                params.delete('brand');
-                const selected = document.querySelector("input[name='brand']:checked");
-                if(selected) {
-                  params.append('brand', selected.value);
-                }
-            }
-
-            window.dispatchEvent(new CustomEvent("ajaxFilter", { detail: params.toString() }));
-        });
-    });
-
-});
-</script>
 
 <style>
 /* ... (Keep your .handle and .tooltip styles the same) ... */
