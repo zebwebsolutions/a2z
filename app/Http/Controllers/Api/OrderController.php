@@ -23,6 +23,7 @@ class OrderController extends Controller
 
         $query = Order::query()
             ->with(['items', 'sparePartItems'])
+            ->withExists(['reads as is_read' => fn ($query) => $query->where('user_id', $user->id)])
             ->where('store_id', $user->store_id);
 
         if ($search = $request->query('search')) {
@@ -186,6 +187,8 @@ class OrderController extends Controller
         if ($order->store_id !== auth()->user()->store_id) {
             abort(403);
         }
+
+        $order->loadExists(['reads as is_read' => fn ($query) => $query->where('user_id', auth()->id())]);
 
         return response()->json(
             $order->load([

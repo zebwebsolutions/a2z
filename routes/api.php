@@ -54,3 +54,8 @@ Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(func
     Route::post('/push-devices', [\App\Http\Controllers\Api\MobilePushDeviceController::class, 'store']);
     Route::delete('/push-devices', [\App\Http\Controllers\Api\MobilePushDeviceController::class, 'destroy']);
 });
+
+Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(function () {
+    Route::get('/order-inbox', [\App\Http\Controllers\Api\OrderInboxController::class, 'index']);
+    Route::post('/orders/{order}/read', [\App\Http\Controllers\Api\OrderInboxController::class, 'read']);
+});
