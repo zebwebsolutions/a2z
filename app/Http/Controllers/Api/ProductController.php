@@ -11,6 +11,8 @@ use Illuminate\Validation\Rule;
 use App\Services\Images\ImageOptimizer;
 use App\Services\Products\ProductInventoryService;
 use App\Models\Category;
+use App\Models\Purchase;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -82,6 +84,18 @@ class ProductController extends Controller
     )
     {
         $user = $request->user();
+        $isPurchase = $request->routeIs('purchases.store');
+        $purchaseData = [];
+        if ($isPurchase) {
+            $purchaseData = $request->validate([
+                'customer_name' => ['required', 'string', 'max:255'],
+                'customer_phone' => ['required', 'string', 'max:30', 'regex:/^[+0-9()\\s-]+$/'],
+                'customer_id_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+                'cost_price' => ['required', 'numeric', 'min:0'],
+                'store_id' => ['required', 'exists:stores,id'],
+            ]);
+            abort_unless($user->role === 'admin' || (int) $user->store_id === (int) $purchaseData['store_id'], 403);
+        }
 
         $data = $request->validate([
             // Required
@@ -149,6 +163,10 @@ class ProductController extends Controller
         $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id'));
         $productInventoryService->validateUnits($inventoryUnits, null, $isPhoneCategory);
 
+        if ($isPurchase && empty($inventoryUnits)) {
+            $request->validate(['stock' => ['required', 'integer', 'min:1']]);
+        }
+
         if (!$isPhoneCategory && empty($inventoryUnits) && !array_key_exists('stock', $data)) {
             $request->validate([
                 'stock' => ['required', 'integer', 'min:0'],
@@ -208,56 +226,83 @@ class ProductController extends Controller
             }
         }
 
-        $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits) {
-            $product = Product::create([
-                'store_id' => $data['store_id'],
-                'parent_category_id' => $data['parent_category_id'] ?? null,
-                'category_id' => $data['category_id'] ?? ($data['parent_category_id'] ?? null),
-                'brand_id' => $data['brand_id'] ?? null,
-                'name' => $data['name'],
-                'slug' => Str::slug($data['name']),
-                'description' => $data['description'] ?? null,
-                'price' => $data['price'],
-                'cost_price' => $data['cost_price'] ?? null,
-                'stock' => !empty($inventoryUnits) ? count($inventoryUnits) : ($data['stock'] ?? 0),
-                'sku' => $data['sku'] ?? null,
-                'barcode' => $data['barcode'] ?? null,
-                'tracks_inventory_by_unit' => !empty($inventoryUnits),
-                'is_used' => $data['is_used'] ?? false,
-                'image' => $imagePath,
-                'gallery' => $gallery,
-                'specs' => $specs,
-            ]);
-
-            if ($request->boolean('is_used')) {
-                $product->usedDeviceDetails()->create([
-                    'device_condition' => $deviceCondition,
-                    'battery_health' => $request->input('used_device_details.battery_health', $request->battery_health),
-                    'imei' => $request->input('used_device_details.imei', $request->imei),
-                    'warranty_days' => $request->input('used_device_details.warranty_days', $request->warranty_days),
-                    'box_available' => $request->has('used_device_details.box_available')
-                        ? $request->boolean('used_device_details.box_available')
-                        : $request->boolean('box_available'),
-                    'cable_available' => $request->has('used_device_details.cable_available')
-                        ? $request->boolean('used_device_details.cable_available')
-                        : $request->boolean('cable_available'),
-                    'charger_available' => $request->has('used_device_details.charger_available')
-                        ? $request->boolean('used_device_details.charger_available')
-                        : $request->boolean('charger_available'),
-                    'headphones_available' => $request->has('used_device_details.headphones_available')
-                        ? $request->boolean('used_device_details.headphones_available')
-                        : $request->boolean('headphones_available'),
+        $customerIdPath = null;
+        $purchase = null;
+        try {
+            $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits, $productInventoryService, $isPurchase, $purchaseData, $user, &$customerIdPath, &$purchase) {
+                $product = Product::create([
+                    'store_id' => $data['store_id'],
+                    'parent_category_id' => $data['parent_category_id'] ?? null,
+                    'category_id' => $data['category_id'] ?? ($data['parent_category_id'] ?? null),
+                    'brand_id' => $data['brand_id'] ?? null,
+                    'name' => $data['name'],
+                    'slug' => Str::slug($data['name']),
+                    'description' => $data['description'] ?? null,
+                    'price' => $data['price'],
+                    'cost_price' => $data['cost_price'] ?? null,
+                    'stock' => !empty($inventoryUnits) ? count($inventoryUnits) : ($data['stock'] ?? 0),
+                    'sku' => $data['sku'] ?? null,
+                    'barcode' => $data['barcode'] ?? null,
+                    'tracks_inventory_by_unit' => !empty($inventoryUnits),
+                    'is_used' => $data['is_used'] ?? false,
+                    'image' => $imagePath,
+                    'gallery' => $gallery,
+                    'specs' => $specs,
                 ]);
+
+                if ($request->boolean('is_used')) {
+                    $product->usedDeviceDetails()->create([
+                        'device_condition' => $deviceCondition,
+                        'battery_health' => $request->input('used_device_details.battery_health', $request->battery_health),
+                        'imei' => $request->input('used_device_details.imei', $request->imei),
+                        'warranty_days' => $request->input('used_device_details.warranty_days', $request->warranty_days),
+                        'box_available' => $request->has('used_device_details.box_available')
+                            ? $request->boolean('used_device_details.box_available')
+                            : $request->boolean('box_available'),
+                        'cable_available' => $request->has('used_device_details.cable_available')
+                            ? $request->boolean('used_device_details.cable_available')
+                            : $request->boolean('cable_available'),
+                        'charger_available' => $request->has('used_device_details.charger_available')
+                            ? $request->boolean('used_device_details.charger_available')
+                            : $request->boolean('charger_available'),
+                        'headphones_available' => $request->has('used_device_details.headphones_available')
+                            ? $request->boolean('used_device_details.headphones_available')
+                            : $request->boolean('headphones_available'),
+                    ]);
+                }
+
+                if (!empty($inventoryUnits)) {
+                    $productInventoryService->syncUnits($product, $inventoryUnits);
+                }
+
+                if ($isPurchase) {
+                    $customerIdPath = $request->file('customer_id_image')->store('purchase-ids', 'local');
+                    if (!$customerIdPath) {
+                        throw new \RuntimeException('Could not save customer ID image.');
+                    }
+                    $purchase = Purchase::create([
+                        'product_id' => $product->id,
+                        'store_id' => $product->store_id,
+                        'user_id' => $user->id,
+                        'customer_name' => $purchaseData['customer_name'],
+                        'customer_phone' => $purchaseData['customer_phone'],
+                        'customer_id_image' => $customerIdPath,
+                        'unit_cost' => $data['cost_price'],
+                        'quantity' => $product->fresh()->stock,
+                    ]);
+                }
+
+                return $product;
+            });
+        } catch (\Throwable $exception) {
+            if ($customerIdPath) {
+                Storage::disk('local')->delete($customerIdPath);
             }
-
-            return $product;
-        });
-
-        if (!empty($inventoryUnits)) {
-            $productInventoryService->syncUnits($product, $inventoryUnits);
+            throw $exception;
         }
 
         return response()->json([
+            ...($purchase ? ['purchase' => $purchase] : []),
             'success' => true,
             'product' => $product->fresh(['usedDeviceDetails', 'units']),
         ], 201);

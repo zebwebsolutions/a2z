@@ -43,3 +43,9 @@ Route::middleware('auth:sanctum', 'active', 'role:salesman,admin')->group(functi
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/brands', [BrandController::class, 'index']);
 });
+
+Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(function () {
+    Route::get('/purchases', [\App\Http\Controllers\Api\PurchaseController::class, 'index']);
+    Route::post('/purchases', [ProductController::class, 'store'])->name('purchases.store');
+    Route::get('/purchases/{purchase}/id-image', [\App\Http\Controllers\Api\PurchaseController::class, 'idImage']);
+});
