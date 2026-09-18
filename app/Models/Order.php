@@ -23,6 +23,20 @@ class Order extends Model
         'status',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (Order $order) {
+            if ($order->order_source !== 'online') return;
+            \Illuminate\Support\Facades\DB::afterCommit(function () use ($order) {
+                try {
+                    \App\Jobs\NotifyNewOrder::dispatch($order->id)->onConnection('database');
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            });
+        });
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id');

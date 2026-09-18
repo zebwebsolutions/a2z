@@ -71,3 +71,9 @@ Route::middleware(['auth', 'active', 'role:admin'])
         Route::post('/scan-barcode', [BarcodeScanController::class, 'scan'])
             ->middleware('auth:sanctum');
     });
+
+Route::middleware(['auth', 'active', 'role:admin,salesman'])->prefix('admin/purchases')->name('admin.purchases.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\PurchaseController::class, 'index'])->name('index');
+    Route::get('/{purchase}', [\App\Http\Controllers\Admin\PurchaseController::class, 'show'])->name('show');
+    Route::get('/{purchase}/id-image', [\App\Http\Controllers\Admin\PurchaseController::class, 'idImage'])->name('id-image');
+});

@@ -118,6 +118,7 @@ class User extends Authenticatable
             'stores'         => $role === 'admin',
             'repairs'        => in_array($role, ['admin', 'technician']),
             'spare-parts'    => in_array($role, ['admin', 'salesman']),
+            'purchases'      => in_array($role, ['admin', 'salesman']),
             'orders'         => in_array($role, ['admin', 'salesman']),
             'sliders'        => $role === 'admin',
             'home-sections'  => $role === 'admin',

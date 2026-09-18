@@ -86,12 +86,27 @@ class ProductController extends Controller
         $user = $request->user();
         $isPurchase = $request->routeIs('purchases.store');
         $purchaseData = [];
+        $requestKey = null;
+        if ($isPurchase && $request->has('request_key')) {
+            $request->validate(['request_key' => ['required', 'string', 'max:100']]);
+            $requestKey = hash('sha256', $user->id.':'.$request->input('request_key'));
+            $existing = Purchase::where('request_key', $requestKey)->first();
+            if ($existing) {
+                abort_unless($user->role === 'admin' || (int) $user->store_id === (int) $existing->store_id, 403);
+                return response()->json(['success' => true, 'purchase' => $existing, 'product' => $existing->product]);
+            }
+        }
         if ($isPurchase) {
             $purchaseData = $request->validate([
                 'customer_name' => ['required', 'string', 'max:255'],
-                'customer_phone' => ['required', 'string', 'max:30', 'regex:/^[+0-9()\\s-]+$/'],
+                'customer_phone' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9()\\s-]+$/', function ($attribute, $value, $fail) {
+                    $digits = preg_replace('/\D/', '', $value);
+                    if (strlen($digits) < 7 || strlen($digits) > 15) {
+                        $fail('The customer phone must contain 7 to 15 digits.');
+                    }
+                }],
                 'customer_id_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-                'cost_price' => ['required', 'numeric', 'min:0'],
+                'cost_price' => ['required', 'numeric', 'min:0', 'max:9999999.999', 'decimal:0,3'],
                 'store_id' => ['required', 'exists:stores,id'],
             ]);
             abort_unless($user->role === 'admin' || (int) $user->store_id === (int) $purchaseData['store_id'], 403);
@@ -119,7 +134,7 @@ class ProductController extends Controller
                 Rule::unique('products', 'barcode'),
             ],
             'inventory_units' => ['nullable', 'array'],
-            'inventory_units.*.id' => ['nullable', 'integer'],
+            'inventory_units.*.id' => ['prohibited'],
             'inventory_units.*.imei_1' => ['nullable', 'string', 'max:50'],
             'inventory_units.*.imei_2' => ['nullable', 'string', 'max:50'],
             'inventory_units.*.serial_number' => ['nullable', 'string', 'max:100'],
@@ -160,7 +175,8 @@ class ProductController extends Controller
         ]);
 
         $inventoryUnits = $productInventoryService->normalizeUnits($request->input('inventory_units'));
-        $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id'));
+        $isPhoneCategory = $this->isPhoneCategory($request->integer('parent_category_id'))
+            || $this->isPhoneCategory($request->integer('category_id'));
         $productInventoryService->validateUnits($inventoryUnits, null, $isPhoneCategory);
 
         if ($isPurchase && empty($inventoryUnits)) {
@@ -171,33 +187,6 @@ class ProductController extends Controller
             $request->validate([
                 'stock' => ['required', 'integer', 'min:0'],
             ]);
-        }
-
-        /* ---------------------------------
-         | Handle images
-         |---------------------------------*/
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $imageOptimizer->storeOptimized(
-                $request->file('image'),
-                'products',
-                1600,
-                82,
-                $data['name'] ?? null
-            );
-        }
-
-        $gallery = [];
-        if ($request->hasFile('gallery')) {
-            foreach ($request->file('gallery') as $img) {
-                $gallery[] = $imageOptimizer->storeOptimized(
-                    $img,
-                    'products/gallery',
-                    1600,
-                    82,
-                    $data['name'] ?? null
-                );
-            }
         }
 
         /* ---------------------------------
@@ -228,8 +217,35 @@ class ProductController extends Controller
 
         $customerIdPath = null;
         $purchase = null;
+        $imagePath = null;
+        $gallery = [];
         try {
-            $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits, $productInventoryService, $isPurchase, $purchaseData, $user, &$customerIdPath, &$purchase) {
+            /* ---------------------------------
+             | Handle images
+             |---------------------------------*/
+            if ($request->hasFile('image')) {
+                $imagePath = $imageOptimizer->storeOptimized(
+                    $request->file('image'),
+                    'products',
+                    1600,
+                    82,
+                    $data['name'] ?? null
+                );
+            }
+
+            if ($request->hasFile('gallery')) {
+                foreach ($request->file('gallery') as $img) {
+                    $gallery[] = $imageOptimizer->storeOptimized(
+                        $img,
+                        'products/gallery',
+                        1600,
+                        82,
+                        $data['name'] ?? null
+                    );
+                }
+            }
+
+            $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits, $productInventoryService, $isPurchase, $purchaseData, $user, $requestKey, &$customerIdPath, &$purchase) {
                 $product = Product::create([
                     'store_id' => $data['store_id'],
                     'parent_category_id' => $data['parent_category_id'] ?? null,
@@ -281,6 +297,8 @@ class ProductController extends Controller
                         throw new \RuntimeException('Could not save customer ID image.');
                     }
                     $purchase = Purchase::create([
+                        'request_key' => $requestKey,
+                        'product_name' => $product->name,
                         'product_id' => $product->id,
                         'store_id' => $product->store_id,
                         'user_id' => $user->id,
@@ -297,6 +315,11 @@ class ProductController extends Controller
         } catch (\Throwable $exception) {
             if ($customerIdPath) {
                 Storage::disk('local')->delete($customerIdPath);
+            }
+            Storage::disk('public')->delete(array_filter([$imagePath, ...$gallery]));
+            // A concurrent retry can lose the unique-key race after the first request commits.
+            if ($requestKey && ($existing = Purchase::where('request_key', $requestKey)->first())) {
+                return response()->json(['success' => true, 'purchase' => $existing, 'product' => $existing->product]);
             }
             throw $exception;
         }

@@ -26,6 +26,9 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $customer = \App\Models\User::where('email', 'test@example.com')->sole();
+        $this->assertSame('customer', $customer->role);
+        $this->assertSame('customer', $customer->roleRelation->name);
+        $response->assertRedirect(route('home', absolute: false));
     }
 }

@@ -11,10 +11,24 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roleRelation')->latest()->paginate(20);
-        return view('admin.users.index', compact('users'));
+        $request->validate(['role' => ['nullable', 'string', 'max:100'], 'search' => ['nullable', 'string', 'max:255']]);
+        $roles = Role::pluck('name')->merge(User::whereNotNull('role')->distinct()->pluck('role'))
+            ->merge(['admin', 'salesman', 'customer', 'technician'])->unique()->sort()->values();
+        $users = User::with(['roleRelation', 'store'])
+            ->when($request->filled('role'), function ($query) use ($request) {
+                $query->where(function ($query) use ($request) {
+                    $query->whereHas('roleRelation', fn ($role) => $role->where('name', $request->input('role')))
+                        ->orWhere(fn ($fallback) => $fallback->whereDoesntHave('roleRelation')->where('role', $request->input('role')));
+                });
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = '%'.$request->input('search').'%';
+                $query->where(fn ($query) => $query->where('name', 'like', $search)->orWhere('email', 'like', $search)->orWhere('phone', 'like', $search));
+            })
+            ->latest()->paginate(20)->withQueryString();
+        return view('admin.users.index', compact('users', 'roles'));
     }
 
     public function create()

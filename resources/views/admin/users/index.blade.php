@@ -11,6 +11,22 @@
         </a>
     </div>
 
+    <x-admin.filter-box>
+        <div class="md:col-span-2">
+            <label for="user-role" class="block text-xs font-semibold text-gray-600 mb-1">User Type</label>
+            <select id="user-role" name="role" class="w-full border rounded px-3 py-2 text-sm">
+                <option value="">All user types</option>
+                @foreach($roles as $role)
+                    <option value="{{ $role }}" @selected(request('role') === $role)>{{ ucfirst($role) }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="md:col-span-3">
+            <label for="user-search" class="block text-xs font-semibold text-gray-600 mb-1">Search</label>
+            <input id="user-search" name="search" value="{{ request('search') }}" placeholder="Name, email or phone" class="w-full border rounded px-3 py-2 text-sm">
+        </div>
+    </x-admin.filter-box>
+
     <table class="w-full bg-white shadow rounded text-sm">
         <thead class="bg-gray-100">
             <tr>
@@ -23,11 +39,11 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($users as $user)
+            @forelse($users as $user)
                 <tr class="border-b">
                     <td class="p-3">{{ $user->name }}</td>
                     <td class="p-3">{{ $user->email }}</td>
-                    <td class="p-3 capitalize">{{ $user->roleRelation?->name ?? '-' }}</td>
+                    <td class="p-3 capitalize">{{ $user->roleRelation?->name ?? $user->role ?? '-' }}</td>
                     <td class="p-3">
                         {{ $user->store->name ?? '—' }}
                     </td>
@@ -62,7 +78,9 @@
                         </form>
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr><td colspan="6" class="p-6 text-center text-gray-500">No users found.</td></tr>
+            @endforelse
         </tbody>
     </table>
 

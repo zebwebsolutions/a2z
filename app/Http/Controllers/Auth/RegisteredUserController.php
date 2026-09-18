@@ -37,6 +37,8 @@ class RegisteredUserController extends Controller
         ]);
 
         $user = User::create([
+            'role' => 'customer',
+            'role_id' => \App\Models\Role::firstOrCreate(['name' => 'customer'])->id,
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,

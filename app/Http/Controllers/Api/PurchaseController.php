@@ -11,10 +11,8 @@ class PurchaseController extends Controller
 {
     public function index(Request $request)
     {
-        return Purchase::query()
-            ->with('product:id,name')
-            ->when($request->user()->role !== 'admin', fn ($query) => $query->where('store_id', $request->user()->store_id))
-            ->latest('id')->paginate(20);
+        $query = app(\App\Services\PurchaseSearch::class)->query($request);
+        return $query->with('product:id,name')->latest('id')->paginate(20);
     }
 
     public function idImage(Request $request, Purchase $purchase)
@@ -24,6 +22,7 @@ class PurchaseController extends Controller
 
         return Storage::disk('local')->response($purchase->customer_id_image, null, [
             'Cache-Control' => 'private, no-store',
+            'Content-Type' => Storage::disk('local')->mimeType($purchase->customer_id_image),
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

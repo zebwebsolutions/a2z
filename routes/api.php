@@ -49,3 +49,8 @@ Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(func
     Route::post('/purchases', [ProductController::class, 'store'])->name('purchases.store');
     Route::get('/purchases/{purchase}/id-image', [\App\Http\Controllers\Api\PurchaseController::class, 'idImage']);
 });
+
+Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(function () {
+    Route::post('/push-devices', [\App\Http\Controllers\Api\MobilePushDeviceController::class, 'store']);
+    Route::delete('/push-devices', [\App\Http\Controllers\Api\MobilePushDeviceController::class, 'destroy']);
+});

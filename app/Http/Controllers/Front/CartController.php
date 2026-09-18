@@ -117,20 +117,14 @@ class CartController extends Controller
         $data['customer_phone'] = isset($data['customer_phone']) ? trim($data['customer_phone']) : null;
         $data['customer_phone_e164'] = $normalizedPhone;
 
-        $checkoutUserId = $this->checkoutUserId();
-        $storeId = auth()->user()?->store_id
-            ?? User::whereKey($checkoutUserId)->value('store_id')
-            ?? 1;
-
         $order = DB::transaction(function () use (
             $cart,
             $data,
             $normalizedPhone,
-            $checkoutUserId,
-            $storeId,
             $productInventoryService
         ) {
             $resolvedItems = [];
+            $storeId = null;
             $subtotal = 0.0;
 
             foreach ($cart as $id => $cartItem) {
@@ -148,6 +142,11 @@ class CartController extends Controller
                     ]);
                 }
 
+                if (!$product->store_id || ($storeId !== null && (int) $storeId !== (int) $product->store_id)) {
+                    throw ValidationException::withMessages(['cart' => 'Please order items from one store at a time.']);
+                }
+                $storeId = $product->store_id;
+
                 if ($product->stock < $quantity) {
                     throw ValidationException::withMessages([
                         'cart' => "Only {$product->stock} unit(s) of {$product->name} are available.",
@@ -158,6 +157,8 @@ class CartController extends Controller
                 $subtotal += $price * $quantity;
                 $resolvedItems[] = compact('product', 'quantity', 'price');
             }
+
+            $checkoutUserId = $this->checkoutUserId($data);
 
             $order = Order::create(array_merge($data, [
                 'customer_phone_e164' => $normalizedPhone,
@@ -211,27 +212,31 @@ class CartController extends Controller
         return redirect()->route('cart.success', $order->id);
     }
 
-    private function checkoutUserId(): int
+    private function checkoutUserId(array $data): int
     {
-        if (auth()->id()) {
-            return auth()->id();
+        $email = strtolower(trim($data['customer_email']));
+        $customer = User::whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($customer) {
+            if (!$customer->hasRole('customer')) {
+                throw ValidationException::withMessages([
+                    'customer_email' => 'Please use a customer email address for this order.',
+                ]);
+            }
+            return $customer->id;
         }
 
-        $userId = User::query()
-            ->where(function ($query) {
-                $query->whereNull('is_active')->orWhere('is_active', true);
-            })
-            ->whereIn('role', ['admin', 'salesman'])
-            ->orderBy('id')
-            ->value('id') ?? User::query()->orderBy('id')->value('id');
+        $role = \App\Models\Role::firstOrCreate(['name' => 'customer']);
+        $customer = User::create([
+            'name' => $data['customer_name'],
+            'email' => $email,
+            'phone' => $data['customer_phone'],
+            'role' => 'customer',
+            'role_id' => $role->id,
+            'password' => \Illuminate\Support\Str::random(64),
+            'is_active' => true,
+        ]);
 
-        if (! $userId) {
-            throw ValidationException::withMessages([
-                'customer_name' => 'No staff user exists to assign this order. Please create an admin or salesman user first.',
-            ]);
-        }
-
-        return (int) $userId;
+        return $customer->id;
     }
 
     // Order success page

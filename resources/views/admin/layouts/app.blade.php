@@ -77,6 +77,13 @@
                 </a>
                 @endif
 
+                @if(auth()->user()->canView('purchases'))
+                <a href="{{ route('admin.purchases.index') }}"
+                   class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.purchases.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 mr-2"></i> Purchases
+                </a>
+                @endif
+
                 @if(auth()->user()->canView('sliders'))
                 <a href="{{ route('admin.sliders.index') }}" 
                 class="flex items-center px-3 py-2 rounded-md transition duration-200 {{ request()->routeIs('admin.sliders.*') ? 'bg-blue-700 font-semibold' : 'hover:bg-blue-700' }}">
