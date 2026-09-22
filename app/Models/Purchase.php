@@ -25,6 +25,12 @@ class Purchase extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (Purchase $purchase) {
+            if (blank($purchase->product_name) && $purchase->product_id) {
+                $purchase->product_name = Product::whereKey($purchase->product_id)->value('name');
+            }
+        });
+
         static::saving(function (Purchase $purchase) {
             $purchase->customer_phone_normalized = self::normalizePhone($purchase->customer_phone);
         });

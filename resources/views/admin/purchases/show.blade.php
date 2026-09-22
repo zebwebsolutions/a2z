@@ -5,7 +5,7 @@
     <a href="{{ route('admin.purchases.index') }}" class="text-sm text-blue-600 hover:underline">← Purchases</a>
     <h1 class="text-2xl font-bold mt-4 mb-6">Purchase #{{ $purchase->id }}</h1>
     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <div><dt class="font-semibold text-gray-600">Product</dt><dd>{{ $purchase->product_name ?? $purchase->product?->name ?? 'Deleted product' }}</dd></div>
+        <div><dt class="font-semibold text-gray-600">Product</dt><dd>{{ $purchase->product_name ?? $purchase->product?->name ?? 'Deleted product' }} @if (! $purchase->product)<span class="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Deleted</span>@endif</dd></div>
         <div><dt class="font-semibold text-gray-600">Customer</dt><dd><a class="text-blue-600 hover:underline" href="{{ route('admin.purchases.index', ['customer_purchase_id' => $purchase->id]) }}">{{ $purchase->customer_name }}</a></dd></div>
         <div><dt class="font-semibold text-gray-600">Phone</dt><dd>{{ $purchase->customer_phone }}</dd></div>
         <div><dt class="font-semibold text-gray-600">Purchased at</dt><dd>{{ $purchase->created_at->format('d M Y, H:i') }}</dd></div>

@@ -199,6 +199,32 @@ class OrderController extends Controller
         );
     }
 
+    public function cancel(Request $request, Order $order, ProductInventoryService $productInventoryService)
+    {
+        abort_unless((int) $order->store_id === (int) $request->user()->store_id, 403);
+
+        DB::transaction(function () use ($order, $productInventoryService) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            // Retrying a successful cancellation must never restore stock twice.
+            if ($lockedOrder->status === 'cancelled') {
+                return;
+            }
+            abort_unless($lockedOrder->status === 'pending', 422, 'Only pending orders can be cancelled.');
+
+            foreach ($lockedOrder->items()->lockForUpdate()->get() as $item) {
+                if ($productInventoryService->restoreUnits($item) === 0) {
+                    Product::whereKey($item->product_id)->lockForUpdate()->first()?->increment('stock', $item->quantity);
+                }
+            }
+            foreach ($lockedOrder->sparePartItems()->lockForUpdate()->get() as $item) {
+                $item->sparePart()->lockForUpdate()->first()?->increment('stock_quantity', $item->quantity);
+            }
+            $lockedOrder->update(['status' => 'cancelled']);
+        });
+
+        return response()->json(['success' => true, 'message' => 'Order cancelled successfully']);
+    }
+
     public function refund(Order $order, ProductInventoryService $productInventoryService)
     {
         if (!in_array($order->status, ['completed'])) {

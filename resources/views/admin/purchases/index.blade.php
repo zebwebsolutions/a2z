@@ -23,7 +23,7 @@
                 @forelse($purchases as $purchase)
                 <tr class="border-b">
                     <td class="p-3">#{{ $purchase->id }}</td>
-                    <td class="p-3">{{ $purchase->product_name ?? $purchase->product?->name ?? 'Deleted product' }}</td>
+                    <td class="p-3">{{ $purchase->product_name ?? $purchase->product?->name ?? 'Deleted product' }} @if (! $purchase->product)<span class="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Deleted</span>@endif</td>
                     <td class="p-3"><a class="text-blue-600 hover:underline" href="{{ route('admin.purchases.index', ['customer_purchase_id' => $purchase->id]) }}">{{ $purchase->customer_name }}</a><div class="text-gray-500">{{ $purchase->customer_phone }}</div></td>
                     <td class="p-3">{{ $purchase->quantity }}</td>
                     <td class="p-3">{{ number_format($purchase->quantity * $purchase->unit_cost, 3) }}</td>

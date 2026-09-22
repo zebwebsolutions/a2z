@@ -55,6 +55,161 @@ class PurchaseTest extends TestCase
         $this->assertSame(Storage::disk('local')->get($purchase->customer_id_image), $image->streamedContent());
     }
 
+    public function test_purchase_details_include_snapshot_and_keep_id_photo_private(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $purchase = Purchase::firstOrFail();
+        $this->getJson('/api/purchases/'.$purchase->id)->assertOk()
+            ->assertJsonPath('id', $purchase->id)
+            ->assertJsonPath('customer_name', 'Test Customer')
+            ->assertJsonPath('unit_cost', '75.125')
+            ->assertJsonPath('quantity', 1)
+            ->assertJsonPath('product.name', 'Customer device')
+            ->assertJsonMissingPath('customer_id_image');
+        $purchase->product->delete();
+        $this->getJson('/api/purchases/'.$purchase->id)->assertOk()
+            ->assertJsonPath('product_name', 'Customer device')->assertJsonPath('product', null);
+    }
+
+    public function test_phone_suggestions_group_customers_and_are_scoped_to_store(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $purchase = Purchase::firstOrFail();
+        $copy = $purchase->replicate();
+        $copy->customer_phone = '55551234';
+        $copy->save();
+        $this->getJson('/api/purchases/customers?phone=5555')->assertOk()
+            ->assertJsonCount(1)->assertJsonPath('0.id', $copy->id)
+            ->assertJsonPath('0.customer_name', 'Test Customer')->assertJsonMissingPath('0.customer_id_image');
+        $this->getJson('/api/purchases/customers?phone=00965%205555')->assertOk()->assertJsonCount(1);
+        $this->getJson('/api/purchases/customers?phone=55')->assertOk()->assertExactJson([]);
+        $other = Store::create(['name' => 'Other', 'address' => 'Other']);
+        Sanctum::actingAs(User::factory()->create(['role' => 'salesman', 'is_active' => true, 'store_id' => $other->id]));
+        $this->getJson('/api/purchases/customers?phone=5555')->assertOk()->assertExactJson([]);
+    }
+
+    public function test_saved_customer_can_be_reused_without_reentering_details_or_id(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $original = Purchase::firstOrFail();
+        $payload = $this->payload($store);
+        unset($payload['customer_name'], $payload['customer_phone'], $payload['customer_id_image']);
+        $payload['customer_purchase_id'] = $original->id;
+        $payload['inventory_units'][0]['serial_number'] = 'REPEAT-001';
+        $this->postJson('/api/purchases', $payload)->assertCreated()
+            ->assertJsonPath('purchase.customer_name', $original->customer_name)
+            ->assertJsonPath('purchase.customer_phone', $original->customer_phone);
+        $repeat = Purchase::latest('id')->firstOrFail();
+        $this->assertNotSame($original->customer_id_image, $repeat->customer_id_image);
+        $this->assertSame(Storage::disk('local')->get($original->customer_id_image), Storage::disk('local')->get($repeat->customer_id_image));
+        $this->getJson('/api/purchases?customer_purchase_id='.$original->id)->assertJsonPath('total', 2);
+    }
+
+    public function test_reusing_customer_rejects_other_stores_and_missing_id_photos(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $original = Purchase::firstOrFail();
+        $payload = ['customer_purchase_id' => $original->id];
+        Storage::disk('local')->delete($original->customer_id_image);
+        $this->postJson('/api/purchases', $payload)->assertUnprocessable();
+        $other = Store::create(['name' => 'Other', 'address' => 'Other']);
+        Sanctum::actingAs(User::factory()->create(['role' => 'salesman', 'is_active' => true, 'store_id' => $other->id]));
+        $this->postJson('/api/purchases', $payload)->assertForbidden();
+        $this->assertDatabaseCount('purchases', 1);
+    }
+
+    public function test_failed_repeat_purchase_does_not_remove_original_id_photo(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $original = Purchase::firstOrFail();
+        $payload = $this->payload($store);
+        unset($payload['customer_name'], $payload['customer_phone'], $payload['customer_id_image']);
+        $payload['customer_purchase_id'] = $original->id;
+        $payload['inventory_units'][0]['serial_number'] = 'REPEAT-FAIL';
+        Purchase::creating(fn () => throw new \RuntimeException('Simulated failure'));
+        try {
+            $this->postJson('/api/purchases', $payload)->assertStatus(500);
+            Storage::disk('local')->assertExists($original->customer_id_image);
+            $this->assertCount(1, Storage::disk('local')->allFiles('purchase-ids'));
+            $this->assertDatabaseCount('purchases', 1);
+        } finally {
+            Purchase::flushEventListeners();
+        }
+    }
+
+    public function test_product_details_can_be_reused_with_fresh_units_and_independent_photos(): void
+    {
+        $store = $this->context();
+        $first = $this->payload($store);
+        $first['image'] = UploadedFile::fake()->image('product.jpg');
+        $first['gallery'] = [UploadedFile::fake()->image('gallery.jpg')];
+        $this->postJson('/api/purchases', $first)->assertCreated();
+        $original = Purchase::firstOrFail();
+        $product = $original->product;
+        $product->update(['description' => 'Original description', 'specs' => ['STORAGE' => '128 GB']]);
+        $this->getJson('/api/products?search=Customer')->assertOk()->assertJsonPath('data.0.id', $product->id);
+        $this->getJson('/api/products/'.$product->id)->assertOk()
+            ->assertJsonPath('description', 'Original description')->assertJsonPath('specs.STORAGE', '128 GB');
+        $payload = $this->payload($store);
+        $payload['source_product_id'] = $product->id;
+        $payload['reuse_product_image'] = true;
+        $payload['source_gallery_indices'] = [0];
+        $payload['inventory_units'][0]['serial_number'] = 'FRESH-UNIT';
+        $payload['cost_price'] = 65;
+        $this->postJson('/api/purchases', $payload)->assertCreated()->assertJsonPath('purchase.unit_cost', '65.000');
+        $newProduct = Purchase::latest('id')->firstOrFail()->product;
+        $this->assertNotEquals($product->id, $newProduct->id);
+        $this->assertNotSame($product->barcode, $newProduct->barcode);
+        $this->assertNotSame($product->image, $newProduct->image);
+        $this->assertNotSame($product->gallery[0], $newProduct->gallery[0]);
+        $this->assertSame(Storage::disk('public')->get($product->image), Storage::disk('public')->get($newProduct->image));
+        $this->assertSame(Storage::disk('public')->get($product->gallery[0]), Storage::disk('public')->get($newProduct->gallery[0]));
+        $this->assertSame(['FRESH-UNIT'], $newProduct->units()->pluck('serial_number')->all());
+        $this->assertSame(['CUSTOMER-001'], $product->units()->pluck('serial_number')->all());
+        $this->assertSame(1, $product->fresh()->stock);
+    }
+
+    public function test_staff_cannot_suggest_read_or_copy_another_stores_product(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $product = Purchase::firstOrFail()->product;
+        $other = Store::create(['name' => 'Other', 'address' => 'Other']);
+        Sanctum::actingAs(User::factory()->create(['role' => 'salesman', 'is_active' => true, 'store_id' => $other->id]));
+        $this->getJson('/api/products?search=Customer')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/products/'.$product->id)->assertForbidden();
+        $payload = $this->payload($other);
+        $payload['source_product_id'] = $product->id;
+        $this->postJson('/api/purchases', $payload)->assertForbidden();
+    }
+
+    public function test_failed_product_copy_keeps_original_photos_and_removes_copies(): void
+    {
+        $store = $this->context();
+        $payload = $this->payload($store);
+        $payload['image'] = UploadedFile::fake()->image('product.jpg');
+        $this->postJson('/api/purchases', $payload)->assertCreated();
+        $product = Purchase::firstOrFail()->product;
+        $payload = $this->payload($store);
+        $payload['source_product_id'] = $product->id;
+        $payload['reuse_product_image'] = true;
+        $payload['inventory_units'][0]['serial_number'] = 'COPY-FAIL';
+        Purchase::creating(fn () => throw new \RuntimeException('Simulated failure'));
+        try {
+            $this->postJson('/api/purchases', $payload)->assertStatus(500);
+            Storage::disk('public')->assertExists($product->image);
+            $this->assertCount(1, Storage::disk('public')->allFiles());
+            $this->assertDatabaseCount('products', 1);
+        } finally {
+            Purchase::flushEventListeners();
+        }
+    }
+
     public function test_customer_details_and_id_are_required_before_creating_inventory(): void
     {
         $store = $this->context();
@@ -75,6 +230,7 @@ class PurchaseTest extends TestCase
         $this->postJson('/api/purchases', $this->payload($store))->assertForbidden();
         $this->getJson('/api/purchases')->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/purchases/'.$purchase->id.'/id-image')->assertForbidden();
+        $this->getJson('/api/purchases/'.$purchase->id)->assertForbidden();
     }
 
     public function test_failed_purchase_rolls_back_inventory_and_removes_id_photo(): void
@@ -126,6 +282,22 @@ class PurchaseTest extends TestCase
         $this->getJson('/api/purchases')->assertOk()->assertJsonPath('data.0.product_name', 'Customer device');
         $purchase->product->delete();
         $this->getJson('/api/purchases')->assertOk()->assertJsonPath('data.0.product_name', 'Customer device')->assertJsonPath('data.0.product', null);
+    }
+
+    public function test_deleting_product_preserves_missing_legacy_purchase_names(): void
+    {
+        $store = $this->context();
+        $this->postJson('/api/purchases', $this->payload($store))->assertCreated();
+        $purchase = Purchase::firstOrFail();
+        foreach ([null, '', 'Deleted product'] as $name) {
+            $copy = $purchase->replicate();
+            $copy->save();
+            // Simulate records created before product names were saved.
+            Purchase::whereKey($copy->id)->update(['product_name' => $name]);
+        }
+        $purchase->product->delete();
+        $this->assertSame(4, Purchase::where('product_name', 'Customer device')->whereNull('product_id')->count());
+        $this->getJson('/api/purchases?search=Customer%20device')->assertOk()->assertJsonPath('total', 4);
     }
 
     public function test_phone_requires_digits_and_money_cannot_be_silently_rounded(): void

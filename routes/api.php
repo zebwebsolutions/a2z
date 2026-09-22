@@ -16,6 +16,7 @@ Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->post('/ord
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->get('/orders', [OrderController::class, 'index']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->get('/orders/{order}', [OrderController::class, 'show']);
 Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->post('/orders/{order}/refund', [OrderController::class, 'refund']);
+Route::middleware('auth:sanctum', 'active', 'role:admin,salesman')->post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])
     ->group(function () {
         Route::get('/products', [ProductController::class, 'index']);
@@ -45,9 +46,11 @@ Route::middleware('auth:sanctum', 'active', 'role:salesman,admin')->group(functi
 });
 
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(function () {
+    Route::get('/purchases/customers', [\App\Http\Controllers\Api\PurchaseController::class, 'customers']);
     Route::get('/purchases', [\App\Http\Controllers\Api\PurchaseController::class, 'index']);
     Route::post('/purchases', [ProductController::class, 'store'])->name('purchases.store');
     Route::get('/purchases/{purchase}/id-image', [\App\Http\Controllers\Api\PurchaseController::class, 'idImage']);
+    Route::get('/purchases/{purchase}', [\App\Http\Controllers\Api\PurchaseController::class, 'show']);
 });
 
 Route::middleware(['auth:sanctum', 'active', 'role:admin,salesman'])->group(function () {

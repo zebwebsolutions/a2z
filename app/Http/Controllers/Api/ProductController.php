@@ -66,8 +66,9 @@ class ProductController extends Controller
         );
     }
 
-    public function show(Product $product)
+    public function show(Request $request, Product $product)
     {
+        abort_unless($request->user()->role === 'admin' || (int) $request->user()->store_id === (int) $product->store_id, 403);
         return response()->json(
             $product->load([
                 'usedDeviceDetails',
@@ -86,6 +87,9 @@ class ProductController extends Controller
         $user = $request->user();
         $isPurchase = $request->routeIs('purchases.store');
         $purchaseData = [];
+        $customerPurchase = null;
+        $sourceProduct = null;
+        $sourceGalleryIndices = [];
         $requestKey = null;
         if ($isPurchase && $request->has('request_key')) {
             $request->validate(['request_key' => ['required', 'string', 'max:100']]);
@@ -97,6 +101,16 @@ class ProductController extends Controller
             }
         }
         if ($isPurchase) {
+            $request->validate(['customer_purchase_id' => ['nullable', 'integer', 'min:1']]);
+            if ($request->filled('customer_purchase_id')) {
+                $customerPurchase = Purchase::findOrFail($request->integer('customer_purchase_id'));
+                abort_unless($user->role === 'admin' || (int) $user->store_id === (int) $customerPurchase->store_id, 403);
+                abort_unless(Storage::disk('local')->exists($customerPurchase->customer_id_image), 422, 'Saved ID photo is unavailable. Enter the customer details and capture a new ID photo.');
+                $request->merge([
+                    'customer_name' => $customerPurchase->customer_name,
+                    'customer_phone' => $customerPurchase->customer_phone,
+                ]);
+            }
             $purchaseData = $request->validate([
                 'customer_name' => ['required', 'string', 'max:255'],
                 'customer_phone' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9()\\s-]+$/', function ($attribute, $value, $fail) {
@@ -105,11 +119,27 @@ class ProductController extends Controller
                         $fail('The customer phone must contain 7 to 15 digits.');
                     }
                 }],
-                'customer_id_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+                'customer_id_image' => [$customerPurchase ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
                 'cost_price' => ['required', 'numeric', 'min:0', 'max:9999999.999', 'decimal:0,3'],
                 'store_id' => ['required', 'exists:stores,id'],
             ]);
             abort_unless($user->role === 'admin' || (int) $user->store_id === (int) $purchaseData['store_id'], 403);
+            $sourceData = $request->validate([
+                'source_product_id' => ['nullable', 'integer', 'min:1'],
+                'reuse_product_image' => ['nullable', 'boolean'],
+                'source_gallery_indices' => ['nullable', 'array', 'max:100'],
+                'source_gallery_indices.*' => ['integer', 'min:0', 'distinct'],
+            ]);
+            if (!empty($sourceData['source_product_id'])) {
+                $sourceProduct = Product::findOrFail($sourceData['source_product_id']);
+                abort_unless($user->role === 'admin' || (int) $user->store_id === (int) $sourceProduct->store_id, 403);
+            }
+            $sourceGalleryIndices = $sourceData['source_gallery_indices'] ?? [];
+            abort_if(($request->boolean('reuse_product_image') || $sourceGalleryIndices) && !$sourceProduct, 422, 'Select a product to reuse its photos.');
+            foreach ($sourceGalleryIndices as $index) {
+                abort_unless(isset($sourceProduct->gallery[$index]), 422, 'A selected product photo is no longer available. Select the product again.');
+            }
+
         }
 
         $data = $request->validate([
@@ -245,14 +275,34 @@ class ProductController extends Controller
                 }
             }
 
-            $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits, $productInventoryService, $isPurchase, $purchaseData, $user, $requestKey, &$customerIdPath, &$purchase) {
+            // Copy photos into independent files so deleting the source cannot remove them.
+            $copyProductPhoto = function (string $path): string {
+                abort_unless(Storage::disk('public')->exists($path), 422, 'A selected product photo is no longer available. Select the product again or add a new photo.');
+                $target = 'products/'.Str::uuid().'.'.pathinfo($path, PATHINFO_EXTENSION);
+                if (!Storage::disk('public')->copy($path, $target)) {
+                    throw new \RuntimeException('Could not copy product photo.');
+                }
+                return $target;
+            };
+            if ($sourceProduct && $request->boolean('reuse_product_image') && !$imagePath && $sourceProduct->image) {
+                $imagePath = $copyProductPhoto($sourceProduct->image);
+            }
+            foreach ($sourceGalleryIndices as $index) {
+                $gallery[] = $copyProductPhoto($sourceProduct->gallery[$index]);
+            }
+
+            $product = DB::transaction(function () use ($data, $request, $imagePath, $gallery, $specs, $deviceCondition, $inventoryUnits, $productInventoryService, $isPurchase, $purchaseData, $customerPurchase, $user, $requestKey, &$customerIdPath, &$purchase) {
+                $slug = Str::slug($data['name']);
+                if ($isPurchase && Product::where('slug', $slug)->exists()) {
+                    $slug = Str::limit($slug, 210, '').'-'.Str::uuid();
+                }
                 $product = Product::create([
                     'store_id' => $data['store_id'],
                     'parent_category_id' => $data['parent_category_id'] ?? null,
                     'category_id' => $data['category_id'] ?? ($data['parent_category_id'] ?? null),
                     'brand_id' => $data['brand_id'] ?? null,
                     'name' => $data['name'],
-                    'slug' => Str::slug($data['name']),
+                    'slug' => $slug,
                     'description' => $data['description'] ?? null,
                     'price' => $data['price'],
                     'cost_price' => $data['cost_price'] ?? null,
@@ -292,7 +342,14 @@ class ProductController extends Controller
                 }
 
                 if ($isPurchase) {
-                    $customerIdPath = $request->file('customer_id_image')->store('purchase-ids', 'local');
+                    if ($customerPurchase) {
+                        $customerIdPath = 'purchase-ids/'.Str::uuid().'.'.pathinfo($customerPurchase->customer_id_image, PATHINFO_EXTENSION);
+                        if (!Storage::disk('local')->copy($customerPurchase->customer_id_image, $customerIdPath)) {
+                            throw new \RuntimeException('Could not copy saved customer ID image.');
+                        }
+                    } else {
+                        $customerIdPath = $request->file('customer_id_image')->store('purchase-ids', 'local');
+                    }
                     if (!$customerIdPath) {
                         throw new \RuntimeException('Could not save customer ID image.');
                     }

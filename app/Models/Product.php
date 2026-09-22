@@ -90,6 +90,17 @@ class Product extends Model
 
     protected static function booted()
     {
+        static::deleting(function (Product $product) {
+            // Preserve names for older purchases before the foreign key is cleared.
+            Purchase::where('product_id', $product->id)
+                ->where(function ($query) {
+                    $query->whereNull('product_name')
+                        ->orWhere('product_name', '')
+                        ->orWhere('product_name', 'Deleted product');
+                })
+                ->update(['product_name' => $product->name]);
+        });
+
         static::creating(function ($product) {
 
             // Auto-generate barcode only if not provided
